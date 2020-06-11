@@ -106,7 +106,7 @@ class GraphTrainer(BaseTrainer):
     #     print("Num Labels in Each Class: " + str(np.unique(self.training_labels, return_counts=True)[1]) + ", Class Weights: " + str(self.class_weights))
 
     def build(self):
-        train_data_list = [Data(x=x, edge_index=edge_idx, y=torch.LongTensor([0])) for x, edge_idx in self.hardware_graphs]
+        train_data_list = [Data(x=x, edge_index=edge_idx, y=torch.LongTensor([y])) for x, edge_idx, y in self.hardware_graphs]
         self.train_loader = DataLoader(train_data_list, batch_size=32)
         if self.config.model == "gcn":
             self.model = GCN(self.num_feature_dim, self.config.hidden, 2, self.config.dropout, self.config.pooling_type, self.config.readout_type).to(self.config.device)
