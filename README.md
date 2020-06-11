@@ -22,6 +22,25 @@ pip install pyunpack
 pip install patool
 ```
 
+# Installation 
+
+## Install PyTorch 1.5.0
+
+To install PyTorch 1.5.0 follow the instructions under "Quick Start Locally" [here](http://pytorch.org/).
+
+## Install Requirements
+
+Run the following commands to install the requirements.
+
+```sh
+$ conda activate [your working environment name]
+$ pip install -r requirements.txt
+```
+
+## Install PyTorch Geometric
+
+To install PyTorch Geometric, simply follow the instructions [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html).
+
 # Dataset
 We obtain the dataset from a famous trojan [benchmark](http://www.trust-hub.org/benchmarks/trojan). We manually downloaded all the avaialable dataset in RTL level into [./input](https://github.com/louisccc/hard_hard_graph/tree/master/input) folder. 
 Running the command"
