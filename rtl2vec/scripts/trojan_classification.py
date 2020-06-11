@@ -1,43 +1,34 @@
-import os, pdb, sys
+import os, sys
 sys.path.append(os.path.dirname(sys.path[0]))
 
-import random
-import torch
-import torch.nn.functional as F
-import torch.optim as optim
-import numpy as np
-import scipy.sparse as sp
-import pandas as pd
 
-
-from argparse import ArgumentParser
-from pathlib import Path
-from tqdm import tqdm
-import json
-import networkx as nx
-
-from torch_geometric.data import Data, DataLoader
-from sklearn.utils.class_weight import compute_class_weight
-
-from core.gcn import *
-from core.gin import *
 from core.trainer import *
-from abc import ABC, abstractmethod
-
-from glob import glob
 from utils.json2graph import *
+import pickle as pkl
 
 
 if __name__ == "__main__":
-    parser = GraphParser(Path("../data/data_ready_FIXED/"))
 
-    parser.read_node_labels("TjFree")
-    parser.read_node_labels("TjIn")
+    parser = None
     
-    parser.read_hardware_designs("TjFree", 0)
-    parser.read_hardware_designs("TjIn", 1)
+    precache_path = Path('./hardware_cache.pkl')
+    if precache_path.exists():
+        with open('node_embeddings.pkl','rb') as f:
+            parser = pkl.load(f)
+            
+    else:
+        parser = GraphParser(Path("../data/data_ready_FIXED/"))
+
+        parser.read_node_labels("TjFree")
+        parser.read_node_labels("TjIn")
+        
+        parser.read_hardware_designs("TjFree", 0)
+        parser.read_hardware_designs("TjIn", 1)
+
+        with open('hardware_cache.pkl', 'wb') as f:
+            pkl.dump(parser, f)
 
     trainer = GraphTrainer(sys.argv[1:], parser.data)
     trainer.build()
     trainer.train()
-    import pdb; pdb.set_trace() 
+    import pdb; pdb.set_trace()

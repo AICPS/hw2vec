@@ -1,4 +1,4 @@
-import os, pdb, sys
+import os, sys
 sys.path.append(os.path.dirname(sys.path[0]))
 
 import random
@@ -13,15 +13,12 @@ import pandas as pd
 from argparse import ArgumentParser
 from pathlib import Path
 from tqdm import tqdm
-import json
-import networkx as nx
 
 from torch_geometric.data import Data, DataLoader
 from sklearn.utils.class_weight import compute_class_weight
 
 from core.gcn import *
 from core.gin import *
-
 from abc import ABC, abstractmethod
 
 
