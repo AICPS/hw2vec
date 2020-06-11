@@ -29,15 +29,15 @@ from utils.json2graph import *
 
 
 if __name__ == "__main__":
-    root = Path("../data/data_ready_FIXED/")
-    root_healthy = root / "TjFree"
-    root_trojan  = root / "TjIn"
+    parser = GraphParser(Path("../data/data_ready_FIXED/"))
 
-    data = read_hardware_designs(root_healthy, 0) + read_hardware_designs(root_trojan, 1)
+    parser.read_node_labels("TjFree")
+    parser.read_node_labels("TjIn")
     
-    trainer = GraphTrainer(sys.argv[1:], data)
+    parser.read_hardware_designs("TjFree", 0)
+    parser.read_hardware_designs("TjIn", 1)
+
+    trainer = GraphTrainer(sys.argv[1:], parser.data)
     trainer.build()
     trainer.train()
-
-            
     import pdb; pdb.set_trace() 
