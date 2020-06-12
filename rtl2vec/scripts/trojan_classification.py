@@ -28,7 +28,8 @@ if __name__ == "__main__":
         with open('hardware_cache.pkl', 'wb') as f:
             pkl.dump(parser, f)
 
-    trainer = GraphTrainer(sys.argv[1:], parser.data)
+    parser.split_dataset(0.7)
+    trainer = GraphTrainer(sys.argv[1:], parser.train_data, parser.test_data)
     trainer.build()
     trainer.train()
-    import pdb; pdb.set_trace()
+    trainer.evaluate()

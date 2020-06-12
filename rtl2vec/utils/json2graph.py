@@ -5,6 +5,7 @@ import random
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.utils.data import random_split
 import numpy as np
 import scipy.sparse as sp
 import pandas as pd
@@ -80,3 +81,7 @@ class GraphParser:
             edge_idx = torch.transpose(torch.LongTensor(edge_idx), 0, 1)
             
             self.data.append((X, edge_idx, label))
+
+    def split_dataset(self, ratio):
+        train_length = int(len(self.data) * ratio)
+        self.train_data, self.test_data = random_split(self.data, [train_length, len(self.data) - train_length])

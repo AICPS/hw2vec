@@ -61,7 +61,7 @@ class Config:
         self.parser.add_argument('--dropout', type=float, default=0.5, help='Dropout rate (1 - keep probability).')
         self.parser.add_argument('--nclass', type=int, default=8, help="The number of classes for node.")
         self.parser.add_argument('--recursive', type=lambda x: (str(x).lower() == 'true'), default=True, help='Recursive loading scenegraphs')
-        self.parser.add_argument('--batch_size', type=int, default=32, help='Number of graphs in a batch.')
+        self.parser.add_argument('--batch_size', type=int, default=4, help='Number of graphs in a batch.')
         self.parser.add_argument('--device', type=str, default="cpu", help='The device to run on models (cuda or cpu) cpu in default.')
         self.parser.add_argument('--model', type=str, default="gcn", help="Model to be used intrinsically.")
         self.parser.add_argument('--num_layers', type=int, default=5, help="Number of layers in the neural network.")
@@ -80,18 +80,16 @@ class Config:
 
 class GraphTrainer(BaseTrainer):
 
-    def __init__(self, args, hardware_graphs):
+    def __init__(self, args, train_graphs, test_graphs):
         self.config = Config(args)
         np.random.seed(self.config.seed)
         torch.manual_seed(self.config.seed)
-        self.hardware_graphs = hardware_graphs
-        self.num_feature_dim = hardware_graphs[0][0].shape[1]
+        self.num_feature_dim = train_graphs[0][0].shape[1]
         
-        train_data_list = [Data(x=x, edge_index=edge_idx, y=torch.LongTensor([y])) for x, edge_idx, y in self.hardware_graphs]
+        train_data_list = [Data(x=x, edge_index=edge_idx, y=torch.LongTensor([y])) for x, edge_idx, y in train_graphs]
         self.train_loader = DataLoader(train_data_list, batch_size=self.config.batch_size)
-        test_data_list = [Data(x=x, edge_index=edge_idx, y=torch.LongTensor([y])) for x, edge_idx, y in self.hardware_graphs]
+        test_data_list = [Data(x=x, edge_index=edge_idx, y=torch.LongTensor([y])) for x, edge_idx, y in test_graphs]
         self.test_loader = DataLoader(test_data_list, batch_size=1)
-
 
     def build(self):
         if self.config.model == "gcn":
@@ -138,7 +136,7 @@ class GraphTrainer(BaseTrainer):
             output = self.model.forward(data.x, data.edge_index, data.batch)
             acc_test = accuracy(output, data.y)
 
-            print('SceneGraph: {:04d}'.format(i), 'acc_test: {:.4f}'.format(acc_test.item()))
+            print('TJ Detection on graph {:04d}'.format(i), 'acc_test: {:.4f}'.format(acc_test.item()))
 
             outputs.append(output.cpu())
             labels.append(data.y.cpu().numpy())
