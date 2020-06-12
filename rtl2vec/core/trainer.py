@@ -36,9 +36,17 @@ class BaseTrainer(ABC):
 	def train(self):
 		pass
 	
-	# @abstractmethod
-	# def evaluate(self):
-	# 	pass
+	@abstractmethod
+	def evaluate(self):
+		pass
+
+
+def accuracy(output, labels):
+    preds = output.max(1)[1].type_as(labels)
+    correct = preds.eq(labels).double()
+    correct = correct.sum()
+    return correct / len(labels)
+
 
 class Config:
     '''Argument Parser for script to train scenegraphs.'''
@@ -78,33 +86,14 @@ class GraphTrainer(BaseTrainer):
         torch.manual_seed(self.config.seed)
         self.hardware_graphs = hardware_graphs
         self.num_feature_dim = hardware_graphs[0][0].shape[1]
-        # self.preprocess_scenegraph_data() # reduced scenegraph extraction
+        
+        train_data_list = [Data(x=x, edge_index=edge_idx, y=torch.LongTensor([y])) for x, edge_idx, y in self.hardware_graphs]
+        self.train_loader = DataLoader(train_data_list, batch_size=self.config.batch_size)
+        test_data_list = [Data(x=x, edge_index=edge_idx, y=torch.LongTensor([y])) for x, edge_idx, y in self.hardware_graphs]
+        self.test_loader = DataLoader(test_data_list, batch_size=1)
 
-    # def preprocess_scenegraph_data(self):
-    #     # load scene graph txts into memory 
-    #     sge = SceneGraphExtractor()
-    #     if not sge.cache_exists() or self.config.nocache:
-    #         if self.config.recursive:
-    #             for sub_dir in tqdm([x for x in self.config.input_base_dir.iterdir() if x.is_dir()]):
-    #                 data_source = sub_dir
-    #                 sge.load(data_source)
-    #         else:
-    #             data_source = self.config.input_base_dir
-    #             sge.load(data_source)
-
-    #     self.training_graphs, self.training_labels, self.testing_graphs, self.testing_labels, self.feature_list = sge.to_dataset(nocache=self.config.nocache)
-    #     train_data_list = [Data(x=g.node_features, edge_index=g.edge_mat, y=torch.LongTensor([label])) for g, label in zip(self.training_graphs, self.training_labels)]
-    #     self.train_loader = DataLoader(train_data_list, batch_size=32)
-    #     test_data_list = [Data(x=g.node_features, edge_index=g.edge_mat, y=torch.LongTensor([label])) for g, label in zip(self.testing_graphs, self.testing_labels)]
-    #     self.test_loader = DataLoader(test_data_list, batch_size=1)
-    #     self.class_weights = torch.from_numpy(compute_class_weight('balanced', np.unique(self.training_labels), self.training_labels))
-
-    #     print("Number of Training Scene Graphs included: ", len(self.training_graphs))
-    #     print("Num Labels in Each Class: " + str(np.unique(self.training_labels, return_counts=True)[1]) + ", Class Weights: " + str(self.class_weights))
 
     def build(self):
-        train_data_list = [Data(x=x, edge_index=edge_idx, y=torch.LongTensor([y])) for x, edge_idx, y in self.hardware_graphs]
-        self.train_loader = DataLoader(train_data_list, batch_size=32)
         if self.config.model == "gcn":
             self.model = GCN(self.num_feature_dim, self.config.hidden, 2, self.config.dropout, self.config.pooling_type, self.config.readout_type).to(self.config.device)
         
@@ -139,20 +128,20 @@ class GraphTrainer(BaseTrainer):
             print('Epoch: {:04d},'.format(epoch_idx), 'loss_train: {:.4f}'.format(acc_loss_train))
             print('')
 
-    # def evaluate(self):
-    #     labels = []
-    #     outputs = []
+    def evaluate(self):
+        labels = []
+        outputs = []
         
-    #     for i, data in enumerate(self.test_loader): # iterate through scenegraphs
-    #         data.to(self.config.device)
-    #         self.model.eval()
-    #         output = self.model.forward(data.x, data.edge_index, data.batch)
-    #         acc_test = accuracy(output, data.y)
+        for i, data in enumerate(self.test_loader): # iterate through scenegraphs
+            data.to(self.config.device)
+            self.model.eval()
+            output = self.model.forward(data.x, data.edge_index, data.batch)
+            acc_test = accuracy(output, data.y)
 
-    #         print('SceneGraph: {:04d}'.format(i), 'acc_test: {:.4f}'.format(acc_test.item()))
+            print('SceneGraph: {:04d}'.format(i), 'acc_test: {:.4f}'.format(acc_test.item()))
 
-    #         outputs.append(output.cpu())
-    #         labels.append(data.y.cpu().numpy())
+            outputs.append(output.cpu())
+            labels.append(data.y.cpu().numpy())
             
-    #     outputs = torch.cat(outputs).reshape(-1,2).detach()
-    #     return outputs, np.array(labels).flatten()
+        outputs = torch.cat(outputs).reshape(-1,2).detach()
+        return outputs, np.array(labels).flatten()
