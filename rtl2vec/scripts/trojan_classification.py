@@ -13,7 +13,7 @@ if __name__ == "__main__":
     
     precache_path = Path('./hardware_cache.pkl')
     if precache_path.exists():
-        with open('node_embeddings.pkl','rb') as f:
+        with open(str(precache_path),'rb') as f:
             parser = pkl.load(f)
             
     else:
