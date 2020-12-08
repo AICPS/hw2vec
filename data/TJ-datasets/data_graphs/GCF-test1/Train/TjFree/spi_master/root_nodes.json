@@ -1,0 +1,16 @@
+[
+    "top._rn0_out_data_graphrename_0",
+    "top._rn1_out_data_graphrename_1",
+    "top._rn2_out_data_graphrename_2",
+    "top._rn3_out_data_graphrename_5",
+    "top._rn4_out_data_graphrename_6",
+    "top.clk_cnt_graphrename_26",
+    "top.clk_div_graphrename_35",
+    "top.in_buf_graphrename_50",
+    "top.mosi_graphrename_70",
+    "top.mosi_buf_graphrename_71",
+    "top.out_buf_graphrename_84",
+    "top.out_data_graphrename_93",
+    "top.sclk_graphrename_112",
+    "top.sclk_buf_graphrename_113"
+]

@@ -1,0 +1,690 @@
+{
+    "top.Antena_graphrename_0": [
+        [
+            "",
+            "top.TSC.Antena_graphrename_45"
+        ]
+    ],
+    "top.TjTrig_graphrename_1": [
+        [
+            "",
+            "top.TjTrigger.TjTrig_graphrename_43"
+        ]
+    ],
+    "top.TjTrigger.clk_graphrename_2": [
+        [
+            "",
+            "top_clk"
+        ]
+    ],
+    "top_clk": [],
+    "top.TjTrigger.Detected_graphrename_3": [
+        [
+            "",
+            "Branch_graphrename_4"
+        ]
+    ],
+    "Branch_graphrename_4": [
+        [
+            "COND",
+            "Eq_graphrename_5"
+        ],
+        [
+            "TRUE",
+            "'d1_graphrename_7"
+        ],
+        [
+            "FALSE",
+            "'d0_graphrename_8"
+        ]
+    ],
+    "Eq_graphrename_5": [
+        [
+            "",
+            "128'd340282366920938463463374607431768211455_graphrename_6"
+        ],
+        [
+            "",
+            "top.TjTrigger.state_graphrename_10"
+        ]
+    ],
+    "128'd340282366920938463463374607431768211455_graphrename_6": [],
+    "'d1_graphrename_7": [],
+    "'d0_graphrename_8": [],
+    "top.TjTrigger.rst_graphrename_9": [
+        [
+            "",
+            "top_rst"
+        ]
+    ],
+    "top_rst": [],
+    "top.TjTrigger.state_graphrename_10": [
+        [
+            "",
+            "top_state"
+        ]
+    ],
+    "top_state": [],
+    "top.TjTrigger.tempClk1_graphrename_11": [
+        [
+            "",
+            "Branch_graphrename_12"
+        ]
+    ],
+    "Branch_graphrename_12": [
+        [
+            "COND",
+            "Eq_graphrename_13"
+        ],
+        [
+            "TRUE",
+            "'d1_graphrename_15"
+        ],
+        [
+            "FALSE",
+            "Branch_graphrename_16"
+        ]
+    ],
+    "Eq_graphrename_13": [
+        [
+            "",
+            "top.TjTrigger.rst_graphrename_9"
+        ],
+        [
+            "",
+            "'d1_graphrename_14"
+        ]
+    ],
+    "'d1_graphrename_14": [],
+    "'d1_graphrename_15": [],
+    "Branch_graphrename_16": [
+        [
+            "COND",
+            "Land_graphrename_17"
+        ],
+        [
+            "TRUE",
+            "'d0_graphrename_22"
+        ],
+        [
+            "FALSE",
+            "Branch_graphrename_23"
+        ]
+    ],
+    "Land_graphrename_17": [
+        [
+            "",
+            "Eq_graphrename_18"
+        ],
+        [
+            "",
+            "Eq_graphrename_20"
+        ]
+    ],
+    "Eq_graphrename_18": [
+        [
+            "",
+            "'d1_graphrename_19"
+        ]
+    ],
+    "'d1_graphrename_19": [],
+    "Eq_graphrename_20": [
+        [
+            "",
+            "top.TjTrigger.Detected_graphrename_3"
+        ],
+        [
+            "",
+            "'d1_graphrename_21"
+        ]
+    ],
+    "'d1_graphrename_21": [],
+    "'d0_graphrename_22": [],
+    "Branch_graphrename_23": [
+        [
+            "COND",
+            "Land_graphrename_24"
+        ],
+        [
+            "FALSE",
+            "'d0_graphrename_29"
+        ]
+    ],
+    "Land_graphrename_24": [
+        [
+            "",
+            "Eq_graphrename_25"
+        ],
+        [
+            "",
+            "Eq_graphrename_27"
+        ]
+    ],
+    "Eq_graphrename_25": [
+        [
+            "",
+            "'d1_graphrename_26"
+        ]
+    ],
+    "'d1_graphrename_26": [],
+    "Eq_graphrename_27": [
+        [
+            "",
+            "'d0_graphrename_28"
+        ]
+    ],
+    "'d0_graphrename_28": [],
+    "'d0_graphrename_29": [],
+    "top.TjTrigger.tempClk2_graphrename_30": [
+        [
+            "",
+            "Branch_graphrename_31"
+        ]
+    ],
+    "Branch_graphrename_31": [
+        [
+            "COND",
+            "Eq_graphrename_32"
+        ],
+        [
+            "TRUE",
+            "'d0_graphrename_34"
+        ],
+        [
+            "FALSE",
+            "Branch_graphrename_35"
+        ]
+    ],
+    "Eq_graphrename_32": [
+        [
+            "",
+            "top.TjTrigger.rst_graphrename_9"
+        ],
+        [
+            "",
+            "'d1_graphrename_33"
+        ]
+    ],
+    "'d1_graphrename_33": [],
+    "'d0_graphrename_34": [],
+    "Branch_graphrename_35": [
+        [
+            "COND",
+            "Land_graphrename_36"
+        ],
+        [
+            "TRUE",
+            "'d1_graphrename_41"
+        ],
+        [
+            "FALSE",
+            "'d0_graphrename_42"
+        ]
+    ],
+    "Land_graphrename_36": [
+        [
+            "",
+            "Eq_graphrename_37"
+        ],
+        [
+            "",
+            "Eq_graphrename_39"
+        ]
+    ],
+    "Eq_graphrename_37": [
+        [
+            "",
+            "top.TjTrigger.tempClk1_graphrename_11"
+        ],
+        [
+            "",
+            "'d1_graphrename_38"
+        ]
+    ],
+    "'d1_graphrename_38": [],
+    "Eq_graphrename_39": [
+        [
+            "",
+            "top.TjTrigger.Detected_graphrename_3"
+        ],
+        [
+            "",
+            "'d1_graphrename_40"
+        ]
+    ],
+    "'d1_graphrename_40": [],
+    "'d1_graphrename_41": [],
+    "'d0_graphrename_42": [],
+    "top.TjTrigger.TjTrig_graphrename_43": [
+        [
+            "",
+            "Or_graphrename_44"
+        ]
+    ],
+    "Or_graphrename_44": [
+        [
+            "",
+            "top.TjTrigger.tempClk1_graphrename_11"
+        ],
+        [
+            "",
+            "top.TjTrigger.tempClk2_graphrename_30"
+        ]
+    ],
+    "top.TSC.Antena_graphrename_45": [
+        [
+            "",
+            "Branch_graphrename_46"
+        ]
+    ],
+    "Branch_graphrename_46": [
+        [
+            "TRUE",
+            "Ulnot_graphrename_47"
+        ],
+        [
+            "FALSE",
+            "1'd0_graphrename_48"
+        ],
+        [
+            "",
+            "top.TSC.MUXSel_graphrename_94"
+        ]
+    ],
+    "Ulnot_graphrename_47": [
+        [
+            "",
+            "top.TSC.rst_graphrename_103"
+        ]
+    ],
+    "1'd0_graphrename_48": [],
+    "top.TSC.Baud8GeneratorACC_graphrename_49": [
+        [
+            "",
+            "Branch_graphrename_50"
+        ]
+    ],
+    "Branch_graphrename_50": [
+        [
+            "COND",
+            "Lor_graphrename_51"
+        ],
+        [
+            "TRUE",
+            "'d0_graphrename_56"
+        ],
+        [
+            "FALSE",
+            "Plus_graphrename_57"
+        ]
+    ],
+    "Lor_graphrename_51": [
+        [
+            "",
+            "Eq_graphrename_52"
+        ],
+        [
+            "",
+            "Eq_graphrename_54"
+        ]
+    ],
+    "Eq_graphrename_52": [
+        [
+            "",
+            "1'd1_graphrename_53"
+        ],
+        [
+            "",
+            "top.TSC.rst_graphrename_103"
+        ]
+    ],
+    "1'd1_graphrename_53": [],
+    "Eq_graphrename_54": [
+        [
+            "",
+            "1'd1_graphrename_55"
+        ],
+        [
+            "",
+            "top.TSC.TjTrig_graphrename_110"
+        ]
+    ],
+    "1'd1_graphrename_55": [],
+    "'d0_graphrename_56": [],
+    "Plus_graphrename_57": [
+        [
+            "",
+            "'d1_graphrename_58"
+        ]
+    ],
+    "'d1_graphrename_58": [],
+    "top.TSC.beep1_graphrename_59": [
+        [
+            "",
+            "Ulnot_graphrename_60"
+        ]
+    ],
+    "Ulnot_graphrename_60": [
+        [
+            "",
+            "Or_graphrename_61"
+        ]
+    ],
+    "Or_graphrename_61": [
+        [
+            "",
+            "Or_graphrename_62"
+        ],
+        [
+            "",
+            "PartSelect_graphrename_69"
+        ]
+    ],
+    "Or_graphrename_62": [
+        [
+            "",
+            "PartSelect_graphrename_63"
+        ],
+        [
+            "",
+            "PartSelect_graphrename_66"
+        ]
+    ],
+    "PartSelect_graphrename_63": [
+        [
+            "",
+            "top.TSC.Baud8GeneratorACC_graphrename_49"
+        ],
+        [
+            "MSB",
+            "'d25_graphrename_64"
+        ],
+        [
+            "LSB",
+            "'d25_graphrename_65"
+        ]
+    ],
+    "'d25_graphrename_64": [],
+    "'d25_graphrename_65": [],
+    "PartSelect_graphrename_66": [
+        [
+            "",
+            "top.TSC.Baud8GeneratorACC_graphrename_49"
+        ],
+        [
+            "MSB",
+            "'d24_graphrename_67"
+        ],
+        [
+            "LSB",
+            "'d24_graphrename_68"
+        ]
+    ],
+    "'d24_graphrename_67": [],
+    "'d24_graphrename_68": [],
+    "PartSelect_graphrename_69": [
+        [
+            "",
+            "top.TSC.Baud8GeneratorACC_graphrename_49"
+        ],
+        [
+            "MSB",
+            "'d23_graphrename_70"
+        ],
+        [
+            "LSB",
+            "'d23_graphrename_71"
+        ]
+    ],
+    "'d23_graphrename_70": [],
+    "'d23_graphrename_71": [],
+    "top.TSC.beep2_graphrename_72": [
+        [
+            "",
+            "And_graphrename_73"
+        ]
+    ],
+    "And_graphrename_73": [
+        [
+            "",
+            "Ulnot_graphrename_74"
+        ],
+        [
+            "",
+            "PartSelect_graphrename_87"
+        ]
+    ],
+    "Ulnot_graphrename_74": [
+        [
+            "",
+            "Or_graphrename_75"
+        ]
+    ],
+    "Or_graphrename_75": [
+        [
+            "",
+            "Or_graphrename_76"
+        ],
+        [
+            "",
+            "PartSelect_graphrename_84"
+        ]
+    ],
+    "Or_graphrename_76": [
+        [
+            "",
+            "PartSelect_graphrename_77"
+        ],
+        [
+            "",
+            "Ulnot_graphrename_80"
+        ]
+    ],
+    "PartSelect_graphrename_77": [
+        [
+            "",
+            "top.TSC.Baud8GeneratorACC_graphrename_49"
+        ],
+        [
+            "MSB",
+            "'d25_graphrename_78"
+        ],
+        [
+            "LSB",
+            "'d25_graphrename_79"
+        ]
+    ],
+    "'d25_graphrename_78": [],
+    "'d25_graphrename_79": [],
+    "Ulnot_graphrename_80": [
+        [
+            "",
+            "PartSelect_graphrename_81"
+        ]
+    ],
+    "PartSelect_graphrename_81": [
+        [
+            "",
+            "top.TSC.Baud8GeneratorACC_graphrename_49"
+        ],
+        [
+            "MSB",
+            "'d24_graphrename_82"
+        ],
+        [
+            "LSB",
+            "'d24_graphrename_83"
+        ]
+    ],
+    "'d24_graphrename_82": [],
+    "'d24_graphrename_83": [],
+    "PartSelect_graphrename_84": [
+        [
+            "",
+            "top.TSC.Baud8GeneratorACC_graphrename_49"
+        ],
+        [
+            "MSB",
+            "'d23_graphrename_85"
+        ],
+        [
+            "LSB",
+            "'d23_graphrename_86"
+        ]
+    ],
+    "'d23_graphrename_85": [],
+    "'d23_graphrename_86": [],
+    "PartSelect_graphrename_87": [
+        [
+            "MSB",
+            "'d0_graphrename_88"
+        ],
+        [
+            "LSB",
+            "'d0_graphrename_89"
+        ],
+        [
+            "",
+            "top.TSC.SHIFTReg_graphrename_104"
+        ]
+    ],
+    "'d0_graphrename_88": [],
+    "'d0_graphrename_89": [],
+    "top.TSC.beeps_graphrename_90": [
+        [
+            "",
+            "Or_graphrename_91"
+        ]
+    ],
+    "Or_graphrename_91": [
+        [
+            "",
+            "top.TSC.beep1_graphrename_59"
+        ],
+        [
+            "",
+            "top.TSC.beep2_graphrename_72"
+        ]
+    ],
+    "top.TSC.clk_graphrename_92": [
+        [
+            "",
+            "top_clk"
+        ]
+    ],
+    "top.TSC.key_graphrename_93": [
+        [
+            "",
+            "top_key"
+        ]
+    ],
+    "top_key": [],
+    "top.TSC.MUXSel_graphrename_94": [
+        [
+            "",
+            "And_graphrename_95"
+        ]
+    ],
+    "And_graphrename_95": [
+        [
+            "",
+            "And_graphrename_96"
+        ],
+        [
+            "",
+            "PartSelect_graphrename_100"
+        ]
+    ],
+    "And_graphrename_96": [
+        [
+            "",
+            "top.TSC.beeps_graphrename_90"
+        ],
+        [
+            "",
+            "PartSelect_graphrename_97"
+        ]
+    ],
+    "PartSelect_graphrename_97": [
+        [
+            "",
+            "top.TSC.Baud8GeneratorACC_graphrename_49"
+        ],
+        [
+            "MSB",
+            "'d15_graphrename_98"
+        ],
+        [
+            "LSB",
+            "'d15_graphrename_99"
+        ]
+    ],
+    "'d15_graphrename_98": [],
+    "'d15_graphrename_99": [],
+    "PartSelect_graphrename_100": [
+        [
+            "",
+            "top.TSC.Baud8GeneratorACC_graphrename_49"
+        ],
+        [
+            "MSB",
+            "'d4_graphrename_101"
+        ],
+        [
+            "LSB",
+            "'d4_graphrename_102"
+        ]
+    ],
+    "'d4_graphrename_101": [],
+    "'d4_graphrename_102": [],
+    "top.TSC.rst_graphrename_103": [
+        [
+            "",
+            "top_rst"
+        ]
+    ],
+    "top.TSC.SHIFTReg_graphrename_104": [
+        [
+            "",
+            "Branch_graphrename_105"
+        ]
+    ],
+    "Branch_graphrename_105": [
+        [
+            "",
+            "top.TSC.key_graphrename_93"
+        ],
+        [
+            "COND",
+            "Eq_graphrename_106"
+        ],
+        [
+            "FALSE",
+            "Srl_graphrename_108"
+        ]
+    ],
+    "Eq_graphrename_106": [
+        [
+            "",
+            "1'd1_graphrename_107"
+        ],
+        [
+            "",
+            "top.TSC.TjTrig_graphrename_110"
+        ]
+    ],
+    "1'd1_graphrename_107": [],
+    "Srl_graphrename_108": [
+        [
+            "",
+            "'d1_graphrename_109"
+        ]
+    ],
+    "'d1_graphrename_109": [],
+    "top.TSC.TjTrig_graphrename_110": [
+        [
+            "",
+            "top.TjTrig_graphrename_1"
+        ]
+    ]
+}

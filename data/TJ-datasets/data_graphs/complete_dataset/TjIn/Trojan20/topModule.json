@@ -1,0 +1,783 @@
+{
+    "top.TjTrig_graphrename_0": [
+        [
+            "",
+            "top.Trigger.TjTrig_graphrename_75"
+        ]
+    ],
+    "top.Trigger.rst_graphrename_1": [
+        [
+            "",
+            "top_rst"
+        ]
+    ],
+    "top_rst": [],
+    "top.Trigger.state_graphrename_2": [
+        [
+            "",
+            "top_state"
+        ]
+    ],
+    "top_state": [],
+    "top.Trigger.State0_graphrename_3": [
+        [
+            "",
+            "Branch_graphrename_4"
+        ]
+    ],
+    "Branch_graphrename_4": [
+        [
+            "COND",
+            "Eq_graphrename_5"
+        ],
+        [
+            "TRUE",
+            "'d0_graphrename_7"
+        ],
+        [
+            "FALSE",
+            "Branch_graphrename_8"
+        ]
+    ],
+    "Eq_graphrename_5": [
+        [
+            "",
+            "top.Trigger.rst_graphrename_1"
+        ],
+        [
+            "",
+            "'d1_graphrename_6"
+        ]
+    ],
+    "'d1_graphrename_6": [],
+    "'d0_graphrename_7": [],
+    "Branch_graphrename_8": [
+        [
+            "COND",
+            "Eq_graphrename_9"
+        ],
+        [
+            "TRUE",
+            "'d1_graphrename_11"
+        ]
+    ],
+    "Eq_graphrename_9": [
+        [
+            "",
+            "top.Trigger.state_graphrename_2"
+        ],
+        [
+            "",
+            "128'd66814286504060421741230023322616923956_graphrename_10"
+        ]
+    ],
+    "128'd66814286504060421741230023322616923956_graphrename_10": [],
+    "'d1_graphrename_11": [],
+    "top.Trigger.State1_graphrename_12": [
+        [
+            "",
+            "Branch_graphrename_13"
+        ]
+    ],
+    "Branch_graphrename_13": [
+        [
+            "COND",
+            "Eq_graphrename_14"
+        ],
+        [
+            "TRUE",
+            "'d0_graphrename_16"
+        ],
+        [
+            "FALSE",
+            "Branch_graphrename_17"
+        ]
+    ],
+    "Eq_graphrename_14": [
+        [
+            "",
+            "top.Trigger.rst_graphrename_1"
+        ],
+        [
+            "",
+            "'d1_graphrename_15"
+        ]
+    ],
+    "'d1_graphrename_15": [],
+    "'d0_graphrename_16": [],
+    "Branch_graphrename_17": [
+        [
+            "COND",
+            "Eq_graphrename_18"
+        ],
+        [
+            "FALSE",
+            "Branch_graphrename_20"
+        ]
+    ],
+    "Eq_graphrename_18": [
+        [
+            "",
+            "top.Trigger.state_graphrename_2"
+        ],
+        [
+            "",
+            "128'd66814286504060421741230023322616923956_graphrename_19"
+        ]
+    ],
+    "128'd66814286504060421741230023322616923956_graphrename_19": [],
+    "Branch_graphrename_20": [
+        [
+            "COND",
+            "Land_graphrename_21"
+        ],
+        [
+            "TRUE",
+            "'d1_graphrename_26"
+        ]
+    ],
+    "Land_graphrename_21": [
+        [
+            "",
+            "Eq_graphrename_22"
+        ],
+        [
+            "",
+            "Eq_graphrename_24"
+        ]
+    ],
+    "Eq_graphrename_22": [
+        [
+            "",
+            "top.Trigger.state_graphrename_2"
+        ],
+        [
+            "",
+            "128'd88962710306127702866241727433142015_graphrename_23"
+        ]
+    ],
+    "128'd88962710306127702866241727433142015_graphrename_23": [],
+    "Eq_graphrename_24": [
+        [
+            "",
+            "top.Trigger.State0_graphrename_3"
+        ],
+        [
+            "",
+            "'d1_graphrename_25"
+        ]
+    ],
+    "'d1_graphrename_25": [],
+    "'d1_graphrename_26": [],
+    "top.Trigger.State2_graphrename_27": [
+        [
+            "",
+            "Branch_graphrename_28"
+        ]
+    ],
+    "Branch_graphrename_28": [
+        [
+            "COND",
+            "Eq_graphrename_29"
+        ],
+        [
+            "TRUE",
+            "'d0_graphrename_31"
+        ],
+        [
+            "FALSE",
+            "Branch_graphrename_32"
+        ]
+    ],
+    "Eq_graphrename_29": [
+        [
+            "",
+            "top.Trigger.rst_graphrename_1"
+        ],
+        [
+            "",
+            "'d1_graphrename_30"
+        ]
+    ],
+    "'d1_graphrename_30": [],
+    "'d0_graphrename_31": [],
+    "Branch_graphrename_32": [
+        [
+            "COND",
+            "Eq_graphrename_33"
+        ],
+        [
+            "FALSE",
+            "Branch_graphrename_35"
+        ]
+    ],
+    "Eq_graphrename_33": [
+        [
+            "",
+            "top.Trigger.state_graphrename_2"
+        ],
+        [
+            "",
+            "128'd66814286504060421741230023322616923956_graphrename_34"
+        ]
+    ],
+    "128'd66814286504060421741230023322616923956_graphrename_34": [],
+    "Branch_graphrename_35": [
+        [
+            "COND",
+            "Land_graphrename_36"
+        ],
+        [
+            "FALSE",
+            "Branch_graphrename_41"
+        ]
+    ],
+    "Land_graphrename_36": [
+        [
+            "",
+            "Eq_graphrename_37"
+        ],
+        [
+            "",
+            "Eq_graphrename_39"
+        ]
+    ],
+    "Eq_graphrename_37": [
+        [
+            "",
+            "top.Trigger.state_graphrename_2"
+        ],
+        [
+            "",
+            "128'd88962710306127702866241727433142015_graphrename_38"
+        ]
+    ],
+    "128'd88962710306127702866241727433142015_graphrename_38": [],
+    "Eq_graphrename_39": [
+        [
+            "",
+            "top.Trigger.State0_graphrename_3"
+        ],
+        [
+            "",
+            "'d1_graphrename_40"
+        ]
+    ],
+    "'d1_graphrename_40": [],
+    "Branch_graphrename_41": [
+        [
+            "COND",
+            "Land_graphrename_42"
+        ],
+        [
+            "TRUE",
+            "'d1_graphrename_47"
+        ]
+    ],
+    "Land_graphrename_42": [
+        [
+            "",
+            "Eq_graphrename_43"
+        ],
+        [
+            "",
+            "Eq_graphrename_45"
+        ]
+    ],
+    "Eq_graphrename_43": [
+        [
+            "",
+            "top.Trigger.state_graphrename_2"
+        ],
+        [
+            "",
+            "128'd0_graphrename_44"
+        ]
+    ],
+    "128'd0_graphrename_44": [],
+    "Eq_graphrename_45": [
+        [
+            "",
+            "top.Trigger.State1_graphrename_12"
+        ],
+        [
+            "",
+            "'d1_graphrename_46"
+        ]
+    ],
+    "'d1_graphrename_46": [],
+    "'d1_graphrename_47": [],
+    "top.Trigger.State3_graphrename_48": [
+        [
+            "",
+            "Branch_graphrename_49"
+        ]
+    ],
+    "Branch_graphrename_49": [
+        [
+            "COND",
+            "Eq_graphrename_50"
+        ],
+        [
+            "TRUE",
+            "'d0_graphrename_52"
+        ],
+        [
+            "FALSE",
+            "Branch_graphrename_53"
+        ]
+    ],
+    "Eq_graphrename_50": [
+        [
+            "",
+            "top.Trigger.rst_graphrename_1"
+        ],
+        [
+            "",
+            "'d1_graphrename_51"
+        ]
+    ],
+    "'d1_graphrename_51": [],
+    "'d0_graphrename_52": [],
+    "Branch_graphrename_53": [
+        [
+            "COND",
+            "Eq_graphrename_54"
+        ],
+        [
+            "FALSE",
+            "Branch_graphrename_56"
+        ]
+    ],
+    "Eq_graphrename_54": [
+        [
+            "",
+            "top.Trigger.state_graphrename_2"
+        ],
+        [
+            "",
+            "128'd66814286504060421741230023322616923956_graphrename_55"
+        ]
+    ],
+    "128'd66814286504060421741230023322616923956_graphrename_55": [],
+    "Branch_graphrename_56": [
+        [
+            "COND",
+            "Land_graphrename_57"
+        ],
+        [
+            "FALSE",
+            "Branch_graphrename_62"
+        ]
+    ],
+    "Land_graphrename_57": [
+        [
+            "",
+            "Eq_graphrename_58"
+        ],
+        [
+            "",
+            "Eq_graphrename_60"
+        ]
+    ],
+    "Eq_graphrename_58": [
+        [
+            "",
+            "top.Trigger.state_graphrename_2"
+        ],
+        [
+            "",
+            "128'd88962710306127702866241727433142015_graphrename_59"
+        ]
+    ],
+    "128'd88962710306127702866241727433142015_graphrename_59": [],
+    "Eq_graphrename_60": [
+        [
+            "",
+            "top.Trigger.State0_graphrename_3"
+        ],
+        [
+            "",
+            "'d1_graphrename_61"
+        ]
+    ],
+    "'d1_graphrename_61": [],
+    "Branch_graphrename_62": [
+        [
+            "COND",
+            "Land_graphrename_63"
+        ],
+        [
+            "FALSE",
+            "Branch_graphrename_68"
+        ]
+    ],
+    "Land_graphrename_63": [
+        [
+            "",
+            "Eq_graphrename_64"
+        ],
+        [
+            "",
+            "Eq_graphrename_66"
+        ]
+    ],
+    "Eq_graphrename_64": [
+        [
+            "",
+            "top.Trigger.state_graphrename_2"
+        ],
+        [
+            "",
+            "128'd0_graphrename_65"
+        ]
+    ],
+    "128'd0_graphrename_65": [],
+    "Eq_graphrename_66": [
+        [
+            "",
+            "top.Trigger.State1_graphrename_12"
+        ],
+        [
+            "",
+            "'d1_graphrename_67"
+        ]
+    ],
+    "'d1_graphrename_67": [],
+    "Branch_graphrename_68": [
+        [
+            "COND",
+            "Land_graphrename_69"
+        ],
+        [
+            "TRUE",
+            "'d1_graphrename_74"
+        ]
+    ],
+    "Land_graphrename_69": [
+        [
+            "",
+            "Eq_graphrename_70"
+        ],
+        [
+            "",
+            "Eq_graphrename_72"
+        ]
+    ],
+    "Eq_graphrename_70": [
+        [
+            "",
+            "top.Trigger.state_graphrename_2"
+        ],
+        [
+            "",
+            "128'd1_graphrename_71"
+        ]
+    ],
+    "128'd1_graphrename_71": [],
+    "Eq_graphrename_72": [
+        [
+            "",
+            "top.Trigger.State2_graphrename_27"
+        ],
+        [
+            "",
+            "'d1_graphrename_73"
+        ]
+    ],
+    "'d1_graphrename_73": [],
+    "'d1_graphrename_74": [],
+    "top.Trigger.TjTrig_graphrename_75": [
+        [
+            "",
+            "And_graphrename_76"
+        ]
+    ],
+    "And_graphrename_76": [
+        [
+            "",
+            "top.Trigger.State3_graphrename_48"
+        ],
+        [
+            "",
+            "And_graphrename_77"
+        ]
+    ],
+    "And_graphrename_77": [
+        [
+            "",
+            "top.Trigger.State2_graphrename_27"
+        ],
+        [
+            "",
+            "And_graphrename_78"
+        ]
+    ],
+    "And_graphrename_78": [
+        [
+            "",
+            "top.Trigger.State0_graphrename_3"
+        ],
+        [
+            "",
+            "top.Trigger.State1_graphrename_12"
+        ]
+    ],
+    "top.Trojan.clk_graphrename_79": [
+        [
+            "",
+            "top_clk"
+        ]
+    ],
+    "top_clk": [],
+    "top.Trojan.COUNTER_graphrename_80": [
+        [
+            "",
+            "Branch_graphrename_81"
+        ]
+    ],
+    "Branch_graphrename_81": [
+        [
+            "COND",
+            "Eq_graphrename_82"
+        ],
+        [
+            "TRUE",
+            "'d0_graphrename_84"
+        ],
+        [
+            "FALSE",
+            "Plus_graphrename_85"
+        ]
+    ],
+    "Eq_graphrename_82": [
+        [
+            "",
+            "'d1_graphrename_83"
+        ],
+        [
+            "",
+            "top.Trojan.rst_graphrename_114"
+        ]
+    ],
+    "'d1_graphrename_83": [],
+    "'d0_graphrename_84": [],
+    "Plus_graphrename_85": [
+        [
+            "",
+            "'d1_graphrename_86"
+        ]
+    ],
+    "'d1_graphrename_86": [],
+    "top.Trojan.INV10out_graphrename_87": [
+        [
+            "",
+            "Unot_graphrename_88"
+        ]
+    ],
+    "Unot_graphrename_88": [
+        [
+            "",
+            "top.Trojan.INV1out_graphrename_91"
+        ]
+    ],
+    "top.Trojan.INV11out_graphrename_89": [
+        [
+            "",
+            "Unot_graphrename_90"
+        ]
+    ],
+    "Unot_graphrename_90": [
+        [
+            "",
+            "top.Trojan.INV1out_graphrename_91"
+        ]
+    ],
+    "top.Trojan.INV1out_graphrename_91": [
+        [
+            "",
+            "Unot_graphrename_92"
+        ]
+    ],
+    "Unot_graphrename_92": [
+        [
+            "",
+            "top.Trojan.LEAKBit_graphrename_110"
+        ]
+    ],
+    "top.Trojan.INV2out_graphrename_93": [
+        [
+            "",
+            "Unot_graphrename_94"
+        ]
+    ],
+    "Unot_graphrename_94": [
+        [
+            "",
+            "top.Trojan.INV1out_graphrename_91"
+        ]
+    ],
+    "top.Trojan.INV3out_graphrename_95": [
+        [
+            "",
+            "Unot_graphrename_96"
+        ]
+    ],
+    "Unot_graphrename_96": [
+        [
+            "",
+            "top.Trojan.INV1out_graphrename_91"
+        ]
+    ],
+    "top.Trojan.INV4out_graphrename_97": [
+        [
+            "",
+            "Unot_graphrename_98"
+        ]
+    ],
+    "Unot_graphrename_98": [
+        [
+            "",
+            "top.Trojan.INV1out_graphrename_91"
+        ]
+    ],
+    "top.Trojan.INV5out_graphrename_99": [
+        [
+            "",
+            "Unot_graphrename_100"
+        ]
+    ],
+    "Unot_graphrename_100": [
+        [
+            "",
+            "top.Trojan.INV1out_graphrename_91"
+        ]
+    ],
+    "top.Trojan.INV6out_graphrename_101": [
+        [
+            "",
+            "Unot_graphrename_102"
+        ]
+    ],
+    "Unot_graphrename_102": [
+        [
+            "",
+            "top.Trojan.INV1out_graphrename_91"
+        ]
+    ],
+    "top.Trojan.INV7out_graphrename_103": [
+        [
+            "",
+            "Unot_graphrename_104"
+        ]
+    ],
+    "Unot_graphrename_104": [
+        [
+            "",
+            "top.Trojan.INV1out_graphrename_91"
+        ]
+    ],
+    "top.Trojan.INV8out_graphrename_105": [
+        [
+            "",
+            "Unot_graphrename_106"
+        ]
+    ],
+    "Unot_graphrename_106": [
+        [
+            "",
+            "top.Trojan.INV1out_graphrename_91"
+        ]
+    ],
+    "top.Trojan.INV9out_graphrename_107": [
+        [
+            "",
+            "Unot_graphrename_108"
+        ]
+    ],
+    "Unot_graphrename_108": [
+        [
+            "",
+            "top.Trojan.INV1out_graphrename_91"
+        ]
+    ],
+    "top.Trojan.key_graphrename_109": [
+        [
+            "",
+            "top_key"
+        ]
+    ],
+    "top_key": [],
+    "top.Trojan.LEAKBit_graphrename_110": [
+        [
+            "",
+            "PartSelect_graphrename_111"
+        ]
+    ],
+    "PartSelect_graphrename_111": [
+        [
+            "MSB",
+            "'d0_graphrename_112"
+        ],
+        [
+            "LSB",
+            "'d0_graphrename_113"
+        ],
+        [
+            "",
+            "top.Trojan.SECRETKey_graphrename_115"
+        ]
+    ],
+    "'d0_graphrename_112": [],
+    "'d0_graphrename_113": [],
+    "top.Trojan.rst_graphrename_114": [
+        [
+            "",
+            "top_rst"
+        ]
+    ],
+    "top.Trojan.SECRETKey_graphrename_115": [
+        [
+            "",
+            "Branch_graphrename_116"
+        ]
+    ],
+    "Branch_graphrename_116": [
+        [
+            "",
+            "top.Trojan.key_graphrename_109"
+        ],
+        [
+            "COND",
+            "Eq_graphrename_117"
+        ],
+        [
+            "FALSE",
+            "Srl_graphrename_119"
+        ]
+    ],
+    "Eq_graphrename_117": [
+        [
+            "",
+            "'d1_graphrename_118"
+        ],
+        [
+            "",
+            "top.Trojan.TjTrig_graphrename_121"
+        ]
+    ],
+    "'d1_graphrename_118": [],
+    "Srl_graphrename_119": [
+        [
+            "",
+            "'d1_graphrename_120"
+        ]
+    ],
+    "'d1_graphrename_120": [],
+    "top.Trojan.TjTrig_graphrename_121": [
+        [
+            "",
+            "top.TjTrig_graphrename_0"
+        ]
+    ]
+}
