@@ -1,0 +1,20 @@
+[
+    "top.bclk_en_w_graphrename_0",
+    "top.bclk_q_graphrename_3",
+    "top.bit_count_q_graphrename_12",
+    "top.clk_en0_ms_q_graphrename_21",
+    "top.clk_en1_q_graphrename_26",
+    "top.clk_en2_q_graphrename_29",
+    "top.clock_div_q_graphrename_32",
+    "top.data_q_graphrename_37",
+    "top.i2s_bclk_o_graphrename_44",
+    "top.i2s_data_o_graphrename_45",
+    "top.i2s_mclk_o_graphrename_46",
+    "top.i2s_ws_o_graphrename_47",
+    "top.mclk_q_graphrename_48",
+    "top.next_data_q_graphrename_52",
+    "top.sample_q_graphrename_64",
+    "top.sample_req_o_graphrename_81",
+    "top.sample_req_q_graphrename_82",
+    "top.ws_q_graphrename_94"
+]
