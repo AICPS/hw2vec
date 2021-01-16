@@ -1,4 +1,4 @@
-# hard_hard_graph
+# hw2vec
 
 We leverage [Pyverilog](https://github.com/PyHDI/Pyverilog) from PyHDI as part of our graph extraction pipeline. It has capabilities to extract the data-flow and control-flow graphs from verilog code.
 
