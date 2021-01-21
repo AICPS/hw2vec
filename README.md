@@ -3,7 +3,7 @@
 We leverage [Pyverilog](https://github.com/PyHDI/Pyverilog) from PyHDI as part of our graph extraction pipeline. It has capabilities to extract the data-flow and control-flow graphs from verilog code.
 
 General Pipeline Architecture is shown as below:
-![](https://github.com/louisccc/hard_hard_graph/blob/master/figures/pipeline.png?raw=true)
+![](https://github.com/louisccc/hw2vec/blob/master/figures/pipeline.png?raw=true)
 
 # Working Environment
 To run [Pyverilog](https://github.com/PyHDI/Pyverilog), we use anaconda3 as primary working environment.
