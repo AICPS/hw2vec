@@ -9,44 +9,41 @@ We leverage [Pyverilog](https://github.com/PyHDI/Pyverilog) from PyHDI as part o
 General Pipeline Architecture is shown as below:
 ![](https://github.com/louisccc/hw2vec/blob/master/figures/pipeline.png?raw=true)
 
-# Directories Structure 
-TO be finished. 
+# To Get Started
+Before using hw2vec, we recommend users to have the following libraries installed: 
+  * python >=3.6 (recommended)
+  * pytorch>= 1.5
+  * pyverilog 
+  * PyTorch Geometric >= 1.5
 
-# Working Environment
-To run [Pyverilog](https://github.com/PyHDI/Pyverilog), we use anaconda3 as primary working environment.
+To setup an Python env users can follow this: 
 ```sh
 1. conda create --name [your working environment name] python=3.6
 2. conda activate [your working environment name]
-3. conda install -c conda-forge iverilog
-4. conda install graphviz
-5. conda install -c alubbock pygraphviz
-6. pip install pyverilog
 ```
-
-Also, these two packages are needed:
-```sh 
-pip install pyunpack
-pip install patool
-```
-
-# Installation 
-
-## Install PyTorch 1.5.0
 
 To install PyTorch 1.5.0 follow the instructions under "Quick Start Locally" [here](http://pytorch.org/).
 
-## Install Requirements
-
-Run the following commands to install the requirements.
-
+Here is a quick guide for setting up an anaconda working environment:
 ```sh
 $ conda activate [your working environment name]
 $ pip install -r requirements.txt
 ```
 
-## Install PyTorch Geometric
+To run [Pyverilog](https://github.com/PyHDI/Pyverilog), we use anaconda3 as primary working environment.
+```sh
+$ conda install -c conda-forge iverilog
+$ conda install graphviz
+$ conda install -c alubbock pygraphviz
+$ pip install pyverilog
+$ pip install pyunpack
+$ pip install patool
+```
 
 To install PyTorch Geometric, simply follow the instructions [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html).
+
+# Directories Structure 
+TO be finished. 
 
 # Dataset
 We obtain the dataset from a famous trojan [benchmark](http://www.trust-hub.org/benchmarks/trojan). We manually downloaded all the avaialable dataset in RTL level into [./input](https://github.com/louisccc/hard_hard_graph/tree/master/input) folder. 
