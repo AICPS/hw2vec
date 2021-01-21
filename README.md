@@ -1,4 +1,4 @@
-# hw2vec
+# HW2Vec: A Python-based Design Automation Library for Embedding Hardware Designs
 
 This repo is a collection of the following two projects:
 1. Hardware Trojan Detection in RTL/Gate-Level Netlist using Graph Learning (GNN4TJ)
