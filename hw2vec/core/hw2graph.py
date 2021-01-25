@@ -22,23 +22,41 @@ class VerilogParser:
 
     #helper fcn to __init__
     def _generate_graph(self, verilog_file):
-        # create dataflow analyzer
         dataflow_analyzer = DataflowAnalyzer(verilog_file, 'top')
         dataflow_analyzer.generate()
         binddict = dataflow_analyzer.getBinddict()
         terms = dataflow_analyzer.getTerms()
         
-        # create dataflow optimizer
         dataflow_optimizer = DataflowOptimizer(terms, binddict)
         dataflow_optimizer.resolveConstant()
         resolved_terms = dataflow_optimizer.getResolvedTerms()
         resolved_binddict = dataflow_optimizer.getResolvedBinddict()
         constlist = dataflow_optimizer.getConstlist()
 
-        # create graph generator
         return GraphGenerator('top', terms, binddict, resolved_terms, 
                             resolved_binddict, constlist, 
                             f'{self.output_directory}seperate_modules.pdf')
+    
+    # This function returns True, if the child is a child of checkParent
+    def _isChild(self, graph, checkParent, child):
+        # This function recursively returns a list of all the parents of a node up to the root
+        def getAllParents(node):
+            # if node has no parents
+            if graph.in_degree(node) == 0:
+                return []
+            # if node has no grandparents
+            elif sum([graph.in_degree(parent) for parent in graph.predecessors(node)]) == 0:
+                return graph.predecessors(node)
+            # recursive call, node has unknown generations of parents
+            else:
+                retlist = list()
+                for parent in graph.predecessors(node):
+                    x = getAllParents(parent)
+                    x.append(parent)
+                    retlist += x
+                return retlist
+        allParents = getAllParents(child)
+        return checkParent in allParents
 
     #generate separate graph separate modules 
     def graph_separate_modules(self,draw_graph=False):
@@ -53,11 +71,11 @@ class VerilogParser:
 
         if draw_graph:
             print(f'Saving subgraphs with {len(self.graph_generator.graph.nodes())} nodes as a pdf...')
-            self.visualize_graph()
+            self.graph_generator.draw()
             print('The subgraphs are saved.\n')
 
     #merge the graphs
-    def merge_graphs(self):
+    def merge_graphs(self, draw_graph=False):
         label_to_node = dict()
         for node in self.graph_generator.graph.nodes():
             if self.graph_generator.graph.in_degree(node) == 0:
@@ -73,7 +91,7 @@ class VerilogParser:
                 self.graph_generator.graph.delete_node(node)
                 deleted += 1
                 for parent in parents:
-                    if not isChild(self.graph_generator.graph, label_to_node[label.replace('_', '.')], parent):
+                    if not self._isChild(self.graph_generator.graph, label_to_node[label.replace('_', '.')], parent):
                         self.graph_generator.graph.add_edge(parent, label_to_node[label.replace('_', '.')])
             print(f'\rProgress : {num - deleted} / {len(self.graph_generator.graph.nodes())}', end='', flush=True)
         print('\nThe subgraphs are merged.\n')
@@ -84,7 +102,7 @@ class VerilogParser:
             print('The graphs are saved.\n')
 
     #export the graphs
-    def export_graph(self):
+    def export_graphs(self):
         root_nodes = [node for node in self.graph_generator.graph.nodes() if self.graph_generator.graph.in_degree(node) == 0]
         print(f'Saving {len(root_nodes)} root nodes as a json...')
         with open(f'{self.output_directory}root_nodes.json', 'w') as f:
@@ -121,13 +139,39 @@ class VerilogParser:
         f.close()
         print('The Graph is saved as topModule.json.\n')
 
-    #SLOW ON LARGE DATASETS
-    def graph_input_dependencies(self):
-        pass
+    #to be refactored
+    def graph_input_dependencies(self,draw_graph=False):
+        labeltoNames = dict()
+        for node in self.graph_generator.graph.nodes():
+            label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
+            if label not in labeltoNames: 
+                labeltoNames[label] = list()
+            labeltoNames[label].append(str(node))
 
-    #helper function to visualize graph
-    def visualize_graph(self):
-        self.graph_generator.draw()  
+        inputs = [self.graph_generator.graph.get_node(*labeltoNames[str(term).replace('.', '_')]) for x, term in zip(self.graph_generator.terms, self.graph_generator.terms.values()) if len(x.get_module_list()) == 1 and 'Input' in term.termtype]
+
+        print('Locating nodes not connected to inputs...')
+        to_delete = list()
+        for num, node in enumerate(self.graph_generator.graph.nodes(), start=1):
+            label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
+            if label not in inputs:
+                x = True
+                for input_ in inputs:
+                    if self._isChild(self.graph_generator.graph, node, input_):
+                        x = False
+                if x == True:
+                    to_delete.append(node)
+            print(f'\rProgress : {num} / {len(self.graph_generator.graph.nodes())}', end='', flush=True)
+        print('\nRemoving nodes not connected to inputs...')
+        for num, node in enumerate(to_delete, start=1):
+            self.graph_generator.graph.delete_node(node)
+            print(f'\rProgress : {num} / {len(to_delete)}', end='', flush=True)
+        print('\nRemoval is complete.\n')
+        
+        if draw_graph:   
+            print(f'Saving graph with {len(self.graph_generator.graph.nodes())} nodes as a pdf...')
+            self.graph_generator.draw(f'{self.output_directory}input_dependencies.pdf')
+            print('Graph saved.\n')
 
 class RTLDFGGenerator:
     '''
@@ -148,9 +192,11 @@ class RTLDFGGenerator:
                 dataset_name = "complete_dataset"
                 os.chdir("../")
                 os.chdir("../")
-                current_directory = os.path.dirname(os.path.abspath(__file__))  
+                #current_directory = os.path.dirname(os.path.abspath(__file__))  
+                current_directory = r"C:\Users\willi\OneDrive\Documents\Projects\GNN4TJ"
                 for TJ in ["TjIn", "TjFree"]:
-                    data_directory = f"{current_directory}/data/TJ-datasets/data_graphs/{dataset_name}/{TJ}"
+                    #data_directory = f"{current_directory}/data/TJ-datasets/data_graphs/{dataset_name}/{TJ}"
+                    data_directory = f"{current_directory}/data_raw/{dataset_name}/{TJ}"
                     print("Reading all ", TJ, "data from ", data_directory, "\n")
                     data_list = [x[1] for x in os.walk(data_directory)]
                     if not data_list:
@@ -158,7 +204,7 @@ class RTLDFGGenerator:
                     for data_name in data_list[0]:
                         print("Benchmark: ", data_name)
                         input_directory = f"{data_directory}/{data_name}/topModule.v"
-                        output_directory = f"{current_directory}/data_graphs/{dataset_name}/{TJ}/{data_name}/"
+                        output_directory = f"{current_directory}/MIGRATION_TEST/data_graphs/{dataset_name}/{TJ}/{data_name}/"
                         print(f'Outputting to : {output_directory}\n')
                         if not os.path.exists(f'{output_directory}'):
                             os.makedirs(os.path.dirname(f'{output_directory}'))  
@@ -182,10 +228,9 @@ class RTLDFGGenerator:
     def parse_verilog_file(self, verilog_file, output_directory):
 
         verilog_parser = VerilogParser(verilog_file, output_directory)
-        verilog_parser.generate_graph(verilog_file, output_directory)
         verilog_parser.graph_separate_modules()
-        verilog_parser.graph_merge()
-        verilog_parser.export_basic_jsons()
+        verilog_parser.merge_graphs()
+        verilog_parser.export_graphs()
         #verilog_parser.graph_input_dependencies()
 
 class NetlistDFGGenerator:
