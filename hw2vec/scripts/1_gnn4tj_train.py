@@ -1,7 +1,7 @@
 import os, sys
 sys.path.append(os.path.dirname(sys.path[0]))
 
-from core.TJ_trainer import *
+from core.trainers import *
 
 '''
     Usages:

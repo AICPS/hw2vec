@@ -70,20 +70,25 @@ def read_dataset_from_pkl(cfg):
 
     return parser # parser.train_data and parser.test_data are ready to be used. 
 
+#TODO: some common functions can be moved to this class, save_model or load_model.
+class BaseTrainer: 
+    pass
 
+
+#TODO: rename this to GraphTrainer.
 class GraphTrainer:
     ''' trainer for graph classification ''' 
     def __init__(self, cfg):
-        self.config = cfg
-        self.min_test_loss = 100
-        self.metrics = {}
+        # self.config = cfg
+        # self.min_test_loss = 100
+        # self.metrics = {}
         self.train_time = 0
         self.test_time = 0
 
-        np.random.seed(self.config.seed)
-        torch.manual_seed(self.config.seed)
+        # np.random.seed(self.config.seed)
+        # torch.manual_seed(self.config.seed)
 
-        parser = read_dataset_from_pkl(cfg)
+        # parser = read_dataset_from_pkl(cfg)
         
         self.train_graphs = parser.train_data
         self.test_graphs = parser.test_data

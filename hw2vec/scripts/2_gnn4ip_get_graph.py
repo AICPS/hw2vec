@@ -6,7 +6,7 @@ warnings.filterwarnings('ignore')
 from argparse import ArgumentParser, RawTextHelpFormatter
 from pathlib import Path
 
-from utils.json2graph import *
+from utils.json2graph_ip import *
 
 import pickle
 

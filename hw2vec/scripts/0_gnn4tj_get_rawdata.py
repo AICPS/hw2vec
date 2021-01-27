@@ -19,6 +19,9 @@ def extract_rar(path, saved_path):
         print(rar_file)
         Archive(rar_file).extractall(saved_path)
 
+#TODO: merge 0_, 1_.  into 1 script
+#TODO: merge 2_, 2_, 3_ into 1 script
+#TODO: move everything inside scripts to ../examples
 
 if __name__ == "__main__": 
     # sample decompressing the zip and rar
