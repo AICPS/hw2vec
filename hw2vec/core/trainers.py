@@ -11,7 +11,6 @@ import pickle as pkl
 import warnings
 warnings.filterwarnings('ignore')
 
-from argparse import ArgumentParser
 from pathlib import Path
 from tqdm import tqdm
 
@@ -19,9 +18,9 @@ from torch_geometric.data import Data, DataLoader
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, precision_score, recall_score, roc_auc_score, roc_curve
 
-from core.models import *
-from utils.json2graph_ip import *
-from utils.json2graph import *
+from hw2vec.core.models import *
+from hw2vec.utils.json2graph_ip import *
+from hw2vec.utils.json2graph import *
 
 from time import time # needs to be here.
 

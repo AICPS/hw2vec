@@ -21,8 +21,8 @@ from torch_geometric.data import Data, DataLoader
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.model_selection import train_test_split
 
-from core.models import *
-from core.trainers import *
+from hw2vec.core.models import *
+from hw2vec.core.trainers import *
 from abc import ABC, abstractmethod
 
 from glob import glob

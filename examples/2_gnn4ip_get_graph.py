@@ -6,7 +6,7 @@ warnings.filterwarnings('ignore')
 from argparse import ArgumentParser, RawTextHelpFormatter
 from pathlib import Path
 
-from utils.json2graph_ip import *
+from hw2vec.utils.json2graph_ip import *
 
 import pickle
 
@@ -20,7 +20,7 @@ scripts for generating datasets.
     for generating Netlist dataset
         => python 0_run_json2graph.py --raw_dataset_path ../data/data_DFG --precache_path dataset_netlist.pkl --dataset_name Netlist
         ''', formatter_class=RawTextHelpFormatter)
-        self.parser.add_argument('--raw_dataset_path', type=str, default='../../data/IP-datasets/data_DFG/', help="Path to raw dataset for parsing if no precache.")
+        self.parser.add_argument('--raw_dataset_path', type=str, default='../data/IP-datasets/data_DFG/', help="Path to raw dataset for parsing if no precache.")
         self.parser.add_argument('--precache_path', type=str, default='./dataset_rtl.pkl', help="Path to hardware graphs for parsing.")
         self.parser.add_argument('--dataset_name', type=str, default='RTL', help="name of hardware design languages." )
 

@@ -1,7 +1,7 @@
 import os, sys
 sys.path.append(os.path.dirname(sys.path[0]))
 
-from core.trainers import *
+from hw2vec.core.trainers import *
 
 '''
     Usages:
@@ -53,7 +53,7 @@ class Config:
         self.parser.add_argument('--poolratio', type=float, default=0.8, help="Ratio for graph pooling.")
 
         self.parser.add_argument('--precache_path', type=str, default='./hardware_cache.pkl', help="Path to hardware graphs for parsing.")
-        self.parser.add_argument('--raw_dataset_path', type=str, default='../../data/TJ-datasets/data_graphs/data_ready_FIXED/', help="Path to raw dataset for parsing if no precache.")
+        self.parser.add_argument('--raw_dataset_path', type=str, default='../data/TJ-datasets/data_graphs/data_ready_FIXED/', help="Path to raw dataset for parsing if no precache.")
 
         self.parser.add_argument('--embed_dim', type=int, default=2, help="The dimension of graph embeddings.")
 
