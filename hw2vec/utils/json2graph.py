@@ -22,11 +22,12 @@ from sklearn.utils.class_weight import compute_class_weight
 from sklearn.model_selection import train_test_split
 
 from core.models import *
-from core.TJ_trainer import *
+from core.trainers import *
 from abc import ABC, abstractmethod
 
 from glob import glob
 
+#TODO: the graph parser should be only different in the way that the one for ip creates pair data additionally.
 class GraphParser:
 
     def __init__(self, root_path:Path):

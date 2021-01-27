@@ -1,7 +1,7 @@
 import os
 import sys
 sys.path.append(os.path.dirname(sys.path[0]))
-from core.IP_trainer import *
+from core.trainers import *
 from argparse import ArgumentParser, RawTextHelpFormatter
 
 class Config:
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     ''' sample command python 1_train_gnn4ip.py --device cuda --batch_size 64 --hidden 16 --embed_dim 16'''
     cfg = Config(sys.argv[1:])
 
-    trainer = GraphTrainer(cfg)
+    trainer = PairwiseGraphTrainer(cfg)
     trainer.build()
     trainer.train()
     trainer.evaluate(cfg.epochs)    
