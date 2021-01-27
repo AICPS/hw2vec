@@ -27,6 +27,10 @@ $ conda install -c alubbock pygraphviz
 $ pip install pyverilog
 $ pip install pyunpack
 $ pip install patool
+
+For those who have issues with pygraphviz when trying to run pipeline,
+$ conda remove pygraphviz 
+$ conda install graphviz pygraphviz -c alubbock
 ```
 
 ## Requirements for rtl2vec
@@ -71,7 +75,7 @@ Running the command below, it reads the FILENAME and save the graphs in teh curr
 ```sh
 $ python generateGraph.py FILENAME
 ```
-If the input fiel is not specified like running the command below, in a loop it reads all the data in the "../data/data_ready_FIXED/" and save the graphs in the "../graphs/data_ready_FIXED/".
+If the input field is not specified like running the command below, in a loop it reads all the data in the "../data/data_ready_FIXED/" and save the graphs in the "../graphs/data_ready_FIXED/".
 ```sh
 $ python generateGraph.py
 ```
