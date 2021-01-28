@@ -1,37 +1,19 @@
 import os, sys
 sys.path.append(os.path.dirname(sys.path[0]))
+import warnings
+warnings.filterwarnings('ignore')
 
+from argparse import ArgumentParser, RawTextHelpFormatter
+from pathlib import Path
+
+# from hw2vec.utils.json2graph_tj import *
 from hw2vec.core.trainers import *
 
-'''
-    Usages:
-
-    Use different precache paths before running different commands
-
-    For training/testing on complete_dataset
-    python trojan_classification.py --raw_dataset_path ../../data_graphs/complete_dataset/ --precache_path xxx --device cuda
-
-    For training/testing on GCF-test1
-    python trojan_classification.py --raw_dataset_path ../../data_graphs/GCF-test1/ --precache_path xxx --device cuda --splitted True
-
-    For training/testing on GCF-test2
-    python trojan_classification.py --raw_dataset_path ../../data_graphs/GCF-test2/ --precache_path xxx --device cuda --splitted True
-
-    For training/testing on HTD-test1
-    python trojan_classification.py --raw_dataset_path ../../data_graphs/HTD-test1/ --precache_path xxx --device cuda --splitted True
-'''
-
-'''
-    new usages:
-    use gcn model: python 1_gnn4tj_train.py 
-    use gin model: python 1_gnn4tj_train.py --model gin
-'''
-
-
+#TODO: merge 2_, 2_, 3_ into 1 script
 class Config:
-    '''Configuration and Argument Parser for script to train the trojan classification.'''
+    '''Configuration and Argument Parser for script to train the IP piracy detection.'''
     def __init__(self, args):
-        self.parser = ArgumentParser(description='The parameters for training the scene graph using GCN.')
+        self.parser = ArgumentParser(description='scripts for generating datasets.', formatter_class=RawTextHelpFormatter)
         self.parser.add_argument('--input_path', type=str, default="../input/synthesis_data/lane-change/", help="Path to code directory.")
         self.parser.add_argument('--learning_rate', default=0.001, type=float, help='The initial learning rate for GCN.')
         self.parser.add_argument('--seed', type=int, default=random.randint(0,2**32), help='Random seed.')
@@ -54,20 +36,18 @@ class Config:
 
         self.parser.add_argument('--precache_path', type=str, default='./hardware_cache.pkl', help="Path to hardware graphs for parsing.")
         self.parser.add_argument('--raw_dataset_path', type=str, default='../data/TJ-datasets/data_graphs/data_ready_FIXED/', help="Path to raw dataset for parsing if no precache.")
-
         self.parser.add_argument('--embed_dim', type=int, default=2, help="The dimension of graph embeddings.")
 
         args_parsed = self.parser.parse_args(args)
-        
         for arg_name in vars(args_parsed):
             self.__dict__[arg_name] = getattr(args_parsed, arg_name)
-
+        
         self.input_base_dir = Path(self.input_path).resolve()
-        self.precache_path = Path(self.precache_path).resolve()
         self.raw_dataset_path = Path(self.raw_dataset_path).resolve()
+        self.precache_path = Path(self.precache_path).resolve()
 
 from collections import Counter
-from collections import defaultdict 
+from collections import defaultdict
 
 def parse_attn_weights(node_attns, batches):
 
@@ -96,16 +76,44 @@ def parse_attn_weights(node_attns, batches):
 
     return node_attns_list
 
-
-if __name__ == "__main__":
+if __name__ == "__main__": 
     cfg = Config(sys.argv[1:])
+    if cfg.precache_path.exists() is False:
+        parser = GraphParser(cfg.raw_dataset_path)
+        if cfg.splitted:
+            # assuming the dataset has been properly splited. and is structured as follows:
+            # 1) we will read all the labels from the nodes in parser.root_path and build the dictionary of node labels.
+            # 2) we will read hardware designs and assign labels for each of them.
+            #   [root_path]/train contains both TjFree ([root_path]/train/TjFree) and TjIn ([root_path]/train/TjIn) hardware designs for training.
+            #   [root_path]/test contains both TjFree ([root_path]/test/TjFree) and TjIn ([root_path]/test/TjIn) hardware designs for testing.
+            # 3) No split is needed as it has been manually splited.
 
-    # start training.
+            parser.read_node_labels()
+            parser.read_hardware_designs("Train/TjFree", 0, store_type="train")
+            parser.read_hardware_designs("Train/TjIn", 1, store_type="train")
+            parser.read_hardware_designs("Test/TjFree", 0, store_type="test")
+            parser.read_hardware_designs("Test/TjIn", 1, store_type="test")
+
+        else:
+            # assuming the dataset hasn't been properly splited. 
+            # 1) we will read all the labels from the nodes in parser.root_path and build the dictionary of node labels.
+            # 2) we will read hardware designs and assign labels for each of them.
+            #   [root_path]/TjFree contains all hardware designs w/o a trojan.
+            #   [root_path]/TjIn  contains all hardware designs w/ a trojan.
+            # 3) we will perform a stratified split over the parser.data
+
+            parser.read_node_labels()
+            parser.read_hardware_designs("TjFree", 0, store_type="all")
+            parser.read_hardware_designs("TjIn", 1, store_type="all")
+
+        with open(cfg.precache_path, 'wb') as f:
+            pkl.dump(parser, f)
+
     trainer = GraphTrainer(cfg)
     trainer.build()
     trainer.train()
     trainer.evaluate(cfg.epochs)
-
+    
     # train_loss, train_labels, _, train_preds, train_node_attns = trainer.inference(trainer.train_loader)
     # test_loss, test_labels, _, test_preds, test_node_attns = trainer.inference(trainer.test_loader)
 
@@ -118,4 +126,3 @@ if __name__ == "__main__":
     # node_attns_test_proc = []
     # for i in tqdm(range(len(trainer.test_loader))):
     #     node_attns_test_proc += parse_attn_weights(test_node_attns[i], data)
-

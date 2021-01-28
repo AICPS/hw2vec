@@ -20,7 +20,7 @@ from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, precisio
 
 from hw2vec.core.models import *
 from hw2vec.utils.json2graph_ip import *
-from hw2vec.utils.json2graph import *
+from hw2vec.utils.json2graph_tj import *
 
 from time import time # needs to be here.
 
@@ -106,7 +106,7 @@ class PairwiseGraphTrainer(BaseTrainer):
     def __init__(self, cfg):
         super().__init__(cfg)
         # self.config = cfg
-        # self.min_test_loss = 1
+        self.min_test_loss = 1
         # self.metrics = {}
 
         # np.random.seed(self.config.seed)
