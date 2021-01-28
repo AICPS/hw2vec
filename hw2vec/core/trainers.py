@@ -24,63 +24,62 @@ from hw2vec.utils.json2graph_tj import *
 
 from time import time # needs to be here.
 
-def read_dataset_from_pkl(cfg):
-    if cfg.dataset_path.exists():
-        with open(str(cfg.dataset_path), 'rb') as f:
+def read_dataset_from_pkl(cfg, path):
+    if path.exists():
+        with open(str(path), 'rb') as f:
             parser = pkl.load(f)
         if cfg.splitted == False:
-            #TODO: add splitted to cfg in IP script and ratio to TJ script
             parser.split_dataset(ratio=cfg.ratio, seed=cfg.seed)
     else:
         raise Exception("pkl file does not exist")
     return parser
 
-def read_dataset_from_pkl2(cfg):
-    '''
-        use cfg.splitted to differentiate the handling of splited dataset or unsplited dataset.
-        ex. splited dataset: GCF-test1
-        ex. unsplited dataset: complete_dataset
-    '''
-    if cfg.precache_path.exists():
-        with open(str(cfg.precache_path),'rb') as f:
-            parser = pkl.load(f)
+# def read_dataset_from_pkl2(cfg):
+#     '''
+#         use cfg.splitted to differentiate the handling of splited dataset or unsplited dataset.
+#         ex. splited dataset: GCF-test1
+#         ex. unsplited dataset: complete_dataset
+#     '''
+#     if cfg.precache_path.exists():
+#         with open(str(cfg.precache_path),'rb') as f:
+#             parser = pkl.load(f)
 
-    else:
-        parser = GraphParser(cfg.raw_dataset_path)
+#     else:
+#         parser = GraphParser(cfg.raw_dataset_path)
         
-        if cfg.splitted:
-            # assuming the dataset has been properly splited. and is structured as follows:
-            # 1) we will read all the labels from the nodes in parser.root_path and build the dictionary of node labels.
-            # 2) we will read hardware designs and assign labels for each of them.
-            #   [root_path]/train contains both TjFree ([root_path]/train/TjFree) and TjIn ([root_path]/train/TjIn) hardware designs for training.
-            #   [root_path]/test contains both TjFree ([root_path]/test/TjFree) and TjIn ([root_path]/test/TjIn) hardware designs for testing.
-            # 3) No split is needed as it has been manually splited.
+#         if cfg.splitted:
+#             # assuming the dataset has been properly splited. and is structured as follows:
+#             # 1) we will read all the labels from the nodes in parser.root_path and build the dictionary of node labels.
+#             # 2) we will read hardware designs and assign labels for each of them.
+#             #   [root_path]/train contains both TjFree ([root_path]/train/TjFree) and TjIn ([root_path]/train/TjIn) hardware designs for training.
+#             #   [root_path]/test contains both TjFree ([root_path]/test/TjFree) and TjIn ([root_path]/test/TjIn) hardware designs for testing.
+#             # 3) No split is needed as it has been manually splited.
     
-            parser.read_node_labels()
-            parser.read_hardware_designs("Train/TjFree", 0, store_type="train")
-            parser.read_hardware_designs("Train/TjIn", 1, store_type="train")
-            parser.read_hardware_designs("Test/TjFree", 0, store_type="test")
-            parser.read_hardware_designs("Test/TjIn", 1, store_type="test")
+#             parser.read_node_labels()
+#             parser.read_hardware_designs("Train/TjFree", 0, store_type="train")
+#             parser.read_hardware_designs("Train/TjIn", 1, store_type="train")
+#             parser.read_hardware_designs("Test/TjFree", 0, store_type="test")
+#             parser.read_hardware_designs("Test/TjIn", 1, store_type="test")
 
-        else:
-            # assuming the dataset hasn't been properly splited. 
-            # 1) we will read all the labels from the nodes in parser.root_path and build the dictionary of node labels.
-            # 2) we will read hardware designs and assign labels for each of them.
-            #   [root_path]/TjFree contains all hardware designs w/o a trojan.
-            #   [root_path]/TjIn  contains all hardware designs w/ a trojan.
-            # 3) we will perform a stratified split over the parser.data
+#         else:
+#             # assuming the dataset hasn't been properly splited. 
+#             # 1) we will read all the labels from the nodes in parser.root_path and build the dictionary of node labels.
+#             # 2) we will read hardware designs and assign labels for each of them.
+#             #   [root_path]/TjFree contains all hardware designs w/o a trojan.
+#             #   [root_path]/TjIn  contains all hardware designs w/ a trojan.
+#             # 3) we will perform a stratified split over the parser.data
 
-            parser.read_node_labels()
-            parser.read_hardware_designs("TjFree", 0, store_type="all")
-            parser.read_hardware_designs("TjIn", 1, store_type="all")
+#             parser.read_node_labels()
+#             parser.read_hardware_designs("TjFree", 0, store_type="all")
+#             parser.read_hardware_designs("TjIn", 1, store_type="all")
 
-        with open(cfg.precache_path, 'wb') as f:
-            pkl.dump(parser, f)
+#         with open(cfg.precache_path, 'wb') as f:
+#             pkl.dump(parser, f)
 
-    if cfg.splitted == False:
-        parser.split_dataset(0.7, cfg.seed)
+#     if cfg.splitted == False:
+#         parser.split_dataset(0.7, cfg.seed)
 
-    return parser # parser.train_data and parser.test_data are ready to be used. 
+#     return parser # parser.train_data and parser.test_data are ready to be used. 
 
 
 class BaseTrainer:
@@ -92,12 +91,27 @@ class BaseTrainer:
         torch.manual_seed(self.config.seed)
         
     def build(self):
+        self.model = None
+        #TODO: is this valid?
         pass
 
-    def load_model(self, path=None):
-        pass
+    def load_saved_model(self, path):
+        model_path = Path(path)
+        if model_path.exists():
+            self.model.load_state_dict(torch.load(str(model_path)))
+            self.model.to(self.config.device)
+        else:
+            raise ValueError("Model load path not exist %s" % model_path)
 
-    def save_model(self, path=None):
+    def save_model(self, path):
+        saved_path = Path(path)
+        saved_path.mkdir(parents=True, exist_ok=True)
+        torch.save(self.model.state_dict(), str(saved_path / "model"))
+        save_path_config = saved_path / "model config.txt"
+        save_path_file = open(save_path_config, "w") 
+        save_path_file.write(" ".join(sys.argv))
+        save_path_file.close()
+
         pass
 
 
@@ -105,14 +119,9 @@ class PairwiseGraphTrainer(BaseTrainer):
     ''' trainer for graph classification ''' 
     def __init__(self, cfg):
         super().__init__(cfg)
-        # self.config = cfg
         self.min_test_loss = 1
-        # self.metrics = {}
 
-        # np.random.seed(self.config.seed)
-        # torch.manual_seed(self.config.seed)
-
-        parser = read_dataset_from_pkl(cfg)
+        parser = read_dataset_from_pkl(cfg, cfg.dataset_path)
         parser.print_data_statistics()
 
         self.train_pairs = []
@@ -254,7 +263,7 @@ class PairwiseGraphTrainer(BaseTrainer):
             self.metrics["conf_mtx"] = str(confusion_matrix(test_labels, test_preds)).replace('\n', ',')
             self.metrics["prec"] = precision_score(test_labels, test_preds, average="micro")
             self.metrics["rec"] = recall_score(test_labels, test_preds, average="micro")
-            self.save_model()
+            self.save_model("./ALU_excluded_result")
 
         if(epoch_idx==self.config.epochs):
             print("best  loss: %4f" % self.min_test_loss+
@@ -279,22 +288,22 @@ class PairwiseGraphTrainer(BaseTrainer):
                     metadata_file.write(str(graphs[2]).replace('/', '\t')+'\n')
 
 
-    def load_saved_model(self, path=None):
-        model_path = Path("./best_result/ippiracy") if path is None else Path(path)
-        if model_path.exists():
-            self.model.load_state_dict(torch.load(str(model_path)))
-            self.model.to(self.config.device)
-        else:
-            raise ValueError("Model load path not exist %s" % model_path)
+    # def load_saved_model(self, path=None):
+    #     model_path = Path("./best_result/ippiracy") if path is None else Path(path)
+    #     if model_path.exists():
+    #         self.model.load_state_dict(torch.load(str(model_path)))
+    #         self.model.to(self.config.device)
+    #     else:
+    #         raise ValueError("Model load path not exist %s" % model_path)
 
-    def save_model(self, path=None):
-        saved_path = self.config.dataset_path.parent / "ALU_excluded_result" if path is None else Path(path)
-        saved_path.mkdir(parents=True, exist_ok=True)
-        torch.save(self.model.state_dict(), str(saved_path / "ippiracy"))
-        save_path_config = saved_path / "ippiracy.txt"
-        save_path_file = open(save_path_config, "w") 
-        save_path_file.write(" ".join(sys.argv))
-        save_path_file.close()
+    # def save_model(self, path=None):
+    #     saved_path = self.config.dataset_path.parent / "ALU_excluded_result" if path is None else Path(path)
+    #     saved_path.mkdir(parents=True, exist_ok=True)
+    #     torch.save(self.model.state_dict(), str(saved_path / "ippiracy"))
+    #     save_path_config = saved_path / "ippiracy.txt"
+    #     save_path_file = open(save_path_config, "w") 
+    #     save_path_file.write(" ".join(sys.argv))
+    #     save_path_file.close()
 
     def get_graph_embedding(self, g_key):
         embed = None
@@ -330,21 +339,11 @@ class GraphTrainer(BaseTrainer):
     ''' trainer for graph classification ''' 
     def __init__(self, cfg):
         super().__init__(cfg)
-        # self.config = cfg
-        # self.min_test_loss = 100
-        # self.metrics = {}
-        # self.train_time = 0
-        # self.test_time = 0
         self.min_test_loss = 100
         self.train_time = 0
         self.test_time = 0
 
-        parser = read_dataset_from_pkl2(cfg)
-
-        # np.random.seed(self.config.seed)
-        # torch.manual_seed(self.config.seed)
-
-        # parser = read_dataset_from_pkl(cfg)
+        parser = read_dataset_from_pkl(cfg, cfg.precache_path)
         
         self.train_graphs = parser.train_data
         self.test_graphs = parser.test_data
@@ -499,6 +498,8 @@ class GraphTrainer(BaseTrainer):
             self.metrics["recall"] = recall
             self.metrics["specificity"] = specificity
             self.metrics["npv"] = npv
+
+            self.save_model("./TJ Best result")
 
             #TODO: store the attn_weights right here. 
 

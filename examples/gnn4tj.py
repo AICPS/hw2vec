@@ -32,6 +32,7 @@ class Config:
         self.parser.add_argument('--pooling_type', type=str, default="sagpool", help="Graph pooling type.")
         self.parser.add_argument('--readout_type', type=str, default="max", help="Readout type.")
         self.parser.add_argument('--splitted', type=bool, default=False, help="Indicating whether the target path has been splitted.")
+        self.parser.add_argument('--ratio', type=float, default=0.8, help="Dataset splitting ratio")
         self.parser.add_argument('--poolratio', type=float, default=0.8, help="Ratio for graph pooling.")
 
         self.parser.add_argument('--precache_path', type=str, default='./hardware_cache.pkl', help="Path to hardware graphs for parsing.")

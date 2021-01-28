@@ -60,9 +60,9 @@ class GCN(nn.Module):
     def forward(self, x, edge_index, batch=None):
         ''' graphs_in_batch is a list of graph instances; '''
         x, attn_weights = self.embed_graph(x, edge_index, batch=batch)
-        # return F.log_softmax(x, dim=1), attn_weights 
+        # return F.log_softmax(x, dim=1), attn_weights (TJ)
         # TODO: put softmax in trainer instead. e.g model = nn.Sequential(GCN, softmax)
-        return x, attn_weights
+        return x, attn_weights # (IP)
 '''
     copy from gin.py
 '''
