@@ -6,10 +6,10 @@ warnings.filterwarnings('ignore')
 from argparse import ArgumentParser, RawTextHelpFormatter
 from pathlib import Path
 
-# from hw2vec.utils.json2graph_tj import *
 from hw2vec.core.trainers import *
+from hw2vec.core.json2graph import *
 
-#TODO: merge 2_, 2_, 3_ into 1 script
+
 class Config:
     '''Configuration and Argument Parser for script to train the IP piracy detection.'''
     def __init__(self, args):
@@ -32,7 +32,7 @@ class Config:
         self.parser.add_argument('--pooling_type', type=str, default="sagpool", help="Graph pooling type.")
         self.parser.add_argument('--readout_type', type=str, default="max", help="Readout type.")
         self.parser.add_argument('--splitted', type=bool, default=False, help="Indicating whether the target path has been splitted.")
-        self.parser.add_argument('--ratio', type=float, default=0.8, help="Dataset splitting ratio")
+        self.parser.add_argument('--ratio', type=float, default=0.7, help="Dataset splitting ratio")
         self.parser.add_argument('--poolratio', type=float, default=0.8, help="Ratio for graph pooling.")
 
         self.parser.add_argument('--precache_path', type=str, default='./hardware_cache.pkl', help="Path to hardware graphs for parsing.")
@@ -80,7 +80,7 @@ def parse_attn_weights(node_attns, batches):
 if __name__ == "__main__": 
     cfg = Config(sys.argv[1:])
     if cfg.precache_path.exists() is False:
-        parser = GraphParser(cfg.raw_dataset_path)
+        parser = GraphParser_TJ(cfg.raw_dataset_path)
         if cfg.splitted:
             # assuming the dataset has been properly splited. and is structured as follows:
             # 1) we will read all the labels from the nodes in parser.root_path and build the dictionary of node labels.
