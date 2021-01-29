@@ -35,8 +35,8 @@ class Config:
         self.parser.add_argument('--ratio', type=float, default=0.7, help="Dataset splitting ratio")
         self.parser.add_argument('--poolratio', type=float, default=0.8, help="Ratio for graph pooling.")
 
-        self.parser.add_argument('--precache_path', type=str, default='./hardware_cache.pkl', help="Path to hardware graphs for parsing.")
-        self.parser.add_argument('--raw_dataset_path', type=str, default='../data/TJ-datasets/data_graphs/data_ready_FIXED/', help="Path to raw dataset for parsing if no precache.")
+        self.parser.add_argument('--pkl_path', type=str, default='./hardware_cache.pkl', help="Path to hardware graphs for parsing.")
+        self.parser.add_argument('--raw_dataset_path', type=str, default='../data/TJ-datasets/data_graphs/data_ready_FIXED/', help="Path to raw dataset for parsing if no pkl.")
         self.parser.add_argument('--embed_dim', type=int, default=2, help="The dimension of graph embeddings.")
 
         args_parsed = self.parser.parse_args(args)
@@ -45,7 +45,7 @@ class Config:
         
         self.input_base_dir = Path(self.input_path).resolve()
         self.raw_dataset_path = Path(self.raw_dataset_path).resolve()
-        self.precache_path = Path(self.precache_path).resolve()
+        self.pkl_path = Path(self.pkl_path).resolve()
 
 from collections import Counter
 from collections import defaultdict
@@ -79,7 +79,7 @@ def parse_attn_weights(node_attns, batches):
 
 if __name__ == "__main__": 
     cfg = Config(sys.argv[1:])
-    if cfg.precache_path.exists() is False:
+    if cfg.pkl_path.exists() is False:
         parser = GraphParser_TJ(cfg.raw_dataset_path)
         if cfg.splitted:
             # assuming the dataset has been properly splited. and is structured as follows:
@@ -89,7 +89,7 @@ if __name__ == "__main__":
             #   [root_path]/test contains both TjFree ([root_path]/test/TjFree) and TjIn ([root_path]/test/TjIn) hardware designs for testing.
             # 3) No split is needed as it has been manually splited.
 
-            parser.read_node_labels()
+            parser.read_node_labels("")
             parser.read_hardware_designs("Train/TjFree", 0, store_type="train")
             parser.read_hardware_designs("Train/TjIn", 1, store_type="train")
             parser.read_hardware_designs("Test/TjFree", 0, store_type="test")
@@ -103,11 +103,11 @@ if __name__ == "__main__":
             #   [root_path]/TjIn  contains all hardware designs w/ a trojan.
             # 3) we will perform a stratified split over the parser.data
 
-            parser.read_node_labels()
+            parser.read_node_labels("")
             parser.read_hardware_designs("TjFree", 0, store_type="all")
             parser.read_hardware_designs("TjIn", 1, store_type="all")
 
-        with open(cfg.precache_path, 'wb') as f:
+        with open(cfg.pkl_path, 'wb') as f:
             pkl.dump(parser, f)
 
     trainer = GraphTrainer(cfg)
