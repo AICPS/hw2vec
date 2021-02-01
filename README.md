@@ -33,8 +33,7 @@ $ pip install -r requirements.txt
 To run [Pyverilog](https://github.com/PyHDI/Pyverilog), we use anaconda3 as primary working environment.
 ```sh
 $ conda install -c conda-forge iverilog
-$ conda install graphviz
-$ conda install -c alubbock pygraphviz
+$ conda install graphviz pygraphviz -c alubbock
 $ pip install pyverilog
 $ pip install pyunpack
 $ pip install patool
