@@ -5,6 +5,7 @@ warnings.filterwarnings('ignore')
 
 from argparse import ArgumentParser, RawTextHelpFormatter
 from pathlib import Path
+from collections import Counter
 
 from hw2vec.graph2vec.trainers import *
 from hw2vec.core.json2graph import *
@@ -47,8 +48,7 @@ class Config:
         self.raw_dataset_path = Path(self.raw_dataset_path).resolve()
         self.pkl_path = Path(self.pkl_path).resolve()
 
-from collections import Counter
-from collections import defaultdict
+
 
 def parse_attn_weights(node_attns, batches):
 
@@ -79,6 +79,7 @@ def parse_attn_weights(node_attns, batches):
 
 if __name__ == "__main__": 
     cfg = Config(sys.argv[1:])
+    
     if cfg.pkl_path.exists() is False:
         parser = GraphParser_TJ(cfg.raw_dataset_path)
         if cfg.splitted:
@@ -110,15 +111,21 @@ if __name__ == "__main__":
         with open(cfg.pkl_path, 'wb') as f:
             pkl.dump(parser, f)
 
+    # initialize a graph trainer for graph classification on trojan classification
     trainer = GraphTrainer(cfg)
+
+    # initialize the model according to cfg. 
     trainer.build()
+
+    # train the model. 
     trainer.train()
+
+    # do a final evaluation.
     trainer.evaluate(cfg.epochs)
     
     # train_loss, train_labels, _, train_preds, train_node_attns = trainer.inference(trainer.train_loader)
     # test_loss, test_labels, _, test_preds, test_node_attns = trainer.inference(trainer.test_loader)
 
-    # # import pdb; pdb.set_trace()
     # node_attns_train_proc = []
     # for i, data in enumerate(trainer.train_loader):
     #     # for i, data in enumerate(dataset): # iterate through graphs
