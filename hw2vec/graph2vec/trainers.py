@@ -282,12 +282,7 @@ class GraphTrainer(BaseTrainer):
         with open(str(cfg.pkl_path), 'rb') as f:
             parser = pkl.load(f)
         
-        if cfg.splitted == False:
-            self.train_graphs, self.test_graphs = parser.split_dataset(ratio=cfg.ratio, seed=cfg.seed, dataset=parser.graphs)
-        else:
-            self.train_graphs = parser.train_data
-            self.test_graphs = parser.test_data
-
+        self.train_graphs, self.test_graphs = parser.get_graphs()
         self.training_labels = [data[2] for data in self.train_graphs]
         self.testing_labels = [data[2] for data in self.test_graphs]
         self.class_weights = torch.from_numpy(compute_class_weight('balanced', np.unique(self.training_labels), self.training_labels))

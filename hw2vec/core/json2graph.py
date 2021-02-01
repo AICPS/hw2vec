@@ -17,11 +17,15 @@ from hw2vec.graph2vec.trainers import *
 from glob import glob
 
 class BaseGraphParser:
-    def __init__(self, root_path:Path):
-        self.root_path = root_path.resolve()
-        
-        ''' self.graphs stores all the hardware graphs that can be parsed from the raw datatset folder. '''
-        self.graphs = [] 
+    def __init__(self, cfg):
+        self.cfg = cfg
+        self.root_path = self.cfg.raw_dataset_path.resolve()
+
+        ''' self.graphs is a dict that stores all the hardware graphs that can be parsed from the raw datatset folder. 
+            'all': means it is a collection of all graph datasets.
+            'train' and 'test': store the collection of graph instances according to a prespliting result.
+        '''
+        self.graphs = {}
 
         self.node_labels = set()
         
@@ -38,9 +42,31 @@ class BaseGraphParser:
         self.training_graph_count = 0
         self.testing_graph_count = 0
 
-        ''' For GNN4TJ '''
-        self.train_data = []
-        self.test_data = []
+
+    def append_training_graph_data(self, data):
+        if 'train' not in self.graphs: 
+            self.graphs['train'] = []
+        self.graphs['train'].append(data)
+
+    def append_testing_graph_data(self, data):
+        if 'test' not in self.graphs: 
+            self.graphs['test'] = []
+        self.graphs['test'].append(data)
+    
+    def append_graph_data(self, data):
+        if 'all' not in self.graphs: 
+            self.graphs['all'] = []
+        self.graphs['all'].append(data)
+
+    def get_graphs(self):
+        if 'train' in self.graphs and 'test' in self.graphs:
+            return self.graphs['train'], self.graphs['test']
+        elif 'all' in self.graphs:
+            return self.split_dataset(ratio=self.cfg.ratio, seed=self.cfg.seed, dataset=self.graphs['all'])
+
+    def do_pickle_dataset(self):
+        with open(self.cfg.pkl_path, 'wb') as f:
+            pkl.dump(self, f)
 
     def read_node_labels(self, key):
         # read thru all the node labels in a dataset. 
@@ -132,24 +158,3 @@ class GraphParser_IP(BaseGraphParser):
                     self.graph_pairs.append((idx_graph_a, idx_graph_b, 1))
                 else:
                     self.graph_pairs.append((idx_graph_a, idx_graph_b,-1))
-
-class GraphParser_TJ(BaseGraphParser):
-
-    def __init__(self, root_path:Path):
-        super().__init__(root_path)
-
-    def read_hardware_designs(self, path, label, store_type="all"):
-
-        for json_path in glob("%s/**/topModule.json" % str(self.root_path/path), recursive=True):
-            folder_name = "%s/%s" % (Path(json_path).parent.parent.name, Path(json_path).parent.name)
-
-            hardware_graph = self.get_graph_from_json(json_path)
-            X, name2idx, idx2name = self.get_node_embeddeings(hardware_graph)
-            edge_idxs = self.get_edge_idxs(hardware_graph, name2idx)
-                                    
-            if store_type == "all":
-                self.graphs.append((X, edge_idxs, label, folder_name, idx2name))
-            elif store_type == "train":
-                self.train_data.append((X, edge_idxs, label, folder_name, idx2name))
-            elif store_type == "test":
-                self.test_data.append((X, edge_idxs, label, folder_name, idx2name))

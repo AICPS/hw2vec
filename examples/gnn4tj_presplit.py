@@ -48,11 +48,16 @@ if __name__ == "__main__":
 
     '''
         Commands for running the experiments:
-            Exp 1: python .\gnn4tj.py --device cuda --raw_dataset_path ..\data\TJ-datasets\data_graphs\HTD-test1 --pkl_path htd-test1.pkl
-            Exp 2: python .\gnn4tj.py --device cuda --raw_dataset_path ..\data\TJ-datasets\data_graphs\HTD-test2 --pkl_path htd-test2.pkl
-            Exp 3: python .\gnn4tj.py --device cuda --raw_dataset_path ..\data\TJ-datasets\data_graphs\data_ready_FIXED --pkl_path dataready-fixed.pkl
-            Exp 4: python .\gnn4tj.py --device cuda --raw_dataset_path ..\data\TJ-datasets\data_graphs\complete_dataset --pkl_path completedataset.pkl
-
+            Exp 1: python .\gnn4tj_presplit.py --device cuda --raw_dataset_path ..\data\TJ-datasets\data_graphs\GCF-test1 --pkl_path gcf-test1.pkl
+            Exp 2: python .\gnn4tj_presplit.py --device cuda --raw_dataset_path ..\data\TJ-datasets\data_graphs\GCF-test2 --pkl_path gcf-test2.pkl
+            Exp 3: python .\gnn4tj_presplit.py --device cuda --raw_dataset_path ..\data\TJ-datasets\data_graphs\GCF-test3 --pkl_path gcf-test3.pkl
+            Exp 4: python .\gnn4tj_presplit.py --device cuda --raw_dataset_path ..\data\TJ-datasets\data_graphs\GCF-test4 --pkl_path gcf-test4.pkl
+            Exp 5: python .\gnn4tj_presplit.py --device cuda --raw_dataset_path ..\data\TJ-datasets\data_graphs\GCF-test5 --pkl_path gcf-test5.pkl
+            Exp 6: python .\gnn4tj_presplit.py --device cuda --raw_dataset_path ..\data\TJ-datasets\data_graphs\GCF-test1-1 --pkl_path gcf-test1-1.pkl
+            Exp 7: python .\gnn4tj_presplit.py --device cuda --raw_dataset_path ..\data\TJ-datasets\data_graphs\GCF-test2-1 --pkl_path gcf-test2-1.pkl
+            Exp 8: python .\gnn4tj_presplit.py --device cuda --raw_dataset_path ..\data\TJ-datasets\data_graphs\GCF-test3-1 --pkl_path gcf-test3-1.pkl
+            Exp 9: python .\gnn4tj_presplit.py --device cuda --raw_dataset_path ..\data\TJ-datasets\data_graphs\GCF-test4-1 --pkl_path gcf-test4-1.pkl
+            Exp 10: python .\gnn4tj_presplit.py --device cuda --raw_dataset_path ..\data\TJ-datasets\data_graphs\GCF-test5-1 --pkl_path gcf-test5-1.pkl
     '''
 
     TROJAN = 1
@@ -62,21 +67,37 @@ if __name__ == "__main__":
         dataset = BaseGraphParser(cfg)
         dataset.read_node_labels("")
 
-        for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"TjFree"), recursive=True):
+        for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"Train"/"TjFree"), recursive=True):
             folder_name = "%s/%s" % (Path(json_path).parent.parent.name, Path(json_path).parent.name)
 
             hardware_graph = dataset.get_graph_from_json(json_path)
             node_embeddings, name2idx, idx2name = dataset.get_node_embeddeings(hardware_graph)
             edge_idxs = dataset.get_edge_idxs(hardware_graph, name2idx)
-            dataset.append_graph_data((node_embeddings, edge_idxs, NON_TROJAN, folder_name, idx2name))
+            dataset.append_training_graph_data((node_embeddings, edge_idxs, NON_TROJAN, folder_name, idx2name))
 
-        for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"TjIn"), recursive=True):
+        for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"Train"/"TjIn"), recursive=True):
             folder_name = "%s/%s" % (Path(json_path).parent.parent.name, Path(json_path).parent.name)
 
             hardware_graph = dataset.get_graph_from_json(json_path)
             node_embeddings, name2idx, idx2name = dataset.get_node_embeddeings(hardware_graph)
             edge_idxs = dataset.get_edge_idxs(hardware_graph, name2idx)
-            dataset.append_graph_data((node_embeddings, edge_idxs, TROJAN, folder_name, idx2name))
+            dataset.append_training_graph_data((node_embeddings, edge_idxs, TROJAN, folder_name, idx2name))
+
+        for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"Test"/"TjFree"), recursive=True):
+            folder_name = "%s/%s" % (Path(json_path).parent.parent.name, Path(json_path).parent.name)
+
+            hardware_graph = dataset.get_graph_from_json(json_path)
+            node_embeddings, name2idx, idx2name = dataset.get_node_embeddeings(hardware_graph)
+            edge_idxs = dataset.get_edge_idxs(hardware_graph, name2idx)
+            dataset.append_testing_graph_data((node_embeddings, edge_idxs, NON_TROJAN, folder_name, idx2name))
+
+        for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"Test"/"TjIn"), recursive=True):
+            folder_name = "%s/%s" % (Path(json_path).parent.parent.name, Path(json_path).parent.name)
+
+            hardware_graph = dataset.get_graph_from_json(json_path)
+            node_embeddings, name2idx, idx2name = dataset.get_node_embeddeings(hardware_graph)
+            edge_idxs = dataset.get_edge_idxs(hardware_graph, name2idx)
+            dataset.append_testing_graph_data((node_embeddings, edge_idxs, TROJAN, folder_name, idx2name))
 
         dataset.do_pickle_dataset()
 
