@@ -64,7 +64,7 @@ if __name__ == "__main__":
     NON_TROJAN = 0
 
     if cfg.pkl_path.exists() is False:
-        dataset = BaseGraphParser(cfg)
+        dataset = GraphParser(cfg)
         dataset.read_node_labels("")
 
         for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"Train"/"TjFree"), recursive=True):

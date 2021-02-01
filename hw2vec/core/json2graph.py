@@ -3,20 +3,17 @@ sys.path.append(os.path.dirname(sys.path[0]))
 
 import torch
 import torch.nn.functional as F
-import itertools
 
-from pathlib import Path
 import json
 import networkx as nx
 
 from sklearn.model_selection import train_test_split
-
-# from hw2vec.core.models import *
-from hw2vec.graph2vec.trainers import *
-
 from glob import glob
 
-class BaseGraphParser:
+from hw2vec.graph2vec.trainers import *
+
+
+class GraphParser:
     def __init__(self, cfg):
         self.cfg = cfg
         self.root_path = self.cfg.raw_dataset_path.resolve()
@@ -57,6 +54,9 @@ class BaseGraphParser:
         if 'all' not in self.graphs: 
             self.graphs['all'] = []
         self.graphs['all'].append(data)
+
+    def append_graph_pair(self, pair):
+        self.graph_pairs.append(pair)
 
     def get_graphs(self):
         if 'train' in self.graphs and 'test' in self.graphs:
@@ -127,34 +127,3 @@ class BaseGraphParser:
             edge_idx.append((name2idx[src], name2idx[dst]))
         edge_idx = torch.transpose(torch.LongTensor(edge_idx), 0, 1).detach()
         return edge_idx
-
-
-class GraphParser_IP(BaseGraphParser):
-
-    def __init__(self, root_path:Path):
-        super().__init__(root_path)     
-
-    def read_hardware_designs(self, key, do_pairing=False):
-        for hw_cat_idx, hardware_root_path in enumerate(glob("%s/**" % str(self.root_path/key), recursive=False)):
-            print("parsing %s" %str(hardware_root_path))
-            
-            for hardware_folder_path in glob("%s/**/topModule.json" % hardware_root_path, recursive=True):
-                folder_name = "%s/%s" % (Path(hardware_folder_path).parent.parent.name, Path(hardware_folder_path).parent.name)
-
-                G = self.get_graph_from_json(hardware_folder_path)
-                X, name2idx, idx2name = self.get_node_embeddeings(G)
-                edge_idx = self.get_edge_idxs(G, name2idx)          
-                
-                if do_pairing:
-                    self.trunk.append(hw_cat_idx)
-                    self.training_graph_count += 1
-                else:
-                    self.testing_graph_count += 1
-                self.graphs.append((X, edge_idx, folder_name))
-        
-        if do_pairing:
-            for idx_graph_a, idx_graph_b in itertools.combinations(range(len(self.trunk)), 2):
-                if self.trunk[idx_graph_a] == self.trunk[idx_graph_b]:
-                    self.graph_pairs.append((idx_graph_a, idx_graph_b, 1))
-                else:
-                    self.graph_pairs.append((idx_graph_a, idx_graph_b,-1))

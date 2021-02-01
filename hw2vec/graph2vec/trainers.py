@@ -85,11 +85,10 @@ class PairwiseGraphTrainer(BaseTrainer):
         if cfg.splitted == False:
             parser.graph_pairs_train, parser.graph_pairs_test = parser.split_dataset(ratio=cfg.ratio, seed=cfg.seed, dataset=parser.graph_pairs)   
         
-        parser.print_data_statistics()
-
+        # parser.print_data_statistics()
         self.train_pairs = []
         self.test_pairs = []
-        self.data = parser.graphs
+        self.data = parser.graphs['all']
         self.training_graph_count = parser.training_graph_count
         self.testing_graph_count = parser.testing_graph_count
 
@@ -131,8 +130,10 @@ class PairwiseGraphTrainer(BaseTrainer):
                 self.model.train()
                 self.optimizer.zero_grad()
                 
-                X1 = F.one_hot(graph1.x, num_classes=self.config.num_feature_dim).float()
-                X2 = F.one_hot(graph2.x, num_classes=self.config.num_feature_dim).float()
+                # X1 = F.one_hot(graph1.x, num_classes=self.config.num_feature_dim).float()
+                # X2 = F.one_hot(graph2.x, num_classes=self.config.num_feature_dim).float()
+                X1 = graph1.x
+                X2 = graph2.x
 
                 start = time()
                 g_emb_1, _ = self.model(X1, graph1.edge_index, batch=graph1.batch)
