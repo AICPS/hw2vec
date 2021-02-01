@@ -11,8 +11,8 @@ import networkx as nx
 
 from sklearn.model_selection import train_test_split
 
-from hw2vec.core.models import *
-from hw2vec.core.trainers import *
+# from hw2vec.core.models import *
+from hw2vec.graph2vec.trainers import *
 
 from glob import glob
 

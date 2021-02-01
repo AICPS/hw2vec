@@ -6,7 +6,7 @@ warnings.filterwarnings('ignore')
 from argparse import ArgumentParser, RawTextHelpFormatter
 from pathlib import Path
 
-from hw2vec.core.trainers import *
+from hw2vec.graph2vec.trainers import *
 from hw2vec.core.json2graph import *
 
 

@@ -18,7 +18,7 @@ from torch_geometric.data import Data, DataLoader
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, precision_score, recall_score, roc_auc_score, roc_curve
 
-from hw2vec.core.models import *
+from hw2vec.graph2vec.models import *
 
 
 from time import time # needs to be here.
