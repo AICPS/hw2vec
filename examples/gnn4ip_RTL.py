@@ -6,7 +6,8 @@ warnings.filterwarnings('ignore')
 from argparse import ArgumentParser, RawTextHelpFormatter
 from pathlib import Path
 from hw2vec.graph2vec.trainers import *
-from hw2vec.core.json2graph import *
+from hw2vec.hw2graph import *
+
 
 class Config:
     '''Configuration and Argument Parser for script to train the IP piracy detection.'''
@@ -200,7 +201,7 @@ if __name__ == "__main__":
     DISSIMILAR = -1
     
     if cfg.pkl_path.exists() is False:
-        dataset = GraphParser(cfg)
+        dataset = JsonGraphParser(cfg)
         dataset.read_node_labels("RTL")
         dataset.read_node_labels("subgraph")
 

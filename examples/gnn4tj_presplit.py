@@ -6,7 +6,7 @@ warnings.filterwarnings('ignore')
 from argparse import ArgumentParser, RawTextHelpFormatter
 from pathlib import Path
 from hw2vec.graph2vec.trainers import *
-from hw2vec.core.json2graph import *
+from hw2vec.hw2graph import *
 
 
 class Config:
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     NON_TROJAN = 0
 
     if cfg.pkl_path.exists() is False:
-        dataset = GraphParser(cfg)
+        dataset = JsonGraphParser(cfg)
         dataset.read_node_labels("")
 
         for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"Train"/"TjFree"), recursive=True):
