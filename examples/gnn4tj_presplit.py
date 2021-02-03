@@ -42,6 +42,7 @@ if __name__ == "__main__":
     parser.add_argument('--pkl_path', type=str, default='./hardware_cache.pkl', help="Path to hardware graphs for parsing.")
     parser.add_argument('--raw_dataset_path', type=str, default='../data/TJ-datasets/data_graphs/data_ready_FIXED/', help="Path to raw dataset for parsing if no pkl.")
     parser.add_argument('--embed_dim', type=int, default=2, help="The dimension of graph embeddings.")
+    parser.add_argument('--debug', type=lambda x: (str(x).lower() == 'true'), default=True, help='debug mode.')
 
     args_parsed = parser.parse_args(sys.argv[1:])
     cfg = Config(args_parsed)

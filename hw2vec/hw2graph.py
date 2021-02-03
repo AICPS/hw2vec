@@ -1,7 +1,4 @@
-#TODO: 
 from optparse import OptionParser
-import os
-import sys
 
 import pyverilog
 from pyverilog.dataflow.dataflow_analyzer import VerilogDataflowAnalyzer as DataflowAnalyzer
@@ -51,7 +48,6 @@ class JsonGraphParser:
         self.training_graph_count = 0
         self.testing_graph_count = 0
 
-
     def append_training_graph_data(self, data):
         if 'train' not in self.graphs: 
             self.graphs['train'] = []
@@ -75,6 +71,11 @@ class JsonGraphParser:
             return self.graphs['train'], self.graphs['test']
         elif 'all' in self.graphs:
             return self.split_dataset(ratio=self.cfg.ratio, seed=self.cfg.seed, dataset=self.graphs['all'])
+
+    def get_pairs(self):
+        graph_pairs = self.graph_pairs if self.cfg.debug else self.graph_pairs[:100]
+        self.graph_pairs_train, self.graph_pairs_test = self.split_dataset(ratio=self.cfg.ratio, seed=self.cfg.seed, dataset=graph_pairs)
+        return self.graph_pairs_train, self.graph_pairs_test
 
     def do_pickle_dataset(self):
         with open(self.cfg.pkl_path, 'wb') as f:

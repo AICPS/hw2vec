@@ -187,6 +187,7 @@ if __name__ == "__main__":
     parser.add_argument('--raw_dataset_path', type=str, default='../data/IP-datasets/data_DFG/', help="Path to raw dataset for parsing if no precache.")
     parser.add_argument('--pkl_path', type=str, default='./dataset_rtl.pkl', help="Path to hardware graphs for parsing.")
     parser.add_argument('--dataset_name', type=str, default='RTL', help="name of hardware design languages." )
+    parser.add_argument('--debug', type=lambda x: (str(x).lower() == 'true'), default=True, help='debug mode.')
 
     args_parsed = parser.parse_args(sys.argv[1:])
     cfg = Config(args_parsed)

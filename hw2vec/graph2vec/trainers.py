@@ -39,7 +39,7 @@ class BaseTrainer:
         elif self.config.model == "gin":
             self.model = GIN(self.config).to(self.config.device)
     
-        self.optimizer = optim.Adam(self.model.parameters(), lr=self.config.learning_rate, weight_decay=self.config.weight_decay)    
+        self.optimizer = optim.Adam(self.model.parameters(), lr=self.config.learning_rate)    
 
     def load_saved_model(self, path):
         model_path = Path(path)
@@ -80,20 +80,19 @@ class PairwiseGraphTrainer(BaseTrainer):
         self.min_test_loss = 1
 
         with open(str(cfg.pkl_path), 'rb') as f:
-            parser = pkl.load(f)
+            dataset = pkl.load(f)
       
-        if cfg.splitted == False:
-            parser.graph_pairs_train, parser.graph_pairs_test = parser.split_dataset(ratio=cfg.ratio, seed=cfg.seed, dataset=parser.graph_pairs)   
+        graph_pairs_train, graph_pairs_test = dataset.get_pairs()
         
-        # parser.print_data_statistics()
+        # dataset.print_data_statistics()
         self.train_pairs = []
         self.test_pairs = []
-        self.data = parser.graphs['all']
-        self.training_graph_count = parser.training_graph_count
-        self.testing_graph_count = parser.testing_graph_count
+        self.data = dataset.graphs['all']
+        self.training_graph_count = dataset.training_graph_count
+        self.testing_graph_count = dataset.testing_graph_count
 
-        train_list = parser.graph_pairs_train if not self.config.debug else parser.graph_pairs_train[:1000]
-        test_list = parser.graph_pairs_test if not self.config.debug else parser.graph_pairs_test[:1000]
+        train_list = graph_pairs_train if not self.config.debug else graph_pairs_train[:1000]
+        test_list = graph_pairs_test if not self.config.debug else graph_pairs_test[:1000]
         for pairs in train_list:
             self.train_pairs.append((self.data[pairs[0]], self.data[pairs[1]], pairs[2]))
         for pairs in test_list:
@@ -114,7 +113,7 @@ class PairwiseGraphTrainer(BaseTrainer):
         self.train_loader = DataLoader(train_data_list, batch_size=self.config.batch_size)
         self.test_loader  = DataLoader(test_data_list, batch_size=self.config.batch_size)
 
-        self.config.num_feature_dim = len(parser.node_labels)
+        self.config.num_feature_dim = len(dataset.node_labels)
 
         self.cos_sim = torch.nn.CosineSimilarity(dim=-1, eps=1e-08).to(self.config.device)
         self.cos_loss = torch.nn.CosineEmbeddingLoss(margin=0.5).to(self.config.device)
@@ -129,15 +128,10 @@ class PairwiseGraphTrainer(BaseTrainer):
                 graph1, graph2, labels = data[0].to(self.config.device), data[1].to(self.config.device), data[2].to(self.config.device)
                 self.model.train()
                 self.optimizer.zero_grad()
-                
-                # X1 = F.one_hot(graph1.x, num_classes=self.config.num_feature_dim).float()
-                # X2 = F.one_hot(graph2.x, num_classes=self.config.num_feature_dim).float()
-                X1 = graph1.x
-                X2 = graph2.x
 
                 start = time()
-                g_emb_1, _ = self.model(X1, graph1.edge_index, batch=graph1.batch)
-                g_emb_2, _ = self.model(X2, graph2.edge_index, batch=graph2.batch)
+                g_emb_1, _ = self.model(graph1.x, graph1.edge_index, batch=graph1.batch)
+                g_emb_2, _ = self.model(graph2.x, graph2.edge_index, batch=graph2.batch)
 
                 loss_train = self.cos_loss(g_emb_1, g_emb_2, labels)
                 end = time()
@@ -163,12 +157,9 @@ class PairwiseGraphTrainer(BaseTrainer):
                 
             self.model.eval()
 
-            X1 = F.one_hot(graph1.x, num_classes=self.config.num_feature_dim).float().detach()
-            X2 = F.one_hot(graph2.x, num_classes=self.config.num_feature_dim).float().detach()
-
             start = time()
-            g_emb_1, _ = self.model(X1, graph1.edge_index, batch=graph1.batch)
-            g_emb_2, _ = self.model(X2, graph2.edge_index, batch=graph2.batch)
+            g_emb_1, _ = self.model(graph1.x, graph1.edge_index, batch=graph1.batch)
+            g_emb_2, _ = self.model(graph2.x, graph2.edge_index, batch=graph2.batch)
 
             similarity = self.cos_sim(g_emb_1, g_emb_2)
             end = time()
@@ -281,13 +272,15 @@ class GraphTrainer(BaseTrainer):
         self.test_time = 0
 
         with open(str(cfg.pkl_path), 'rb') as f:
-            parser = pkl.load(f)
+            dataset = pkl.load(f)
         
-        self.train_graphs, self.test_graphs = parser.get_graphs()
+        self.train_graphs, self.test_graphs = dataset.get_graphs()
         self.training_labels = [data[2] for data in self.train_graphs]
         self.testing_labels = [data[2] for data in self.test_graphs]
         self.class_weights = torch.from_numpy(compute_class_weight('balanced', np.unique(self.training_labels), self.training_labels))
 
+        if self.config.debug:
+            self.train_graphs, self.test_graphs = self.train_graphs[:10], self.test_graphs[:10]
         print("Train on %d graphs, Test on %d graphs." % (len(self.train_graphs), len(self.test_graphs)))
         print("Class weights (Tj-free/Tj-in)", self.class_weights.detach().tolist())
 
