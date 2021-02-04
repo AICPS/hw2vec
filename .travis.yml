@@ -14,6 +14,8 @@ env:
   - COVERAGE_RCFILE=".coveragerc" PYLINTRC=".pylintrc"
 
 install:
+  - sudo add-apt-repository universe
+  - sudo apt update
   - sudo apt install graphviz
   - pip install pygraphviz
   - pip install -r requirements_dev.txt
