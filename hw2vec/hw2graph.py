@@ -79,6 +79,12 @@ class JsonGraphParser:
 
     def do_pickle_dataset(self):
         with open(self.cfg.pkl_path, 'wb') as f:
+            if self.cfg.debug and len(self.graph_pairs) is 0:
+                if 'train' in self.graphs and 'test' in self.graphs:
+                    self.graphs['train'] = self.graphs['train'][:100]
+                    self.graphs['test'] = self.graphs['test'][:100] 
+                elif 'all' in self.graphs:
+                    self.graphs['all'] = self.graphs['all'][:200]   
             pkl.dump(self, f)
 
     def read_node_labels(self, key):

@@ -137,27 +137,27 @@ def test_GNN4TJ():
     TROJAN = 1
     NON_TROJAN = 0
 
-    if cfg.pkl_path.exists() is False:
-        dataset = JsonGraphParser(cfg)
-        dataset.read_node_labels("")
+    
+    dataset = JsonGraphParser(cfg)
+    dataset.read_node_labels("")
 
-        for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"TjFree"), recursive=True):
-            folder_name = "%s/%s" % (Path(json_path).parent.parent.name, Path(json_path).parent.name)
+    for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"TjFree"), recursive=True):
+        folder_name = "%s/%s" % (Path(json_path).parent.parent.name, Path(json_path).parent.name)
 
-            hardware_graph = dataset.get_graph_from_json(json_path)
-            node_embeddings, name2idx, idx2name = dataset.get_node_embeddeings(hardware_graph)
-            edge_idxs = dataset.get_edge_idxs(hardware_graph, name2idx)
-            dataset.append_graph_data((node_embeddings, edge_idxs, NON_TROJAN, folder_name, idx2name))
+        hardware_graph = dataset.get_graph_from_json(json_path)
+        node_embeddings, name2idx, idx2name = dataset.get_node_embeddeings(hardware_graph)
+        edge_idxs = dataset.get_edge_idxs(hardware_graph, name2idx)
+        dataset.append_graph_data((node_embeddings, edge_idxs, NON_TROJAN, folder_name, idx2name))
 
-        for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"TjIn"), recursive=True):
-            folder_name = "%s/%s" % (Path(json_path).parent.parent.name, Path(json_path).parent.name)
+    for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"TjIn"), recursive=True):
+        folder_name = "%s/%s" % (Path(json_path).parent.parent.name, Path(json_path).parent.name)
 
-            hardware_graph = dataset.get_graph_from_json(json_path)
-            node_embeddings, name2idx, idx2name = dataset.get_node_embeddeings(hardware_graph)
-            edge_idxs = dataset.get_edge_idxs(hardware_graph, name2idx)
-            dataset.append_graph_data((node_embeddings, edge_idxs, TROJAN, folder_name, idx2name))
+        hardware_graph = dataset.get_graph_from_json(json_path)
+        node_embeddings, name2idx, idx2name = dataset.get_node_embeddeings(hardware_graph)
+        edge_idxs = dataset.get_edge_idxs(hardware_graph, name2idx)
+        dataset.append_graph_data((node_embeddings, edge_idxs, TROJAN, folder_name, idx2name))
 
-        dataset.do_pickle_dataset()
+    dataset.do_pickle_dataset()
 
     # initialize a graph trainer for graph classification on trojan classification
     trainer = GraphTrainer(cfg)
