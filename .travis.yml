@@ -26,6 +26,9 @@ install:
   - pip install --no-index torch-cluster -f https://pytorch-geometric.com/whl/torch-1.6.0+cpu.html
   - pip install --no-index torch-spline-conv -f https://pytorch-geometric.com/whl/torch-1.6.0+cpu.html
   - pip install torch-geometric
+  - pip install pyverilog
+  - pip install pyunpack
+  - pip install patool
 
 
 script:
