@@ -40,8 +40,8 @@ def test_GNN4TIP():
 
     args_parsed = parser.parse_args([])
     cfg = Config(args_parsed)
-    cfg.raw_dataset_path = Path('../data/IP-datasets/data_DFG').resolve()
-    cfg.pkl_path = Path('./gnn4iprtl.pkl').resolve()
+    cfg.raw_dataset_path = (Path('..')/"data"/"IP-datasets"/"data_DFG").resolve()
+    cfg.pkl_path = (Path('.')/'gnn4iprtl.pkl').resolve()
     cfg.epochs = 1
     cfg.debug = True
 
