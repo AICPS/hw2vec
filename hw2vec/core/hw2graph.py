@@ -8,13 +8,18 @@ from pyverilog.dataflow.dataflow_analyzer import VerilogDataflowAnalyzer as Data
 from pyverilog.dataflow.optimizer import VerilogDataflowOptimizer as DataflowOptimizer
 from pyverilog.dataflow.graphgen import VerilogGraphGenerator as GraphGenerator
 
+#Control flow analyzer
+import pyverilog.utils.util as util
+from pyverilog.controlflow.controlflow_analyzer import VerilogControlflowAnalyzer as ControlflowAnalyzer
+
+
 from json import dumps
 class VerilogParser:
     '''
         the only class that interfaces with pyverilog.
     ''' 
     #holds a graph_generator instance
-    def __init__(self, verilog_file, output_directory):
+    def __init__(self, verilog_file, output_directory, dfg=True):
         print("Verilog file", verilog_file)
         print("Output directory ", output_directory)
         self.output_directory = output_directory
@@ -192,11 +197,10 @@ class RTLDFGGenerator:
                 dataset_name = "complete_dataset"
                 os.chdir("../")
                 os.chdir("../")
-                #current_directory = os.path.dirname(os.path.abspath(__file__))  
-                current_directory = r"C:\Users\willi\OneDrive\Documents\Projects\GNN4TJ"
+                current_directory = os.path.dirname(os.path.abspath(__file__))  
                 for TJ in ["TjIn", "TjFree"]:
-                    #data_directory = f"{current_directory}/data/TJ-datasets/data_graphs/{dataset_name}/{TJ}"
-                    data_directory = f"{current_directory}/data_raw/{dataset_name}/{TJ}"
+                    data_directory = f"{current_directory}/data/TJ-datasets/data_graphs/{dataset_name}/{TJ}"
+                    #data_directory = f"{current_directory}/data_raw/{dataset_name}/{TJ}"
                     print("Reading all ", TJ, "data from ", data_directory, "\n")
                     data_list = [x[1] for x in os.walk(data_directory)]
                     if not data_list:
@@ -204,7 +208,8 @@ class RTLDFGGenerator:
                     for data_name in data_list[0]:
                         print("Benchmark: ", data_name)
                         input_directory = f"{data_directory}/{data_name}/topModule.v"
-                        output_directory = f"{current_directory}/MIGRATION_TEST/data_graphs/{dataset_name}/{TJ}/{data_name}/"
+                        output_directory = f"{current_directory}/data_graphs/{dataset_name}/{TJ}/{data_name}/"
+                        #output_directory = f"{current_directory}/MIGRATION_TEST/data_graphs/{dataset_name}/{TJ}/{data_name}/"
                         print(f'Outputting to : {output_directory}\n')
                         if not os.path.exists(f'{output_directory}'):
                             os.makedirs(os.path.dirname(f'{output_directory}'))  
@@ -251,11 +256,73 @@ class RTLCFGGenerator:
     '''
     def __init__(self, code_language="verilog"):
         if code_language == "verilog":
-            self.parser = VerilogParser()
+            #self.parser = VerilogParser()
+            optparser = OptionParser()
+            (options, args) = optparser.parse_args()
 
-    def generate(self):
-        pass
+            dataset_name = "complete_dataset"
+            os.chdir("../")
+            os.chdir("../")
+            current_directory = os.path.dirname(os.path.abspath(__file__))  
 
+            for TJ in ["TjIn", "TjFree"]:
+                #data_directory = f"{current_directory}/data/TJ-datasets/data_graphs/{dataset_name}/{TJ}"
+                data_directory = f"C:/Users/willi/OneDrive/Documents/Projects/GNN4TJ/data_raw/complete_dataset"
+                print("Reading all ", TJ, "data from ", data_directory, "\n")
+                data_list = [x[1] for x in os.walk(data_directory)]
+                print("DATALIST", data_list)
+                if not data_list:
+                        raise IOError("data not found in ", data_directory)
+                for data_name in data_list[1]:
+                    #input_directory = f"{current_directory}/data/data_HW/{dataset_name}/{circuit_name}/{data_name}/topModule.v"
+                    input_directory = f"{data_directory}/{TJ}/{data_name}/topModule.v"
+                    #output_directory = f"{current_directory}/data/data_DFG/{dataset_name}/{circuit_name}/{data_name}/"
+                    output_directory = f"{current_directory}/control-graphs/{data_name}"
+
+                    print(f'Outputting to : {output_directory}\n')
+                    if not os.path.exists(f'{output_directory}'):
+                        #os.makedirs(os.path.dirname(f'{output_directory}'))  
+                        #function call to generate cfg
+                        self.generate(input_directory,output_directory)
+                        
+                    print("------------------------------------------------------------------------")
+
+    #generate
+    def generate(self,verilog_file,output_directory,graph_format="json",no_label=False,search_target=[]):
+        print(f'VERILOG FILE: {verilog_file}')
+        analyzer = DataflowAnalyzer(verilog_file,"top")
+        analyzer.generate()
+
+        terms = analyzer.getTerms()
+        binddict = analyzer.getBinddict()
+
+        optimizer = DataflowOptimizer(terms, binddict)
+
+        optimizer.resolveConstant()
+        resolved_terms = optimizer.getResolvedTerms()
+        resolved_binddict = optimizer.getResolvedBinddict()
+        constlist = optimizer.getConstlist()
+        fsm_vars = tuple(['fsm', 'state', 'count', 'cnt', 'step', 'mode'] + search_target)
+
+        canalyzer = ControlflowAnalyzer("top", terms, binddict,
+                                        resolved_terms, resolved_binddict, constlist, fsm_vars)
+        fsms = canalyzer.getFiniteStateMachines()
+
+        '''NOTE
+        BUG: FSM Length 0, used GNN4TJ datasets
+        '''
+        print("VIEWING FSM's")
+        print("LENGTH OF FSM: ", len(fsms))
+        for signame, fsm in fsms.items():
+            print('# SIGNAL NAME: %s' % signame)
+            print('# DELAY CNT: %d' % fsm.delaycnt)
+            fsm.view()
+            fsm.tograph(filename=util.toFlatname(signame) + '.' +
+                            graph_format, nolabel=no_label)
+            loops = fsm.get_loop()
+            print('Loop')
+            for loop in loops:
+                print(loop)
 
 class NetlistCFGGenerator:
     '''
@@ -270,14 +337,19 @@ class NetlistCFGGenerator:
 
 #TODO: check FSM?
 
+#To be refactored
 def preprocess_verilog():
     # its going to example script: parse_verilog_2_graph.py
     # use case 1: 
     #import hw2graph.RTLDFGGenerator
-    parser = RTLDFGGenerator()
+    #parser = RTLDFGGenerator()
+    parser = RTLCFGGenerator()
+
+
     #parser.parse('''one or multiple RTLs''')
     #parser.export("some file name", type="json")
 
+#To be refactored
 if __name__ == "__main__":
     # This part will eventually goes to example script or test cases.
 
