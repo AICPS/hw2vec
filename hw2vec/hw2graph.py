@@ -1,9 +1,9 @@
 from optparse import OptionParser
 
 import pyverilog
-from pyverilog.dataflow.dataflow_analyzer import VerilogDataflowAnalyzer as DataflowAnalyzer
-from pyverilog.dataflow.optimizer import VerilogDataflowOptimizer as DataflowOptimizer
-from pyverilog.dataflow.graphgen import VerilogGraphGenerator as GraphGenerator
+from pyverilog.dataflow.dataflow_analyzer import VerilogDataflowAnalyzer as PyDataflowAnalyzer
+from pyverilog.dataflow.optimizer import VerilogDataflowOptimizer as PyDataflowOptimizer
+from pyverilog.dataflow.graphgen import VerilogGraphGenerator as PyGraphGenerator
 
 from json import dumps
 
@@ -153,26 +153,26 @@ class VerilogParser:
         the only class that interfaces with pyverilog.
     ''' 
     #holds a graph_generator instance
-    def __init__(self, verilog_file, output_directory):
-        print("Verilog file", verilog_file)
-        print("Output directory ", output_directory)
+    def __init__(self, verilog_file, output_directory, top_module, draw_graph=False):
+        print("Verilog file: ", verilog_file)
+        print("Output directory: ", output_directory)
         self.output_directory = output_directory
-        self.graph_generator = self._generate_graph(verilog_file)
+        self.graph_generator = self._generate_graph(verilog_file, top_module)
 
     #helper fcn to __init__
-    def _generate_graph(self, verilog_file):
-        dataflow_analyzer = DataflowAnalyzer(verilog_file, 'top')
+    def _generate_graph(self, verilog_file, top_module):
+        dataflow_analyzer = PyDataflowAnalyzer(verilog_file, top_module)
         dataflow_analyzer.generate()
         binddict = dataflow_analyzer.getBinddict()
         terms = dataflow_analyzer.getTerms()
         
-        dataflow_optimizer = DataflowOptimizer(terms, binddict)
+        dataflow_optimizer = PyDataflowOptimizer(terms, binddict)
         dataflow_optimizer.resolveConstant()
         resolved_terms = dataflow_optimizer.getResolvedTerms()
         resolved_binddict = dataflow_optimizer.getResolvedBinddict()
         constlist = dataflow_optimizer.getConstlist()
 
-        return GraphGenerator('top', terms, binddict, resolved_terms, 
+        return PyGraphGenerator(top_module, terms, binddict, resolved_terms, 
                             resolved_binddict, constlist, 
                             f'{self.output_directory}seperate_modules.pdf')
     
@@ -198,7 +198,7 @@ class VerilogParser:
         return checkParent in allParents
 
     #generate separate graph separate modules 
-    def graph_separate_modules(self,draw_graph=False):
+    def graph_separate_modules(self, draw_graph=False):
         # binddict with string keys
         signals = [str(bind) for bind in self.graph_generator.binddict]
 
@@ -233,50 +233,54 @@ class VerilogParser:
                     if not self._isChild(self.graph_generator.graph, label_to_node[label.replace('_', '.')], parent):
                         self.graph_generator.graph.add_edge(parent, label_to_node[label.replace('_', '.')])
             print(f'\rProgress : {num - deleted} / {len(self.graph_generator.graph.nodes())}', end='', flush=True)
-        print('\nThe subgraphs are merged.\n')
+        print('\nThe signals subgraphs are merged.\n')
 
         if draw_graph:
             print(f'Saving merged graph with {len(self.graph_generator.graph.nodes())} nodes as a pdf...')
-            self.graph_generator.draw(f'{self.output_directory}merged.pdf')
+            self.graph_generator.draw(f'{self.output_directory}merged_graph.pdf')
             print('The graphs are saved.\n')
 
     #export the graphs
-    def export_graphs(self):
-        root_nodes = [node for node in self.graph_generator.graph.nodes() if self.graph_generator.graph.in_degree(node) == 0]
-        print(f'Saving {len(root_nodes)} root nodes as a json...')
-        with open(f'{self.output_directory}root_nodes.json', 'w') as f:
-            f.write(dumps(root_nodes, indent=4))
-        print('List of root nodes saved in root_nodes.json.\n')
-        f.close()
-        
-        all_nodes = (self.graph_generator.graph.nodes())
-        print(f'Saving all {len(all_nodes)} nodes as a json...')
-        with open(f'{self.output_directory}all_nodes.json', 'w') as f:
-            f.write(dumps(all_nodes, indent=4))
-        print('List of nodes saved in all_nodes.json.\n')
-        f.close()
-        
-        all_edges = list()
-        for edge in self.graph_generator.graph.edges():
-            all_edges.append((edge[0], edge[1], edge.attr['label']))
-        print(f'Saving all {len(all_edges)} edges as a json...')
-        with open(f'{self.output_directory}all_edges.json', 'w') as f:
-            f.write(dumps(all_edges, indent=4))
-        print('List of edges is saved in all_edges.json.\n')
-        f.close()
-        
-        jsondict = {}
-        for node in self.graph_generator.graph.nodes():
-            jsondict[str(node)] = list()
-            for child in self.graph_generator.graph.successors(node):
-                edgeLabel = self.graph_generator.graph.get_edge(node, child).attr['label']
-                jsondict[str(node)].append((edgeLabel, str(child)))
-        print(f'Saving graph dictionary as a json...')
-        f = open(f'{self.output_directory}topModule.json', 'w')
-        jsonstr = dumps(jsondict, indent=4)
-        f.write(jsonstr)
-        f.close()
-        print('The Graph is saved as topModule.json.\n')
+    def export_graphs(self, output='graph'):
+        if (output=='roots'):
+            root_nodes = [node for node in self.graph_generator.graph.nodes() if self.graph_generator.graph.in_degree(node) == 0]
+            print(f'Saving {len(root_nodes)} root nodes as a json...')
+            with open(f'{self.output_directory}root_nodes.json', 'w') as f:
+                f.write(dumps(root_nodes, indent=4))
+            print('List of root nodes saved in root_nodes.json.\n')
+            f.close()
+            
+        elif (output=='nodes'):
+            all_nodes = (self.graph_generator.graph.nodes())
+            print(f'Saving all {len(all_nodes)} nodes as a json...')
+            with open(f'{self.output_directory}all_nodes.json', 'w') as f:
+                f.write(dumps(all_nodes, indent=4))
+            print('List of nodes saved in all_nodes.json.\n')
+            f.close()
+            
+        elif (output=='edges'):
+            all_edges = list()
+            for edge in self.graph_generator.graph.edges():
+                all_edges.append((edge[0], edge[1], edge.attr['label']))
+            print(f'Saving all {len(all_edges)} edges as a json...')
+            with open(f'{self.output_directory}all_edges.json', 'w') as f:
+                f.write(dumps(all_edges, indent=4))
+            print('List of edges is saved in all_edges.json.\n')
+            f.close()
+            
+        elif (output=='graph'):
+            jsondict = {}
+            for node in self.graph_generator.graph.nodes():
+                jsondict[str(node)] = list()
+                for child in self.graph_generator.graph.successors(node):
+                    edgeLabel = self.graph_generator.graph.get_edge(node, child).attr['label']
+                    jsondict[str(node)].append((edgeLabel, str(child)))
+            print(f'Saving graph dictionary as a json...')
+            f = open(f'{self.output_directory}topModule.json', 'w')
+            jsonstr = dumps(jsondict, indent=4)
+            f.write(jsonstr)
+            f.close()
+            print('The graph is saved as topModule.json.\n')
 
     #to be refactored
     def graph_input_dependencies(self,draw_graph=False):
@@ -314,67 +318,50 @@ class VerilogParser:
 
 class RTLDFGGenerator:
     '''
-        This generator generates DFG from RTL code.
+        This generator generates DFG from RTL (Register Transfer Level) Verilog code.
     '''
-    def __init__(self, code_language='verilog'):
+    def __init__(self, verilog_file, output_path, code_language='verilog', top_module='top', draw_graph=False):
         if code_language == "verilog":
-
-            optparser = OptionParser()
-            (options, args) = optparser.parse_args()
-
-            p = os.path.dirname(os.path.abspath(__file__))
-            sys.path.insert(0, os.path.dirname(p))
-            #default code below (will be removed as I refactor)
             
-            if len(args) != 1:
-                
-                dataset_name = "complete_dataset"
-                os.chdir("../")
-                os.chdir("../")
-                #current_directory = os.path.dirname(os.path.abspath(__file__))  
-                current_directory = r"C:\Users\willi\OneDrive\Documents\Projects\GNN4TJ"
-                for TJ in ["TjIn", "TjFree"]:
-                    #data_directory = f"{current_directory}/data/TJ-datasets/data_graphs/{dataset_name}/{TJ}"
-                    data_directory = f"{current_directory}/data_raw/{dataset_name}/{TJ}"
-                    print("Reading all ", TJ, "data from ", data_directory, "\n")
-                    data_list = [x[1] for x in os.walk(data_directory)]
-                    if not data_list:
-                        raise IOError("data not found in ", data_directory)
-                    for data_name in data_list[0]:
-                        print("Benchmark: ", data_name)
-                        input_directory = f"{data_directory}/{data_name}/topModule.v"
-                        output_directory = f"{current_directory}/MIGRATION_TEST/data_graphs/{dataset_name}/{TJ}/{data_name}/"
-                        print(f'Outputting to : {output_directory}\n')
-                        if not os.path.exists(f'{output_directory}'):
-                            os.makedirs(os.path.dirname(f'{output_directory}'))  
-                            self.parse_verilog_file(input_directory,output_directory)
-                            
-                        print("------------------------------------------------------------------------")
-                            
-            else:
-                if not os.path.exists(args[0]):
-                    raise IOError("file not found: " + args[0])
-                    
-                current_directory = os.path.dirname(os.path.abspath(__file__))    
-                input_directory = args[0]
-                print("Reading ", input_directory)
-                output_directory = f"{current_directory}/graphs/"
-                print(f'Outputting to : {output_directory}\n')
-                if not os.path.exists(f'{output_directory}'):
-                        os.makedirs(os.path.dirname(f'{output_directory}'))  
-                self.parse_verilog_file(input_directory, output_directory)
+            if not os.path.exists(verilog_file):
+                raise IOError("file not found: " + verilog_file)
+    
+            print("Reading ", verilog_file)
+            print(f'Outputting to : {output_path}\n')
+            if not os.path.exists(f'{output_path}'):
+                    os.makedirs(os.path.dirname(f'{output_path}'))  
+            self.generate_DFG(verilog_file, output_path, draw_graph)
+            
    
-    def parse_verilog_file(self, verilog_file, output_directory):
+    def generate_DFG(self, verilog_file, output_path, top_module='top', draw_graph=False):
 
-        verilog_parser = VerilogParser(verilog_file, output_directory)
-        verilog_parser.graph_separate_modules()
-        verilog_parser.merge_graphs()
-        verilog_parser.export_graphs()
-        #verilog_parser.graph_input_dependencies()
+        self.verilog_parser = VerilogParser(verilog_file, output_path, top_module, draw_graph)
+        self.verilog_parser.graph_separate_modules()
+        self.verilog_parser.merge_graphs()
+        self.verilog_parser.export_graphs(output='graph')
+    
+    def draw_DFG(self):
+        pass
+    
+    def draw_signals_DFG(self):
+        pass
+    
+    def export_nodes(self):
+        self.verilog_parser.export_graphs(output='nodes')
+    
+    def export_edges(self):
+        self.verilog_parser.export_graphs(output='edges')
+    
+    def export_root_nodes(self):
+        self.verilog_parser.export_graphs(output='roots')
+        
+    def check_dependecny(self):
+        self.verilog_parser.graph_input_dependencies()
+        
 
-class NetlistDFGGenerator:
+class GLNDFGGenerator:
     '''
-        This generator generates DFG from Netlist code.
+        This generator generates DFG from GLN (Gate-Level Netlist) Verilog code.
     '''
     def __init__(self, code_language="verilog"):
         if code_language == "verilog":
@@ -386,7 +373,7 @@ class NetlistDFGGenerator:
 
 class RTLCFGGenerator:
     '''
-        This generator generates the Control Flow Graph (CFG) from RTL verilog code.
+        This generator generates the Control Flow Graph (CFG) from RTL (Register Transfer Level) verilog code.
     '''
     def __init__(self, code_language="verilog"):
         if code_language == "verilog":
@@ -396,9 +383,9 @@ class RTLCFGGenerator:
         pass
 
 
-class NetlistCFGGenerator:
+class GLNCFGGenerator:
     '''
-        This generator generates CFG from Netlist code.
+        This generator generates CFG from GLN (Gate-Level Netlist) Verilog code.
     '''
     def __init__(self, code_language="verilog"):
         if code_language == "verilog":
@@ -407,15 +394,30 @@ class NetlistCFGGenerator:
     def generate(self):
         pass
 
-#TODO: check FSM?
 
-def preprocess_verilog():
-    # its going to example script: parse_verilog_2_graph.py
-    # use case 1: 
-    #import hw2graph.RTLDFGGenerator
-    parser = RTLDFGGenerator()
-    #parser.parse('''one or multiple RTLs''')
-    #parser.export("some file name", type="json")
+class PreprocessVerilog:
+    '''
+        This class comprise the preprocessing functions for Verilog files in RTL (Register Transfer Level) and GLN (Gate-Level Netlist).
+    '''
+    def __init__(self, code_language="verilog"):
+        if code_language == "verilog":
+            pass
+
+    def remove_underscores(self, input_file):
+        f = open(input_file, 'r')
+        s = f.read().replace('_', '')
+        f.close()
+        f = open(filename, 'w')
+        f.write(s)
+        f.close()
+
+    def flatten(self, input_path, output_path, top_module):
+        output_path = os.path.dirname(os.path.abspath(__file__))
+        with open(output_path+"/topModule.v", "wt") as outfile:
+            for verilog_file in glob(fr'{input_path}/*.v'):
+                with open(verilog_file, "rt") as infile:
+                    outfile.write(infile.read().replace(top_module, 'top'))
+        
 
 if __name__ == "__main__":
     # This part will eventually goes to example script or test cases.
