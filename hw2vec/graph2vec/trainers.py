@@ -284,9 +284,9 @@ class GraphTrainer(BaseTrainer):
         print("Train on %d graphs, Test on %d graphs." % (len(self.train_graphs), len(self.test_graphs)))
         print("Class weights (Tj-free/Tj-in)", self.class_weights.detach().tolist())
 
-        train_data_list = [Data(x=x, edge_index=edge_idx, y=torch.LongTensor([y]), idx=name2idx) for x, edge_idx, y, folder_name, name2idx in self.train_graphs]
+        train_data_list = [Data(x=x, edge_index=edge_idx, y=torch.LongTensor([y]), folder_name=folder_name, idx=name2idx) for x, edge_idx, y, folder_name, name2idx in self.train_graphs]
         self.train_loader = DataLoader(train_data_list, shuffle=True, batch_size=self.config.batch_size)
-        test_data_list = [Data(x=x, edge_index=edge_idx, y=torch.LongTensor([y]), idx=name2idx) for x, edge_idx, y, folder_name, name2idx in self.test_graphs]
+        test_data_list = [Data(x=x, edge_index=edge_idx, y=torch.LongTensor([y]), folder_name=folder_name, idx=name2idx) for x, edge_idx, y, folder_name, name2idx in self.test_graphs]
         self.test_loader = DataLoader(test_data_list, shuffle=True, batch_size=1)
 
         self.config.num_feature_dim = self.train_graphs[0][0].shape[1]
@@ -331,6 +331,7 @@ class GraphTrainer(BaseTrainer):
         outputs = []
         node_attns = []
         total_loss = 0
+        folder_names = []
         
         for i, data in enumerate(dataset): # iterate through graphs
             data.to(self.config.device)
@@ -352,6 +353,7 @@ class GraphTrainer(BaseTrainer):
                 node_attns.append(node_attn)
 
             labels += np.split(data.y.cpu().numpy(), len(data.y.cpu().numpy()))
+            folder_names += data.folder_name
 
         outputs = torch.cat(outputs).reshape(-1,2).detach()
         avg_loss = total_loss / (len(dataset))
@@ -360,12 +362,12 @@ class GraphTrainer(BaseTrainer):
         outputs_tensor = torch.FloatTensor(outputs).detach()
         preds = outputs_tensor.max(1)[1].type_as(labels_tensor).detach()
 
-        return avg_loss, labels_tensor, outputs_tensor, preds, node_attns
+        return avg_loss, labels_tensor, outputs_tensor, preds, node_attns, folder_names
 
     def evaluate(self, epoch_idx):
         start_time = time()
-        train_loss, train_labels, _, train_preds, train_node_attns = self.inference(self.train_loader)
-        test_loss, test_labels, _, test_preds, test_node_attns = self.inference(self.test_loader)
+        train_loss, train_labels, _, train_preds, train_node_attns, _ = self.inference(self.train_loader)
+        test_loss, test_labels, _, test_preds, test_node_attns, _ = self.inference(self.test_loader)
         self.test_time += (time() - start_time)
         train_tn, train_fp, train_fn, train_tp = confusion_matrix(train_labels, train_preds).ravel()
         test_tn, test_fp, test_fn, test_tp = confusion_matrix(test_labels, test_preds).ravel()

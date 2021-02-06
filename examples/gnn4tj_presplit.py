@@ -42,7 +42,7 @@ if __name__ == "__main__":
     parser.add_argument('--pkl_path', type=str, default='./hardware_cache.pkl', help="Path to hardware graphs for parsing.")
     parser.add_argument('--raw_dataset_path', type=str, default='../data/TJ-datasets/data_graphs/data_ready_FIXED/', help="Path to raw dataset for parsing if no pkl.")
     parser.add_argument('--embed_dim', type=int, default=2, help="The dimension of graph embeddings.")
-    parser.add_argument('--debug', type=lambda x: (str(x).lower() == 'true'), default=True, help='debug mode.')
+    parser.add_argument('--debug', type=lambda x: (str(x).lower() == 'true'), default=False, help='debug mode.')
 
     args_parsed = parser.parse_args(sys.argv[1:])
     cfg = Config(args_parsed)
@@ -114,6 +114,9 @@ if __name__ == "__main__":
     # do a final evaluation.
     trainer.evaluate(cfg.epochs)
 
+    # inspect the results in the testing set.
+    avg_loss, labels, outputs, preds, node_attns, fldr_names = trainer.inference(trainer.test_loader)
+    
 # from collections import Counter
 # def parse_attn_weights(node_attns, batches):
 
@@ -154,17 +157,3 @@ if __name__ == "__main__":
     # node_attns_test_proc = []
     # for i in tqdm(range(len(trainer.test_loader))):
     #     node_attns_test_proc += parse_attn_weights(test_node_attns[i], data)
-
-
-
-# else:
-#             # assuming the dataset hasn't been properly splited. 
-#             # 1) we will read all the labels from the nodes in dataset.root_path and build the dictionary of node labels.
-#             # 2) we will read hardware designs and assign labels for each of them.
-#             #   [root_path]/TjFree contains all hardware designs w/o a trojan.
-#             #   [root_path]/TjIn  contains all hardware designs w/ a trojan.
-#             # 3) we will perform a stratified split over the dataset.data
-
-#             dataset.read_node_labels("")
-#             dataset.read_hardware_designs("TjFree", 0, store_type="all")
-#             dataset.read_hardware_designs("TjIn", 1, store_type="all")
