@@ -10,6 +10,22 @@ We leverage [Pyverilog](https://github.com/PyHDI/Pyverilog) from PyHDI as part o
 General Pipeline Architecture is shown as below:
 ![](https://github.com/louisccc/hw2vec/blob/master/figures/pipeline.png?raw=true)
 
+# Directories Structure
+Directories structure (temporary) figure is shown below:
+![](https://github.com/louisccc/hw2vec/blob/master/figures/folder%20structure.png?raw=true)
+Library code are in hw2vec folder:<br>
+hw2vec/hw2graph.py: code for generating graph objects from hardware design.<br>
+hw2vec/graph2vec: code of graph training trainers and models.<br>
+<br>
+Use case examples are stored in examples folder:<br>
+examples/gnn4ip_netlist.py: gnn4ip script running on netlist dataset.<br>
+examples/gnn4ip_RTL.py: gnn4ip script running on RTL dataset.<br>
+examples/gnn4tj.py:gnn4tj script running on dataset which has not been splitted into training and testing dataset. <br>
+examples/gnn4tj_presplit.py: gnn4tj script running on dataset which has been splitted into training and testing dataset. <br>
+
+
+
+
 # To Get Started
 Before using hw2vec, we recommend users to have the following libraries installed: 
   * python >=3.6 (recommended)
