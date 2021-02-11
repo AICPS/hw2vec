@@ -1,0 +1,4 @@
+---
+device: "cuda" 
+raw_dataset_path: "../data/IP-datasets/data_DFG"
+pkl_path: "gnn4ipnetlist.pkl"
