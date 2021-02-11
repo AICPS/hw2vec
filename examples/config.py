@@ -32,7 +32,7 @@ class YamlConfig:
         self.pkl_path = data['pkl_path'] if ('pkl_path' in data and data['pkl_path']!=None ) else "./hardware_cache.pkl"
         self.raw_dataset_path = data['raw_dataset_path'] if ('raw_dataset_path' in data and data['raw_dataset_path']!=None ) else "../data/TJ-datasets/data_graphs/data_ready_FIXED/"
         self.embed_dim = data['embed_dim'] if ('embed_dim' in data and data['embed_dim']!=None ) else 2
-        self.debug = data['debug'] if ('debug' in data and data['debug']!=None ) else True
+        self.debug = data['debug'] if ('debug' in data and data['debug']!=None ) else False
         #TODO: debug and recursive type, lambda?
 
         self.raw_dataset_path = Path(self.raw_dataset_path).resolve()
