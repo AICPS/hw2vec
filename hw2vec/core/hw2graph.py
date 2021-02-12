@@ -266,7 +266,6 @@ class RTLCFGGenerator:
             current_directory = os.path.dirname(os.path.abspath(__file__))  
 
             for TJ in ["TjIn", "TjFree"]:
-                #data_directory = f"{current_directory}/data/TJ-datasets/data_graphs/{dataset_name}/{TJ}"
                 data_directory = f"C:/Users/willi/OneDrive/Documents/Projects/GNN4TJ/data_raw/complete_dataset"
                 print("Reading all ", TJ, "data from ", data_directory, "\n")
                 data_list = [x[1] for x in os.walk(data_directory)]
@@ -274,21 +273,21 @@ class RTLCFGGenerator:
                 if not data_list:
                         raise IOError("data not found in ", data_directory)
                 for data_name in data_list[1]:
-                    #input_directory = f"{current_directory}/data/data_HW/{dataset_name}/{circuit_name}/{data_name}/topModule.v"
                     input_directory = f"{data_directory}/{TJ}/{data_name}/topModule.v"
-                    #output_directory = f"{current_directory}/data/data_DFG/{dataset_name}/{circuit_name}/{data_name}/"
                     output_directory = f"{current_directory}/control-graphs/{data_name}"
 
                     print(f'Outputting to : {output_directory}\n')
                     if not os.path.exists(f'{output_directory}'):
                         #os.makedirs(os.path.dirname(f'{output_directory}'))  
                         #function call to generate cfg
-                        self.generate(input_directory,output_directory)
+                        self.generate_dot_files(input_directory,output_directory)
                         
                     print("------------------------------------------------------------------------")
 
-    #generate
-    def generate(self,verilog_file,output_directory,graph_format="json",no_label=False,search_target=[]):
+    #generates the PNGs and DOT Files
+    #under revision
+    #figure out doc to control where the files are stored
+    def generate_dot_files(self,verilog_file,output_directory,graph_format="png",no_label=False,search_target=[]):
         print(f'VERILOG FILE: {verilog_file}')
         analyzer = DataflowAnalyzer(verilog_file,"top")
         analyzer.generate()
@@ -320,9 +319,12 @@ class RTLCFGGenerator:
             fsm.tograph(filename=util.toFlatname(signame) + '.' +
                             graph_format, nolabel=no_label)
             loops = fsm.get_loop()
+            
             print('Loop')
             for loop in loops:
                 print(loop)
+
+    def parse_dot_files():
 
 class NetlistCFGGenerator:
     '''
