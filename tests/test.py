@@ -26,6 +26,7 @@ def test_GNN4IP():
     cfg.pkl_path = (Path('.')/'gnn4ip.pkl').resolve()
     cfg.epochs = 1
     cfg.debug = True
+    cfg.batch_size = 1
 
     SIMILAR = 1
     DISSIMILAR = -1
@@ -34,9 +35,13 @@ def test_GNN4IP():
     dataset.read_node_labels("DFG")
 
     trunk = []
+    count = 0
     for hw_cat_idx, hardware_root_path in enumerate(glob("%s/**" % str(cfg.raw_dataset_path/"DFG"), recursive=False)):
-        
+        if count > 10:
+            break
         for hardware_folder_path in glob("%s/**/topModule.json" % hardware_root_path, recursive=True):
+            if count > 10:
+                break
             folder_name = "%s/%s" % (Path(hardware_folder_path).parent.parent.name, Path(hardware_folder_path).parent.name)
 
             G = dataset.get_graph_from_json(hardware_folder_path)
@@ -47,6 +52,7 @@ def test_GNN4IP():
             dataset.training_graph_count += 1
 
             dataset.append_graph_data((X, edge_idx, folder_name))
+            count = count + 1
 
     for idx_graph_a, idx_graph_b in itertools.combinations(range(len(trunk)), 2):
         if trunk[idx_graph_a] == trunk[idx_graph_b]:
@@ -74,6 +80,7 @@ def test_GNN4IP_yaml():
     cfg.pkl_path = (Path('.')/'gnn4ip.pkl').resolve()
     cfg.epochs = 1
     cfg.debug = True
+    cfg.batch_size = 1
 
     SIMILAR = 1
     DISSIMILAR = -1
@@ -82,9 +89,14 @@ def test_GNN4IP_yaml():
     dataset.read_node_labels("DFG")
 
     trunk = []
+
+    count = 0
     for hw_cat_idx, hardware_root_path in enumerate(glob("%s/**" % str(cfg.raw_dataset_path/"DFG"), recursive=False)):
-        
+        if count > 10:
+            break
         for hardware_folder_path in glob("%s/**/topModule.json" % hardware_root_path, recursive=True):
+            if count > 10:
+                break
             folder_name = "%s/%s" % (Path(hardware_folder_path).parent.parent.name, Path(hardware_folder_path).parent.name)
 
             G = dataset.get_graph_from_json(hardware_folder_path)
@@ -95,6 +107,7 @@ def test_GNN4IP_yaml():
             dataset.training_graph_count += 1
 
             dataset.append_graph_data((X, edge_idx, folder_name))
+            count = count + 1
 
     for idx_graph_a, idx_graph_b in itertools.combinations(range(len(trunk)), 2):
         if trunk[idx_graph_a] == trunk[idx_graph_b]:
