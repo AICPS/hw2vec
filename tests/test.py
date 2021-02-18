@@ -76,8 +76,6 @@ def test_GNN4IP_yaml():
     cfg = Config(cfg_helper.config_path)
 
     cfg.device = 'cpu'
-    cfg.raw_dataset_path = (Path('..')/"data"/"IP-dataset").resolve()
-    cfg.pkl_path = (Path('.')/'gnn4ip.pkl').resolve()
     cfg.epochs = 1
     cfg.debug = True
     cfg.batch_size = 1
@@ -122,81 +120,98 @@ def test_GNN4IP_yaml():
     trainer.train()
     trainer.evaluate(cfg.epochs)
 
-# def test_GNN4TJ():
-#     parser = ArgumentParser(description='scripts for generating datasets.', formatter_class=RawTextHelpFormatter)
-#     parser.add_argument('--learning_rate', default=0.001, type=float, help='The initial learning rate for GCN.')
-#     parser.add_argument('--seed', type=int, default=random.randint(0,2**32), help='Random seed.')
-#     parser.add_argument('--epochs', type=int, default=200, help='Number of epochs to train.')
-#     parser.add_argument('--weight_decay', type=float, default=5e-4, help='Weight decay (L2 loss on parameters).')
-#     parser.add_argument('--hidden', type=int, default=200, help='Number of hidden units.')
-#     parser.add_argument('--dropout', type=float, default=0.5, help='Dropout rate (1 - keep probability).')
-#     parser.add_argument('--nclass', type=int, default=8, help="The number of classes for node.")
-#     parser.add_argument('--recursive', type=lambda x: (str(x).lower() == 'true'), default=True, help='Recursive loading scenegraphs')
-#     parser.add_argument('--batch_size', type=int, default=4, help='Number of graphs in a batch.')
-#     parser.add_argument('--device', type=str, default="cpu", help='The device to run on models (cuda or cpu) cpu in default.')
-#     parser.add_argument('--model', type=str, default="gcn", help="Model to be used intrinsically.")
-#     parser.add_argument('--num_layers', type=int, default=5, help="Number of layers in the neural network.")
-#     parser.add_argument('--hidden_dim', type=int, default=32, help="Hidden dimension in GIN.")
-#     parser.add_argument('--test_step', type=int, default=10, help="The interval between mini evaluation along the training process.")
-#     parser.add_argument('--pooling_type', type=str, default="sagpool", help="Graph pooling type.")
-#     parser.add_argument('--readout_type', type=str, default="max", help="Readout type.")
-#     parser.add_argument('--splitted', type=bool, default=False, help="Indicating whether the target path has been splitted.")
-#     parser.add_argument('--ratio', type=float, default=0.7, help="Dataset splitting ratio")
-#     parser.add_argument('--poolratio', type=float, default=0.8, help="Ratio for graph pooling.")
-#     parser.add_argument('--pkl_path', type=str, default='./hardware_cache.pkl', help="Path to hardware graphs for parsing.")
-#     parser.add_argument('--raw_dataset_path', type=str, default='../data/TJ-datasets/data_graphs/data_ready_FIXED/', help="Path to raw dataset for parsing if no pkl.")
-#     parser.add_argument('--embed_dim', type=int, default=2, help="The dimension of graph embeddings.")
-#     parser.add_argument('--debug', type=lambda x: (str(x).lower() == 'true'), default=True, help='debug mode.')
+def test_GNN4TJ():
+    cfg = Config({})
+    cfg.raw_dataset_path = (Path('..')/"data"/"TJ-dataset").resolve()
+    cfg.pkl_path = (Path('.')/'gnn4tj.pkl').resolve()
+    cfg.epochs = 1
+    cfg.debug = True
+    cfg.batch_size = 1
 
-#     args_parsed = parser.parse_args([])
-#     cfg = Config(args_parsed)
-#     cfg.device = 'cuda'
-#     cfg.raw_dataset_path = Path('../data/TJ-datasets/data_graphs/HTD-test1').resolve()
-#     cfg.pkl_path = Path('./htd-test1.pkl').resolve()
-#     cfg.epochs = 1
-#     cfg.debug = True
-
-#     '''
-#         Commands for running the experiments:
-#             Exp 1: python .\gnn4tj.py --device cuda --raw_dataset_path ..\data\TJ-datasets\data_graphs\HTD-test1 --pkl_path htd-test1.pkl
-#             Exp 2: python .\gnn4tj.py --device cuda --raw_dataset_path ..\data\TJ-datasets\data_graphs\HTD-test2 --pkl_path htd-test2.pkl
-#             Exp 3: python .\gnn4tj.py --device cuda --raw_dataset_path ..\data\TJ-datasets\data_graphs\data_ready_FIXED --pkl_path dataready-fixed.pkl
-#             Exp 4: python .\gnn4tj.py --device cuda --raw_dataset_path ..\data\TJ-datasets\data_graphs\complete_dataset --pkl_path completedataset.pkl
-#     '''
-
-#     TROJAN = 1
-#     NON_TROJAN = 0
+    TROJAN = 1
+    NON_TROJAN = 0
 
     
-#     dataset = JsonGraphParser(cfg)
-#     dataset.read_node_labels("")
+    dataset = JsonGraphParser(cfg)
+    dataset.read_node_labels("")
 
-#     for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"TjFree"), recursive=True):
-#         folder_name = "%s/%s" % (Path(json_path).parent.parent.name, Path(json_path).parent.name)
+    for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"TjFree"), recursive=True):
+        folder_name = "%s/%s" % (Path(json_path).parent.parent.name, Path(json_path).parent.name)
 
-#         hardware_graph = dataset.get_graph_from_json(json_path)
-#         node_embeddings, name2idx, idx2name = dataset.get_node_embeddeings(hardware_graph)
-#         edge_idxs = dataset.get_edge_idxs(hardware_graph, name2idx)
-#         dataset.append_graph_data((node_embeddings, edge_idxs, NON_TROJAN, folder_name, idx2name))
+        hardware_graph = dataset.get_graph_from_json(json_path)
+        node_embeddings, name2idx, idx2name = dataset.get_node_embeddeings(hardware_graph)
+        edge_idxs = dataset.get_edge_idxs(hardware_graph, name2idx)
+        dataset.append_graph_data((node_embeddings, edge_idxs, NON_TROJAN, folder_name, idx2name))
 
-#     for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"TjIn"), recursive=True):
-#         folder_name = "%s/%s" % (Path(json_path).parent.parent.name, Path(json_path).parent.name)
+    for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"TjIn"), recursive=True):
+        folder_name = "%s/%s" % (Path(json_path).parent.parent.name, Path(json_path).parent.name)
 
-#         hardware_graph = dataset.get_graph_from_json(json_path)
-#         node_embeddings, name2idx, idx2name = dataset.get_node_embeddeings(hardware_graph)
-#         edge_idxs = dataset.get_edge_idxs(hardware_graph, name2idx)
-#         dataset.append_graph_data((node_embeddings, edge_idxs, TROJAN, folder_name, idx2name))
+        hardware_graph = dataset.get_graph_from_json(json_path)
+        node_embeddings, name2idx, idx2name = dataset.get_node_embeddeings(hardware_graph)
+        edge_idxs = dataset.get_edge_idxs(hardware_graph, name2idx)
+        dataset.append_graph_data((node_embeddings, edge_idxs, TROJAN, folder_name, idx2name))
 
-#     dataset.do_pickle_dataset()
+    dataset.do_pickle_dataset()
 
-#     # initialize a graph trainer for graph classification on trojan classification
-#     trainer = GraphTrainer(cfg)
+    # initialize a graph trainer for graph classification on trojan classification
+    trainer = GraphTrainer(cfg)
 
-#     # initialize the model according to cfg. 
-#     trainer.build()
+    # initialize the model according to cfg. 
+    trainer.build()
 
-#     # train the model. 
-#     trainer.train()
+    # train the model. 
+    trainer.train()
 
-#     # do a final evaluation.
-#     trainer.evaluate(cfg.epochs)
+    # do a final evaluation.
+    trainer.evaluate(cfg.epochs)
+
+def test_GNN4TJ_yaml():
+    parser = ArgumentParser(description="scripts for generating datasets", formatter_class=RawTextHelpFormatter)
+    parser.add_argument('--config_path', default='../examples/configs/config_tj.yaml', help='path to the config file.')
+    
+    args_parsed = parser.parse_args([])
+    cfg_helper = ConfigHelper(args_parsed)
+
+    cfg = Config(cfg_helper.config_path)
+
+    cfg.device = 'cpu'
+    cfg.epochs = 1
+    cfg.debug = True
+    cfg.batch_size = 1
+
+    TROJAN = 1
+    NON_TROJAN = 0
+
+    
+    dataset = JsonGraphParser(cfg)
+    dataset.read_node_labels("")
+
+    for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"TjFree"), recursive=True):
+        folder_name = "%s/%s" % (Path(json_path).parent.parent.name, Path(json_path).parent.name)
+
+        hardware_graph = dataset.get_graph_from_json(json_path)
+        node_embeddings, name2idx, idx2name = dataset.get_node_embeddeings(hardware_graph)
+        edge_idxs = dataset.get_edge_idxs(hardware_graph, name2idx)
+        dataset.append_graph_data((node_embeddings, edge_idxs, NON_TROJAN, folder_name, idx2name))
+
+    for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"TjIn"), recursive=True):
+        folder_name = "%s/%s" % (Path(json_path).parent.parent.name, Path(json_path).parent.name)
+
+        hardware_graph = dataset.get_graph_from_json(json_path)
+        node_embeddings, name2idx, idx2name = dataset.get_node_embeddeings(hardware_graph)
+        edge_idxs = dataset.get_edge_idxs(hardware_graph, name2idx)
+        dataset.append_graph_data((node_embeddings, edge_idxs, TROJAN, folder_name, idx2name))
+
+    dataset.do_pickle_dataset()
+
+    # initialize a graph trainer for graph classification on trojan classification
+    trainer = GraphTrainer(cfg)
+
+    # initialize the model according to cfg. 
+    trainer.build()
+
+    # train the model. 
+    trainer.train()
+
+    # do a final evaluation.
+    trainer.evaluate(cfg.epochs)
