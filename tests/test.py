@@ -21,7 +21,6 @@ class ConfigHelper:
 
 def test_GNN4IP():
     cfg = Config({})
-    cfg.device="cuda"
     cfg.raw_dataset_path = (Path('..')/"data"/"IP-dataset").resolve()
     cfg.pkl_path = (Path('.')/'gnn4ip.pkl').resolve()
     cfg.epochs = 1
@@ -76,6 +75,7 @@ def test_GNN4IP_yaml():
 
     cfg = Config(cfg_helper.config_path)
 
+    cfg.device = 'cpu'
     cfg.raw_dataset_path = (Path('..')/"data"/"IP-dataset").resolve()
     cfg.pkl_path = (Path('.')/'gnn4ip.pkl').resolve()
     cfg.epochs = 1
