@@ -9,17 +9,19 @@ from hw2vec.graph2vec.trainers import *
 from hw2vec.hw2graph import *
 from config import *
 
-class Config:
+class ConfigHelper:
     '''Configuration and Argument Parser for script to train the IP piracy detection.'''
     def __init__(self, args_parsed):
         for arg_name in vars(args_parsed):
             self.__dict__[arg_name] = getattr(args_parsed, arg_name)
-        self.raw_dataset_path = Path(self.raw_dataset_path).resolve()
-        self.pkl_path = Path(self.pkl_path).resolve()
+        # self.raw_dataset_path = Path(self.raw_dataset_path).resolve()
+        # self.pkl_path = Path(self.pkl_path).resolve()
+        self.config_path = Path(self.config_path).resolve()
 
 
 if __name__ == "__main__":   
-    # parser = ArgumentParser(description='scripts for generating datasets.', formatter_class=RawTextHelpFormatter)
+    parser = ArgumentParser(description='scripts for generating datasets.', formatter_class=RawTextHelpFormatter)
+    parser.add_argument('--config_path', default='./configs/config_tj.yaml', help='path to the config file.')
     # parser.add_argument('--learning_rate', default=0.001, type=float, help='The initial learning rate for GCN.')
     # parser.add_argument('--seed', type=int, default=random.randint(0,2**32), help='Random seed.')
     # parser.add_argument('--epochs', type=int, default=200, help='Number of epochs to train.')
@@ -44,9 +46,10 @@ if __name__ == "__main__":
     # parser.add_argument('--embed_dim', type=int, default=2, help="The dimension of graph embeddings.")
     # parser.add_argument('--debug', type=lambda x: (str(x).lower() == 'true'), default=True, help='debug mode.')
 
-    # args_parsed = parser.parse_args(sys.argv[1:])
-    # cfg = Config(args_parsed)
-    cfg = YamlConfig("config.yaml")
+    args_parsed = parser.parse_args(sys.argv[1:])
+    cfg_helper = ConfigHelper(args_parsed)
+
+    cfg = Config(cfg_helper.config_path)
 
     '''
         Commands for running the experiments:

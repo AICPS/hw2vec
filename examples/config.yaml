@@ -1,4 +1,0 @@
----
-device: "cuda" 
-raw_dataset_path: "../data/TJ-datasets/data_graphs/GCF-test1"
-pkl_path: "gcf-test1.pkl"
