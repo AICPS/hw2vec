@@ -7,7 +7,7 @@ from argparse import ArgumentParser, RawTextHelpFormatter
 from pathlib import Path
 from hw2vec.graph2vec.trainers import *
 from hw2vec.hw2graph import *
-from config import *
+from hw2vec.graph2vec.config import *
 
 class ConfigHelper:
     '''Configuration and Argument Parser for script to train the IP piracy detection.'''

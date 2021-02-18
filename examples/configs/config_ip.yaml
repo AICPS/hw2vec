@@ -1,0 +1,4 @@
+---
+device: "cuda" 
+raw_dataset_path: "../data/IP-dataset"
+pkl_path: "ip.pkl"

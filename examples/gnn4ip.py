@@ -8,16 +8,18 @@ from pathlib import Path
 from hw2vec.graph2vec.trainers import *
 from hw2vec.hw2graph import *
 import itertools
-from config import *
+from hw2vec.graph2vec.config import *
 
 
-class Config:
+class ConfigHelper:
     '''Configuration and Argument Parser for script to train the IP piracy detection.'''
     def __init__(self, args_parsed):
         for arg_name in vars(args_parsed):
             self.__dict__[arg_name] = getattr(args_parsed, arg_name)
-        self.raw_dataset_path = Path(self.raw_dataset_path).resolve()
-        self.pkl_path = Path(self.pkl_path).resolve()
+        # self.raw_dataset_path = Path(self.raw_dataset_path).resolve()
+        # self.pkl_path = Path(self.pkl_path).resolve()
+        self.config_path = Path(self.config_path).resolve()
+
 
 # # test cases for netlist
 # def test_c432(trainer):
@@ -166,7 +168,8 @@ class Config:
 
 
 if __name__ == "__main__":
-    # parser = ArgumentParser(description="scripts for generating datasets", formatter_class=RawTextHelpFormatter)
+    parser = ArgumentParser(description="scripts for generating datasets", formatter_class=RawTextHelpFormatter)
+    parser.add_argument('--config_path', default='./configs/config_ip.yaml', help='path to the config file.')
     # parser.add_argument('--input_path', type=str, default="../input/synthesis_data/lane-change/", help="Path to code directory.")
     # parser.add_argument('--learning_rate', default=0.001, type=float, help='The initial learning rate for GCN.')
     # parser.add_argument('--seed', type=int, default=random.randint(0,2**32), help='Random seed.')
@@ -193,7 +196,10 @@ if __name__ == "__main__":
 
     # args_parsed = parser.parse_args(sys.argv[1:])
     # cfg = Config(args_parsed)
-    cfg = YamlConfig("config.yaml")
+    args_parsed = parser.parse_args(sys.argv[1:])
+    cfg_helper = ConfigHelper(args_parsed)
+
+    cfg = Config(cfg_helper.config_path)
 
     '''
         Commands for running the experiments:
@@ -206,11 +212,11 @@ if __name__ == "__main__":
     
     if cfg.pkl_path.exists() is False:
         dataset = JsonGraphParser(cfg)
-        dataset.read_node_labels("Obfuscated")
+        dataset.read_node_labels("DFG")
             
         trunk = []
         # import pdb; pdb.set_trace()
-        for hw_cat_idx, hardware_root_path in enumerate(glob("%s/**" % str(cfg.raw_dataset_path/"Obfuscated"), recursive=False)):
+        for hw_cat_idx, hardware_root_path in enumerate(glob("%s/**" % str(cfg.raw_dataset_path/"DFG"), recursive=False)):
             # print("parsing %s" %str(hardware_root_path))
             
             for hardware_folder_path in glob("%s/**/topModule.json" % hardware_root_path, recursive=True):
