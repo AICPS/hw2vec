@@ -29,6 +29,7 @@ install:
   - pip install pyverilog
   - pip install pyunpack
   - pip install patool
+  - pip install PyYAML
 
 
 script:
