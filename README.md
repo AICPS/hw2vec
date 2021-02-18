@@ -54,6 +54,8 @@ $ conda install graphviz pygraphviz -c alubbock
 $ pip install pyverilog
 $ pip install pyunpack
 $ pip install patool
+
+$ pip install PyYaml
 ```
 
 To install PyTorch Geometric, simply follow the instructions [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html).
