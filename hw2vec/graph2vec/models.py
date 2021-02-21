@@ -1,6 +1,3 @@
-'''
-    copy from tnn4ip
-'''
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -59,13 +56,9 @@ class GCN(nn.Module):
 
     def forward(self, x, edge_index, batch=None):
         ''' graphs_in_batch is a list of graph instances; '''
-        x, attn_weights = self.embed_graph(x, edge_index, batch=batch)
-        return F.log_softmax(x, dim=1), attn_weights 
-        # TODO: put softmax in trainer instead. e.g model = nn.Sequential(GCN, softmax)
-        #return x, attn_weights
-'''
-    copy from gin.py
-'''
+        return self.embed_graph(x, edge_index, batch=batch)
+
+
 class GIN(nn.Module):
     
     def __init__(self, config):
