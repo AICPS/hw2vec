@@ -5,11 +5,12 @@ from pyverilog.dataflow.dataflow_analyzer import VerilogDataflowAnalyzer as PyDa
 from pyverilog.dataflow.optimizer import VerilogDataflowOptimizer as PyDataflowOptimizer
 from pyverilog.dataflow.graphgen import VerilogGraphGenerator as PyGraphGenerator
 from pyverilog.controlflow.controlflow_analyzer import VerilogControlflowAnalyzer as PyControlflowAnalyzer
-import pyverilog.utils.util as util
 
+import pyverilog.utils.util as util
 import pydot
 
 from json import dumps
+from collections import defaultdict
 
 import os, sys
 sys.path.append(os.path.dirname(sys.path[0]))
@@ -24,6 +25,7 @@ from sklearn.model_selection import train_test_split
 from glob import glob
 
 from hw2vec.graph2vec.trainers import *
+
 
 
 class JsonGraphParser:
@@ -380,7 +382,7 @@ class RTLCFGGenerator:
         This generator generates the Control Flow Graph (CFG) from RTL verilog code.
     '''
     def __init__(self, code_language="verilog"):
-        if code_language == "verilog":
+        if code_language == "verilogg":
             #self.parser = VerilogParser()
             optparser = OptionParser()
             (options, args) = optparser.parse_args()
@@ -455,26 +457,51 @@ class RTLCFGGenerator:
             for loop in loops:
                 print(loop)
 
-    def parse_dot_files(self, input_directory):
+    def parse_dot_file(self, input_directory):
+        def default_val():
+            return []
         graph = pydot.graph_from_dot_file(input_directory)[0]
+
         nodes = [node.get_name() for node in graph.get_node_list()]
+        root_nodes = [node.get_name() for node in graph.get_node_list() if node.obj_dict['parent_graph'] == None]
         edges = [[edge.get_source(),edge.get_destination(),edge.obj_dict['attributes']['label']] for edge in graph.get_edge_list()]
+        topModule = defaultdict(default_val) #key: node, val: list of out going edges
 
-        print(nodes)
-        print(edges)
+        for edge in edges:
+            if edge[2] == 'None':
+                topModule[edge[0]].append("")
+            else:
+                topModule[edge[0]].append(edge[2])
 
-
-        print(f'Saving all {len(nodes)} nodes as a json...')
+        print(f'Saving all {len(nodes)} nodes as a json file')
         with open('C:/Users/willi/OneDrive/Documents/Projects/hw2vec/hw2vec/all_nodes.json', 'w') as f:
             f.write(dumps(nodes, indent=4))
         print('List of nodes saved in all_nodes.json.\n')
         f.close()
 
-        print(f'Saving all {len(edges)} edges as a json')
+        print(f'Saving all {len(edges)} edges as a json file')
         with open('C:/Users/willi/OneDrive/Documents/Projects/hw2vec/hw2vec/all_edges.json', 'w') as f:
             f.write(dumps(edges, indent=4))
-        print('List of nodes saved in all_edges.json.\n')
+        print('List of edges saved in all_edges.json.\n')
         f.close()
+
+        print(f'Saving all {len(root_nodes)} nodes as a json file')
+        with open('C:/Users/willi/OneDrive/Documents/Projects/hw2vec/hw2vec/root_nodes.json', 'w') as f:
+            f.write(dumps(root_nodes, indent=4))
+        print('List of root nodes saved in root_nodes.json.\n')
+        f.close()
+
+        print(f'Saving all {len(topModule)} nodes and their outgoing edges as a json file')
+        with open('C:/Users/willi/OneDrive/Documents/Projects/hw2vec/hw2vec/topModule.json', 'w') as f:
+            f.write(dumps(topModule, indent=4))
+        print('List of nodes with outgoing edges saved in topModule.json.\n')
+        f.close()
+
+
+
+    #clean up dot and associated files generated for each verilog file
+    def cleanup_dot_file(self):
+        pass
 
 class GLNCFGGenerator:
     '''
@@ -515,5 +542,5 @@ class PreprocessVerilog:
 if __name__ == "__main__":
     # This part will eventually goes to example script or test cases.
     
-
+    
     preprocess_verilog()
