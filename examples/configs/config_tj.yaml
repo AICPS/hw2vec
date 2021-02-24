@@ -1,4 +1,0 @@
----
-device: "cuda" 
-raw_dataset_path: "../data/TJ-dataset"
-pkl_path: "tj.pkl"
