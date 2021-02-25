@@ -61,7 +61,7 @@ $ pip install -r requirements.txt
 
 
 # Example Use Cases (only contains training part for now)
-## GNN4IP: IP piracy detection (clone detection) in hardware design
+## GNN4TJ: Hardware Trojan Detection in RTL/Gate-Level Netlist using Graph Learning
 ### Problem Formulation
 (missing in gnn4tj.md)
 
