@@ -28,7 +28,7 @@ class Config:
         self.ratio = list_of_args['ratio'] if ('ratio' in list_of_args and list_of_args['ratio']!=None ) else 0.7
         self.poolratio = list_of_args['poolratio'] if ('poolratio' in list_of_args and list_of_args['poolratio']!=None ) else 0.8
         self.pkl_path = list_of_args['pkl_path'] if ('pkl_path' in list_of_args and list_of_args['pkl_path']!=None ) else "./hardware_cache.pkl"
-        self.raw_dataset_path = list_of_args['raw_dataset_path'] if ('raw_dataset_path' in list_of_args and list_of_args['raw_dataset_path']!=None ) else "../data/TJ-datasets/data_graphs/data_ready_FIXED/"
+        self.raw_dataset_path = list_of_args['raw_dataset_path'] if ('raw_dataset_path' in list_of_args and list_of_args['raw_dataset_path']!=None ) else "../data/TJ-datasets"
         self.embed_dim = list_of_args['embed_dim'] if ('embed_dim' in list_of_args and list_of_args['embed_dim']!=None ) else 2
         self.debug = list_of_args['debug'] if ('debug' in list_of_args and list_of_args['debug']!=None ) else False
 

@@ -60,10 +60,38 @@ $ pip install -r requirements.txt
 ```
 
 
-# Dataset
-We obtain the dataset from a famous trojan [benchmark](http://www.trust-hub.org/benchmarks/trojan). We manually downloaded all the avaialable dataset in RTL level into [./input](https://github.com/louisccc/hard_hard_graph/tree/master/input) folder. 
-Running the command"
-```python
-python combine_dataset.py
+# Example Use Cases (only contains training part for now)
+## GNN4IP: IP piracy detection (clone detection) in hardware design
+### Problem Formulation
+(missing in gnn4tj.md)
+
+### Dataset
+We obtain the dataset from a famous trojan [benchmark](https://www.trust-hub.org/benchmarks/trojan). <br>
+(maybe still need description)
+
+### Training
+After generating graphs from hardware code, we can train our graph model. The example script is in "hw2vec/examples" folder.
+```sh
+$ cd examples
 ```
-will extract all data instances in the folder and store them into one combined dataset folder.
+To train a model on a dataset in folder "hw2vec/data/TJ-dataset" with default configurations defined in "hw2vec/hw2vec/graph2vec/config.py", specify the configuration file path and run the script by running the following command:
+```sh
+$ python gnn4tj.py --config_path ./example_config.yaml
+```
+
+## GNN4IP: IP piracy detection (clone detection) in hardware design
+### Problem Formulation
+In this work, we want to develop a model to detect IP piracy in hardware design. In other word, we want to develop a model to check similarity between two Verilog code and determine if they are for the same hardware design or not. In order to do that, we need to create two batch of samples; clone pair, and non-clone pair. The clone pair is two Verilog code that are similar and represent the same hardware design while the non-clone pair are a pair of two code that are for entirely different designs. We have gathered a dataset of veriog assignments and all samples in a assignments are clone pair while two codes from different assignment are considered as a non-clone pair.
+
+### Dataset
+(description of dataset)
+
+### Training
+After generating graphs from hardware code, we can train our graph model. The example script is in "hw2vec/examples" folder.
+```sh
+$ cd examples
+```
+To train a model on a dataset in folder "hw2vec/data/IP-dataset" with default configurations defined in "hw2vec/hw2vec/graph2vec/config.py", please first modify the "hw2vec/examples/example_config.yaml" file. Change arguments "raw_dataset_path" to "../data/IP-dataset" and "pkl_path" to "ip.pkl". Then specify the configuration file path and run the script by running the following command:
+```sh
+$ python gnn4ip.py --config_path ./example_config.yaml
+```
