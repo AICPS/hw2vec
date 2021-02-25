@@ -27,41 +27,38 @@ examples/gnn4tj_presplit.py: gnn4tj script running on dataset which has been spl
 
 
 # To Get Started
-Before using hw2vec, we recommend users to have the following libraries installed: 
-  * python >=3.6 (recommended)
-  * pytorch>= 1.5
-  * pyverilog 
-  * PyTorch Geometric >= 1.5
+Before using hw2vec, we recommend users to set up the environment by following the steps below:
 
-To setup an Python env users can follow this: 
+To setup an anaconda working environment: 
 ```sh
-1. conda create --name [your working environment name] python=3.6
-2. conda activate [your working environment name]
-```
-
-To install PyTorch 1.5.0 follow the instructions under "Quick Start Locally" [here](http://pytorch.org/).
-
-Here is a quick guide for setting up an anaconda working environment:
-```sh
+$ conda create --name [your working environment name] python=3.6
 $ conda activate [your working environment name]
-$ pip install -r requirements.txt
 ```
+To install PyTorch and PyTorch Geometric (cuda version is 10.2):
+```sh
+$ conda install pytorch==1.6.0 torchvision==0.7.0 cudatoolkit=10.2 -c pytorch
+$ pip install --no-index torch-scatter -f https://pytorch-geometric.com/whl/torch-1.6.0+cu102.html
+$ pip install --no-index torch-sparse -f https://pytorch-geometric.com/whl/torch-1.6.0+cu102.html
+$ pip install --no-index torch-cluster -f https://pytorch-geometric.com/whl/torch-1.6.0+cu102.html
+$ pip install --no-index torch-spline-conv -f https://pytorch-geometric.com/whl/torch-1.6.0+cu102.html
+$ pip install torch-geometric
+```
+If you are using a different version, please refer to the instructions [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html).
 
-To run [Pyverilog](https://github.com/PyHDI/Pyverilog), we use anaconda3 as primary working environment.
+To use [Pyverilog](https://github.com/PyHDI/Pyverilog), we need to install the package and its supporting packages.
 ```sh
 $ conda install -c conda-forge iverilog
-$ conda install graphviz pygraphviz -c alubbock
+$ conda install graphviz
+$ conda install -c alubbock pygraphviz
 $ pip install pyverilog
 $ pip install pyunpack
 $ pip install patool
-
-$ pip install PyYaml
+```
+Also some libraries used in our code needed to be installed:
+```sh
+$ pip install -r requirements.txt
 ```
 
-To install PyTorch Geometric, simply follow the instructions [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html).
-
-# Directories Structure 
-TO be finished. 
 
 # Dataset
 We obtain the dataset from a famous trojan [benchmark](http://www.trust-hub.org/benchmarks/trojan). We manually downloaded all the avaialable dataset in RTL level into [./input](https://github.com/louisccc/hard_hard_graph/tree/master/input) folder. 
