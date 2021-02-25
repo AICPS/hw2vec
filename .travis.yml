@@ -3,6 +3,7 @@ language: python
 notifications:
   email:
     - shihyuay@uci.edu
+    - qingronz@uci.edu
 
 os:
   - linux
@@ -29,8 +30,6 @@ install:
   - pip install pyverilog
   - pip install pyunpack
   - pip install patool
-  - pip install PyYAML
-
 
 script:
   - cd ./tests
