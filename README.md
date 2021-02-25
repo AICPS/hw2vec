@@ -1,30 +1,19 @@
-# HW2Vec: A Python-based Design Automation Library for Embedding Hardware Designs
+# HW2Vec: A Python-based Hardware Designs Embedding Tool for Hardware Security
 [![Build Status](https://travis-ci.com/louisccc/hw2vec.svg?branch=master)](https://travis-ci.com/github/louisccc/hw2vec) [![GitHub license](https://img.shields.io/github/license/Sujit-O/pykg2vec.svg)](https://github.com/Sujit-O/pykg2vec/blob/master/LICENSE)
 
-This repo is a collection of the following two projects:
-1. Hardware Trojan Detection in RTL/Gate-Level Netlist using Graph Learning (GNN4TJ)
-2. IP Piracy detection (clone detection) in hardware design using graph learning (GNN4IP)
+HW2vec contains the tools and source code we used for our previous research projects. In this repo, we collect our previous codebases and standardize the pipeline and use-cases and hope that this tool can be helpful in researchers in hardware security field and drive the research progress in this field. The two previous research projects are 1) Hardware Trojan Detection in RTL/Gate-Level Netlist using Graph Learning (GNN4TJ), 2) IP Piracy Detection in hardware design using graph learning (GNN4IP), published in DATE2021 and DAC2021, respectively. In this repo, we leverage [Pyverilog](https://github.com/PyHDI/Pyverilog) from PyHDI as part of our graph extraction pipeline.
 
-We leverage [Pyverilog](https://github.com/PyHDI/Pyverilog) from PyHDI as part of our graph extraction pipeline. It has capabilities to extract the data-flow and control-flow graphs from verilog code.
+The architecture of hw2vec is as follows:
+- **hw2vec/hw2graph.py**: code for generating graph objects from hardware design.
+- **hw2vec/graph2vec**: code of graph training trainers and models.
+- Use case examples are stored in examples folder:<br>
+  - **examples/gnn4ip_netlist.py**: gnn4ip script running on netlist dataset.
+  - **examples/gnn4ip_RTL.py**: gnn4ip script running on RTL dataset.
+  - **examples/gnn4tj.py**: gnn4tj script running on dataset which has not been splitted into training and testing dataset.
+  - **examples/gnn4tj_presplit.py**: gnn4tj script running on dataset which has been splitted into training and testing dataset.
 
 General Pipeline Architecture is shown as below:
 ![](https://github.com/louisccc/hw2vec/blob/master/figures/pipeline.png?raw=true)
-
-# Directories Structure
-Directories structure (temporary) figure is shown below:
-![](https://github.com/louisccc/hw2vec/blob/master/figures/folder%20structure.png?raw=true)
-Library code are in hw2vec folder:<br>
-hw2vec/hw2graph.py: code for generating graph objects from hardware design.<br>
-hw2vec/graph2vec: code of graph training trainers and models.<br>
-<br>
-Use case examples are stored in examples folder:<br>
-examples/gnn4ip_netlist.py: gnn4ip script running on netlist dataset.<br>
-examples/gnn4ip_RTL.py: gnn4ip script running on RTL dataset.<br>
-examples/gnn4tj.py:gnn4tj script running on dataset which has not been splitted into training and testing dataset. <br>
-examples/gnn4tj_presplit.py: gnn4tj script running on dataset which has been splitted into training and testing dataset. <br>
-
-
-
 
 # To Get Started
 Before using hw2vec, we recommend users to set up the environment by following the steps below:
