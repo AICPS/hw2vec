@@ -16,38 +16,34 @@ General Pipeline Architecture is shown as below:
 ![](https://github.com/louisccc/hw2vec/blob/master/figures/pipeline.png?raw=true)
 
 # To Get Started
-Before using hw2vec, we recommend users to set up the environment by following the steps below:
+We recommend our potential users to use [Anaconda](https://www.anaconda.com/) as the virtual environment. The requirments for hw2vec is as follows,
+- python >= 3.6 
+- torch == 1.6.0
+- torch_teometric == 1.6.1
+- pygraphviz
+- [Pyverilog](https://github.com/PyHDI/Pyverilog)
+- packages in requirements.txt
 
-To setup an anaconda working environment: 
+Our recommended command sequence is as follows, 
 ```sh
-$ conda create --name [your working environment name] python=3.6
-$ conda activate [your working environment name]
-```
-To install PyTorch and PyTorch Geometric (cuda version is 10.2):
-```sh
-$ conda install pytorch==1.6.0 torchvision==0.7.0 cudatoolkit=10.2 -c pytorch
-$ pip install --no-index torch-scatter -f https://pytorch-geometric.com/whl/torch-1.6.0+cu102.html
-$ pip install --no-index torch-sparse -f https://pytorch-geometric.com/whl/torch-1.6.0+cu102.html
-$ pip install --no-index torch-cluster -f https://pytorch-geometric.com/whl/torch-1.6.0+cu102.html
-$ pip install --no-index torch-spline-conv -f https://pytorch-geometric.com/whl/torch-1.6.0+cu102.html
-$ pip install torch-geometric
-```
-If you are using a different version, please refer to the instructions [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html).
-
-To use [Pyverilog](https://github.com/PyHDI/Pyverilog), we need to install the package and its supporting packages.
-```sh
-$ conda install -c conda-forge iverilog
-$ conda install graphviz
-$ conda install -c alubbock pygraphviz
+$ conda create --name hw2vec python=3.6
+$ conda activate hw2vec
+$ sudo add-apt-repository universe
+$ sudo apt update
+$ sudo apt install graphviz
+$ python -m pip install pygraphviz
+$ conda install pytorch==1.6.0 torchvision==0.7.0 cudatoolkit=10.1 -c pytorch
+$ python -m pip install --no-index torch-scatter -f https://pytorch-geometric.com/whl/torch-1.6.0+cu101.html
+$ python -m pip install --no-index torch-sparse -f https://pytorch-geometric.com/whl/torch-1.6.0+cu101.html
+$ python -m pip install --no-index torch-cluster -f https://pytorch-geometric.com/whl/torch-1.6.0+cu101.html
+$ python -m pip install --no-index torch-spline-conv -f https://pytorch-geometric.com/whl/torch-1.6.0+cu101.html
+$ python -m pip install torch-geometric==1.6.1
 $ pip install pyverilog
 $ pip install pyunpack
 $ pip install patool
+$ python -m pip install -r requirements.txt
 ```
-Also some libraries used in our code needed to be installed:
-```sh
-$ pip install -r requirements.txt
-```
-
+This set of commands assumes you to have cuda10.1 in your local and you are using linux. Please refer to the installation guides of [torch](https://pytorch.org/) and [pytorch_geometric](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html) if you have different cuda settings. If installing pygraphviz in windows, please refer this [issue](https://github.com/pygraphviz/pygraphviz/issues/58) for more information.
 
 # Example Use Cases (only contains training part for now)
 ## GNN4TJ: Hardware Trojan Detection in RTL/Gate-Level Netlist using Graph Learning
