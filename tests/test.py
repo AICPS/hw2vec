@@ -68,17 +68,20 @@ def test_GNN4IP():
 
 def test_GNN4IP_yaml():
     parser = ArgumentParser(description="scripts for generating datasets", formatter_class=RawTextHelpFormatter)
-    parser.add_argument('--config_path', default='../examples/configs/config_ip.yaml', help='path to the config file.')
+    parser.add_argument('--config_path', default='../examples/example_config.yaml', help='path to the config file.')
     
     args_parsed = parser.parse_args([])
-    cfg_helper = ConfigHelper(args_parsed)
+    args={}
+    args['config_path'] = Path(getattr(args_parsed, 'config_path')).resolve()
 
-    cfg = Config(cfg_helper.config_path)
+    cfg = Config(args['config_path'])
 
     cfg.device = 'cpu'
     cfg.epochs = 1
     cfg.debug = True
     cfg.batch_size = 1
+    cfg.raw_dataset_path = (Path('..')/"data"/"IP-dataset").resolve()
+    cfg.pkl_path = (Path('.')/'gnn4ip.pkl').resolve()
 
     SIMILAR = 1
     DISSIMILAR = -1
@@ -167,7 +170,7 @@ def test_GNN4TJ():
 
 def test_GNN4TJ_yaml():
     parser = ArgumentParser(description="scripts for generating datasets", formatter_class=RawTextHelpFormatter)
-    parser.add_argument('--config_path', default='../examples/configs/config_tj.yaml', help='path to the config file.')
+    parser.add_argument('--config_path', default='../examples/example_config.yaml', help='path to the config file.')
     
     args_parsed = parser.parse_args([])
     cfg_helper = ConfigHelper(args_parsed)
