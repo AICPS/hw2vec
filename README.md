@@ -33,9 +33,9 @@ $ python -m pip install --no-index torch-sparse -f https://pytorch-geometric.com
 $ python -m pip install --no-index torch-cluster -f https://pytorch-geometric.com/whl/torch-1.6.0+cu101.html
 $ python -m pip install --no-index torch-spline-conv -f https://pytorch-geometric.com/whl/torch-1.6.0+cu101.html
 $ python -m pip install torch-geometric==1.6.1
-$ pip install pyverilog
-$ pip install pyunpack
-$ pip install patool
+$ python -m pip install pyverilog
+$ python -m pip install pyunpack
+$ python -m pip install patool
 $ python -m pip install -r requirements.txt
 ```
 This set of commands assumes you to have cuda10.1 in your local and you are using linux. Please refer to the installation guides of [torch](https://pytorch.org/) and [pytorch_geometric](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html) if you have different cuda settings. If installing pygraphviz in windows, please refer this [issue](https://github.com/pygraphviz/pygraphviz/issues/58) for more information.
