@@ -8,7 +8,7 @@ The architecture of hw2vec is as follows:
 - **hw2vec/graph2vec**: code of graph training trainers and models.
 
 General Pipeline Architecture is shown as below:
-![](https://github.com/louisccc/hw2vec/blob/master/figures/pipeline.png?raw=true)
+![]https://github.com/louisccc/hw2vec/blob/master/figures/pipeline_add%20visual.jpg?raw=true)
 
 # To Get Started
 We recommend our potential users to use [Anaconda](https://www.anaconda.com/) as the virtual environment. The requirments for hw2vec is as follows,
