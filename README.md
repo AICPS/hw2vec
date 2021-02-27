@@ -55,9 +55,9 @@ The sample code for this use case is examples/gnn4tj.py. The related research pa
 To run this use case, use the script examples/gnn4tj.py and the downloaded dataset (data/TJ-dataset). To train a model on a dataset, we provide the following command sequence.
 ```sh
 $ cd examples
-$ python gnn4tj.py --config_path ./example_config.yaml
+$ python gnn4tj.py
 ```
-You can try to adjust the configuration (example_config.yaml) to play with the model's hyperparameter.
+You can try to adjust the configuration (example_gnn4tj.yaml) to play with the model's hyperparameter.
 ```python
 ---
 learning_rate: 0.001 # The initial learning rate for the model.
@@ -90,11 +90,9 @@ The sample code for this use case is examples/gnn4ip.py and examples/gnn4ip_RTL.
 To run this use case, use the script examples/gnn4tj.py and the downloaded dataset (data/IP-dataset). To train a model on a dataset, we provide the following command sequence.
 ```sh
 $ cd examples
-$ python gnn4ip.py --config_path ./example_config.yaml
+$ python gnn4ip.py
 ```
-To train a model on a dataset in folder "hw2vec/data/IP-dataset" with default configurations defined in "hw2vec/hw2vec/graph2vec/config.py", please first modify the "hw2vec/examples/example_config.yaml" file. Change arguments "raw_dataset_path" to "../data/IP-dataset" and "pkl_path" to "ip.pkl". 
-
-You can try to adjust the configuration (example_config.yaml) to play with the model's hyperparameter.
+You can try to adjust the configuration (example_gnn4ip.yaml) to play with the model's hyperparameter.
 ```python
 ---
 learning_rate: 0.001 # The initial learning rate for the model.
@@ -115,8 +113,8 @@ pooling_type: "sagpool" # Graph pooling type.
 readout_type: "max" # Readout type.
 rati0: 0.8 # Dataset splitting ratio
 poolratio: 0.75 # Ratio for graph pooling.
-raw_dataset_path: "../data/TJ-dataset" # Path to raw dataset for parsing if no precache.
-pkl_path: "tj.pkl" # Path to hardware graphs for parsing.
+raw_dataset_path: "../data/IP-dataset" # Path to raw dataset for parsing if no precache.
+pkl_path: "ip.pkl" # Path to hardware graphs for parsing.
 embed_dim: 2 # The dimension of graph embeddings.
 debug: False # Debug mode.
 ```

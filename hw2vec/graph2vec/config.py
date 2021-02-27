@@ -1,9 +1,7 @@
 import yaml
-import io
 import os, sys
 sys.path.append(os.path.dirname(sys.path[0]))
 import random
-
 from pathlib import Path
 
 class Config:
@@ -39,7 +37,8 @@ class Config:
     def __init__(self, args):
         if isinstance(args, dict) :
             self.internal_init(args)
-        elif isinstance(args, Path):
-            with open(args, 'r') as f:
+        elif isinstance(args, str):
+            yaml_path = Path(args).resolve()
+            with open(yaml_path, 'r') as f:
                 data = yaml.safe_load(f)
             self.internal_init(data)    
