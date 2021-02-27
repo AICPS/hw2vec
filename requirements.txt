@@ -11,3 +11,4 @@ pyyaml==5.4.1
 pyverilog
 pyunpack
 patool
+pathlib

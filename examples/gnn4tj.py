@@ -9,7 +9,7 @@ TROJAN = 1
 NON_TROJAN = 0
 
 if __name__ == "__main__":
-    cfg = Config("./example_config.yaml")
+    cfg = Config("./example_gnn4tj.yaml")
 
     if cfg.pkl_path.exists() is False:
         dataset = JsonGraphParser(cfg)
