@@ -60,6 +60,7 @@ class GNN4IP:
             dataset.read_node_labels("DFG")
                 
             trunk = []
+
             for hw_cat_idx, hardware_root_path in enumerate(glob("%s/**" % str(self.cfg.raw_dataset_path/"DFG"), recursive=False)):
                 
                 for hardware_folder_path in glob("%s/**/topModule.json" % hardware_root_path, recursive=True):

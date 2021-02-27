@@ -11,7 +11,7 @@ from hw2vec.app import GNN4TJ, GNN4IP
 
 def test_GNN4IP():
     cfg = Config({})
-    cfg.raw_dataset_path = (Path('..')/"data"/"IP-dataset").resolve()
+    cfg.raw_dataset_path = (Path('..')/"tests"/"data"/"IP-dataset").resolve()
     cfg.pkl_path = (Path('.')/'gnn4ip.pkl').resolve()
     cfg.epochs = 1
     cfg.debug = True
@@ -28,7 +28,7 @@ def test_GNN4IP_yaml():
     cfg.epochs = 1
     cfg.debug = True
     cfg.batch_size = 1
-    cfg.raw_dataset_path = (Path('..')/"data"/"IP-dataset").resolve()
+    cfg.raw_dataset_path = (Path('..')/"tests"/"data"/"IP-dataset").resolve()
     cfg.pkl_path = (Path('.')/'gnn4ip.pkl').resolve()
     app = GNN4IP(cfg)
     app.parse_from_json()
@@ -38,7 +38,7 @@ def test_GNN4IP_yaml():
 
 def test_GNN4TJ():
     cfg = Config({})
-    cfg.raw_dataset_path = (Path('..')/"data"/"TJ-dataset").resolve()
+    cfg.raw_dataset_path = (Path('..')/"tests"/"data"/"TJ-dataset").resolve()
     cfg.pkl_path = (Path('.')/'gnn4tj.pkl').resolve()
     cfg.epochs = 1
     cfg.debug = True
