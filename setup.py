@@ -20,7 +20,7 @@ setuptools.setup(
     name='hw2vec',
     version=VERSION,
     author="Shih-Yuan Yu, Rozhin Yasaei, Qingrong Zhou, Tommy Nguyen, Mohammad Abdullah Al Faruque",
-    author_email="sujitchhetri@gmail.com",
+    author_email="shihyuay@uci.edu",
     description="HW2Vec: A Python-based Hardware Designs Embedding Tool for Hardware Security",
     long_description=long_description,
     long_description_content_type="text/markdown",
