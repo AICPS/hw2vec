@@ -257,11 +257,12 @@ class VerilogParser:
         return graph_gen
 
     #export the graphs
-    def export_graphs(self, output='graph'):
+    def export_graphs(self, output_dir, output='graph'):
+        output_dir = str(output_dir)
         if (output=='roots'):
             root_nodes = [node for node in self.graph_generator.graph.nodes() if self.graph_generator.graph.in_degree(node) == 0]
             print(f'Saving {len(root_nodes)} root nodes as a json...')
-            with open(f'{self.output_directory}root_nodes.json', 'w') as f:
+            with open(f'{output_dir}root_nodes.json', 'w') as f:
                 f.write(dumps(root_nodes, indent=4))
             print('List of root nodes saved in root_nodes.json.\n')
             f.close()
@@ -269,7 +270,7 @@ class VerilogParser:
         elif (output=='nodes'):
             all_nodes = (self.graph_generator.graph.nodes())
             print(f'Saving all {len(all_nodes)} nodes as a json...')
-            with open(f'{self.output_directory}all_nodes.json', 'w') as f:
+            with open(f'{output_dir}all_nodes.json', 'w') as f:
                 f.write(dumps(all_nodes, indent=4))
             print('List of nodes saved in all_nodes.json.\n')
             f.close()
@@ -280,7 +281,7 @@ class VerilogParser:
             for edge in self.graph_generator.graph.edges():
                 all_edges.append((edge[0], edge[1], edge.attr['label']))
             print(f'Saving all {len(all_edges)} edges as a json...')
-            with open(f'{self.output_directory}all_edges.json', 'w') as f:
+            with open(f'{output_dir}all_edges.json', 'w') as f:
                 f.write(dumps(all_edges, indent=4))
             print('List of edges is saved in all_edges.json.\n')
             f.close()
@@ -294,7 +295,7 @@ class VerilogParser:
                     edgeLabel = self.graph_generator.graph.get_edge(node, child).attr['label']
                     jsondict[str(node)].append((edgeLabel, str(child)))
             print(f'Saving graph dictionary as a json...')
-            f = open(f'{self.output_directory}topModule.json', 'w')
+            f = open(f'{output_dir}/topModule.json', 'w')
             jsonstr = dumps(jsondict, indent=4)
             f.write(jsonstr)
             f.close()
@@ -302,26 +303,50 @@ class VerilogParser:
             return jsondict
 
 
-
 class RTLDFGGenerator:
     '''
         This generator generates DFG from RTL (Register Transfer Level) Verilog code.
     '''
-    def __init__(self, verilog_file, output_path, code_language='verilog', top_module='top', draw_graph=False):
-        if code_language == "verilog":
-            if not os.path.exists(verilog_file):
-                raise IOError("file not found: " + verilog_file)
+    def __init__(self, output_path, code_language='verilog', top_module='top', draw_graph=False):
+        self.output_path = output_path
+        self.code_language='verilog'
+        self.top_module = 'top'
+        self.draw_graph = False
+
+        # if code_language == "verilog":
+        # self.generate_DFG(verilog_file, output_path, top_module, draw_graph)
+
+    def process(self, verilog_path):
+        '''
+            parse the hw code to graph object
+        '''
+        if not verilog_path.exists():
+            raise IOError("file not found: " + verilog_path)
+        print("Reading ", verilog_path)
+        # self.DFG_gen = VerilogParser(verilog_path, self.output_path, self.top_module, self.draw_graph)
+        return VerilogParser(verilog_path, self.output_path, self.top_module, self.draw_graph)
     
-            print("Reading ", verilog_file)
-            print(f'Outputting to : {output_path}\n')
-            if not os.path.exists(f'{output_path}'):
-                    print("Error: The output path doesn't exist.") 
-            self.generate_DFG(verilog_file, output_path, top_module, draw_graph)
-            
-   
-    def generate_DFG(self, verilog_file, output_path, top_module='top', draw_graph=False):
-        self.DFG_gen = VerilogParser(verilog_file, output_path, top_module, draw_graph)
-        self.DFG_gen.export_graphs(output='graph')
+    def process_batch(self, verilog_dir, file_name):
+        ''' This function processs graphs in batch '''
+        graphs = []
+        for verilog_path in glob("%s/**/%s" % (verilog_dir, file_name), recursive=True):
+            graphs.append(VerilogParser(verilog_path, self.output_path, self.top_module, self.draw_graph))
+        return graphs
+
+    def export_json(self, graph, output_dir): # TODO: need to support a graph batch
+        '''
+            export the graph/graphs in self.DFG_gen to json
+        '''
+        
+        print(f'Outputting to : {output_dir}\n')
+        if not output_dir.exists():
+            raise IOError("Error: The output path doesn't exist.") # TODO: should create a new dir
+        graph.export_graphs(output_dir, output='graph')
+
+    # This function has been divided into process/process_batch and export_json functions
+    # def generate_DFG(self, verilog_file, output_path, top_module='top', draw_graph=False):
+    #     self.DFG_gen = VerilogParser(verilog_file, output_path, top_module, draw_graph)
+    #     self.DFG_gen.export_graphs(output='graph')
     
     def draw_DFG(self):
         pass
