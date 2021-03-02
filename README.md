@@ -1,14 +1,19 @@
+<<<<<<< HEAD
 # HW2Vec: A Python-based Design Automation Library for Embedding Hardware Designs
 [![Build Status](https://travis-ci.com/louisccc/hw2vec.svg?branch=master)](https://travis-ci.com/github/louisccc/hw2vec) [![GitHub license](https://img.shields.io/github/license/Sujit-O/pykg2vec.svg)](https://github.com/Sujit-O/pykg2vec/blob/master/LICENSE)
+=======
+# HW2Vec: A Python-based Hardware Designs Embedding Tool for Hardware Security
+[![Build Status](https://travis-ci.com/louisccc/hw2vec.svg?branch=master)](https://travis-ci.com/github/louisccc/hw2vec) [![GitHub license](https://img.shields.io/github/license/Sujit-O/pykg2vec.svg)](https://github.com/Sujit-O/pykg2vec/blob/master/LICENSE) ![PyPI version](https://badge.fury.io/py/hw2vec.svg)
+>>>>>>> master
 
-This repo is a collection of the following two projects:
-1. Hardware Trojan Detection in RTL/Gate-Level Netlist using Graph Learning (GNN4TJ)
-2. IP Piracy detection (clone detection) in hardware design using graph learning (GNN4IP)
+HW2vec contains the tools and source code we used for our previous research projects. In this repo, we collect our previous codebases and standardize the pipeline and use-cases and hope that this tool can be helpful in researchers in hardware security field and drive the research progress in this field. The two previous research projects are 1) Hardware Trojan Detection in RTL/Gate-Level Netlist using Graph Learning (GNN4TJ), 2) IP Piracy Detection in hardware design using graph learning (GNN4IP), published in DATE2021 and DAC2021, respectively. In this repo, we leverage [Pyverilog](https://github.com/PyHDI/Pyverilog) from PyHDI as part of our graph extraction pipeline.
 
-We leverage [Pyverilog](https://github.com/PyHDI/Pyverilog) from PyHDI as part of our graph extraction pipeline. It has capabilities to extract the data-flow and control-flow graphs from verilog code.
+The architecture of hw2vec is as follows:
+- **hw2vec/hw2graph.py**: code for generating graph objects from hardware design.
+- **hw2vec/graph2vec**: code of graph training trainers and models.
 
 General Pipeline Architecture is shown as below:
-![](https://github.com/louisccc/hw2vec/blob/master/figures/pipeline.png?raw=true)
+![](https://github.com/louisccc/hw2vec/blob/master/figures/pipeline_add%20visual.jpg?raw=true)
 
 # Directories Structure
 Directories structure (temporary) figure is shown below:
@@ -27,44 +32,117 @@ examples/gnn4tj_presplit.py: gnn4tj script running on dataset which has been spl
 
 
 # To Get Started
-Before using hw2vec, we recommend users to have the following libraries installed: 
-  * python >=3.6 (recommended)
-  * pytorch>= 1.5
-  * pyverilog 
-  * PyTorch Geometric >= 1.5
+We recommend our potential users to use [Anaconda](https://www.anaconda.com/) as the virtual environment. The requirments for hw2vec is as follows,
+- python >= 3.6 
+- torch == 1.6.0
+- torch_teometric == 1.6.1
+- pygraphviz
 
-To setup an Python env users can follow this: 
+You can install hw2vec from pypi or cloning our repo. Here we provide one recommended command sequence, 
 ```sh
-1. conda create --name [your working environment name] python=3.6
-2. conda activate [your working environment name]
+$ conda create --name hw2vec python=3.6
+$ conda activate hw2vec
+$ python -m pip install hw2vec 
+# if you clone from the repo, go to the root dir and do python setup.py install here.
+
+# for installing pygraphviz. 
+$ sudo add-apt-repository universe
+$ sudo apt update
+$ sudo apt install graphviz
+$ python -m pip install pygraphviz
+
+# for install torch and torch_geometric.
+$ conda install pytorch==1.6.0 torchvision==0.7.0 cudatoolkit=10.1 -c pytorch
+$ python -m pip install --no-index torch-scatter -f https://pytorch-geometric.com/whl/torch-1.6.0+cu101.html
+$ python -m pip install --no-index torch-sparse -f https://pytorch-geometric.com/whl/torch-1.6.0+cu101.html
+$ python -m pip install --no-index torch-cluster -f https://pytorch-geometric.com/whl/torch-1.6.0+cu101.html
+$ python -m pip install --no-index torch-spline-conv -f https://pytorch-geometric.com/whl/torch-1.6.0+cu101.html
+$ python -m pip install torch-geometric==1.6.1
 ```
+This set of commands assumes you to have cuda10.1 in your local and you are using linux. Please refer to the installation guides of [torch](https://pytorch.org/) and [pytorch_geometric](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html) if you have different cuda settings. If installing pygraphviz in windows, please refer this [issue](https://github.com/pygraphviz/pygraphviz/issues/58) for more information.
 
-To install PyTorch 1.5.0 follow the instructions under "Quick Start Locally" [here](http://pytorch.org/).
+# Example Use Cases (only contains training part for now)
+- Use case examples are stored in examples folder:
+  - **examples/gnn4ip.py**: gnn4ip script running on Netlist dataset.
+  - **examples/gnn4tj.py**: gnn4tj script running on dataset which has not been splitted into training and testing dataset.
 
-Here is a quick guide for setting up an anaconda working environment:
+## Use Case 1: Create Your Own Graph Dataset From hardware code
+To be filled. (DFG, CFG, AST)
+
+## Use Case 2: Hardware Trojan Detection in RTL-level (Advanced Application)
+The sample code for this use case is examples/gnn4tj.py. The related research paper is [Graph Neural Networks for Hardware Trojan Detection at Register Transfer Level](https://drive.google.com/file/d/1XFgWWO4v2oA-lmkwleG0h03znAvmJV5i/view). The dataset used in this paper is obtained from a famous trojan [benchmark](https://www.trust-hub.org/benchmarks/trojan). The converted hardware DFG dataset can be downloaded from [here](http://ieee-dataport.org/3640).
+
+To run this use case, use the script examples/gnn4tj.py and the downloaded dataset (data/TJ-dataset). To train a model on a dataset, we provide the following command sequence.
 ```sh
-$ conda activate [your working environment name]
-$ pip install -r requirements.txt
-```
-
-To run [Pyverilog](https://github.com/PyHDI/Pyverilog), we use anaconda3 as primary working environment.
-```sh
+<<<<<<< HEAD
 $ conda install -c conda-forge iverilog
 $ conda install graphviz pygraphviz -c alubbock
 $ pip install pyverilog
 $ pip install pyunpack
 $ pip install patool
+=======
+$ cd examples
+$ python gnn4tj.py
 ```
-
-To install PyTorch Geometric, simply follow the instructions [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html).
-
-# Directories Structure 
-TO be finished. 
-
-# Dataset
-We obtain the dataset from a famous trojan [benchmark](http://www.trust-hub.org/benchmarks/trojan). We manually downloaded all the avaialable dataset in RTL level into [./input](https://github.com/louisccc/hard_hard_graph/tree/master/input) folder. 
-Running the command"
+You can try to adjust the configuration (example_gnn4tj.yaml) to play with the model's hyperparameter.
 ```python
-python combine_dataset.py
+---
+learning_rate: 0.001 # The initial learning rate for the model.
+seed: 1 # Random seed.
+epochs: 200 # Number of epochs to train.
+weight_decay: 5e-4 # Weight decay (L2 loss on parameters).
+hidden: 200 # Number of hidden units.
+dropout: 0.5 # Dropout rate (1 - keep probability).
+nclass: 8 # The number of classes for node.
+recursive: True # Recursive loading scenegraphs.
+batch_size: 4 # Number of graphs in a batch.
+device: "cuda" # The device to run on models (cuda or cpu) cpu in default.
+model: "gcn" # Model to be used.
+num_layer: 5 # Number of layers in the neural network.
+hidden_dim: 32 # Hidden dimension in GIN.
+test_step: 10 # The interval between mini evaluation along the training process.
+pooling_type: "sagpool" # Graph pooling type.
+readout_type: "max" # Readout type.
+rati0: 0.8 # Dataset splitting ratio
+poolratio: 0.75 # Ratio for graph pooling.
+raw_dataset_path: "../data/TJ-dataset" # Path to raw dataset for parsing if no precache.
+pkl_path: "tj.pkl" # Path to hardware graphs for parsing.
+embed_dim: 2 # The dimension of graph embeddings.
+debug: False # Debug mode.
+>>>>>>> master
 ```
-will extract all data instances in the folder and store them into one combined dataset folder.
+
+## Use Case 3: IP Piracy Detection in hardware design (Advanced Application)
+The sample code for this use case is examples/gnn4ip.py and examples/gnn4ip_RTL.py. The related research paper is [GNN4IP: Graph Neural Network for HardwareIntellectual Property Piracy Detection]() (still under review). The dataset used in this paper is obtained from a famous trojan [benchmark](https://www.trust-hub.org/benchmarks/trojan). The converted hardware DFG dataset can be downloaded from [here](http://ieee-dataport.org/3640). In this use case, we demonstrate how to use hw2vec to develop a model that detects IP piracy in RTL and Netlist levels. In other word, we want to develop a model to check similarity between two Verilog code and determine if they are for the same hardware design or not. In order to do that, we need to create two batch of samples; clone pair, and non-clone pair. 
+
+To run this use case, use the script examples/gnn4ip.py and the downloaded dataset (data/IP-dataset). To train a model on a dataset, we provide the following command sequence.
+```sh
+$ cd examples
+$ python gnn4ip.py
+```
+You can try to adjust the configuration (example_gnn4ip.yaml) to play with the model's hyperparameter.
+```python
+---
+learning_rate: 0.001 # The initial learning rate for the model.
+seed: 1 # Random seed.
+epochs: 200 # Number of epochs to train.
+weight_decay: 5e-4 # Weight decay (L2 loss on parameters).
+hidden: 200 # Number of hidden units.
+dropout: 0.5 # Dropout rate (1 - keep probability).
+nclass: 8 # The number of classes for node.
+recursive: True # Recursive loading scenegraphs.
+batch_size: 4 # Number of graphs in a batch.
+device: "cuda" # The device to run on models (cuda or cpu) cpu in default.
+model: "gcn" # Model to be used.
+num_layer: 5 # Number of layers in the neural network.
+hidden_dim: 32 # Hidden dimension in GIN.
+test_step: 10 # The interval between mini evaluation along the training process.
+pooling_type: "sagpool" # Graph pooling type.
+readout_type: "max" # Readout type.
+rati0: 0.8 # Dataset splitting ratio
+poolratio: 0.75 # Ratio for graph pooling.
+raw_dataset_path: "../data/IP-dataset" # Path to raw dataset for parsing if no precache.
+pkl_path: "ip.pkl" # Path to hardware graphs for parsing.
+embed_dim: 2 # The dimension of graph embeddings.
+debug: False # Debug mode.
+```

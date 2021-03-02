@@ -7,3 +7,8 @@ scikit-learn==0.23.1
 scipy==1.4.1
 tqdm==4.36.1
 pytorch-nlp==0.5.0
+pyyaml==5.4.1
+pyverilog
+pyunpack
+patool
+pathlib

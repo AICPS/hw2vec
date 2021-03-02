@@ -1,5 +1,6 @@
 import os, sys
 sys.path.append(os.path.dirname(sys.path[0]))
+<<<<<<< HEAD
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -148,3 +149,15 @@ if __name__ == "__main__":
 #             dataset.read_node_labels("")
 #             dataset.read_hardware_designs("TjFree", 0, store_type="all")
 #             dataset.read_hardware_designs("TjIn", 1, store_type="all")
+=======
+from hw2vec.graph2vec.config import Config
+from hw2vec.app import GNN4TJ
+
+if __name__ == "__main__":
+    cfg = Config("./example_gnn4tj.yaml")
+    app = GNN4TJ(cfg)
+    app.parse_from_json()
+    app.init_trainer()
+    app.train()
+    app.evaluate()
+>>>>>>> master
