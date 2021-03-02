@@ -15,13 +15,13 @@ def parse_single_verilog_code(verilog_path, output_path, graph_format="DFG"):
         handling a single verilog code to a DFG. 
     '''
     if graph_format == "DFG":
-        graph_generator = RTLDFGGenerator(output_path)
+        graph_generator = RTLDFGGenerator()
     elif graph_format == "CFG":
-        graph_generator = RTLCFGGenerator(output_path)
+        graph_generator = RTLCFGGenerator()
     elif graph_format == "AST":
-        graph_generator = RTLASTGenerator(output_path)
+        graph_generator = RTLASTGenerator()
     
-    graph = graph_generator.process(verilog_path) 
+    graph = graph_generator.process(verilog_path, output_path) 
     graph_generator.export_json(graph, output_path)
 
     # we might want draw? visualize? print?
@@ -52,6 +52,8 @@ def parse_multiple_verilog_code(verilog_path, output_path, graph_format="DFG"):
     #     except:
     #         print('Error in', verilog_path)
     pass
+
+
 if __name__ == '__main__':
     ''' 
         An example on how to genreate the data flow graph for a dataset of Verilog harwdare designs

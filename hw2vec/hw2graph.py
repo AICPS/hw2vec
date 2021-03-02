@@ -310,8 +310,7 @@ class RTLDFGGenerator:
     '''
         This generator generates DFG from RTL (Register Transfer Level) Verilog code.
     '''
-    def __init__(self, output_path, code_language='verilog', top_module='top', draw_graph=False):
-        self.output_path = output_path
+    def __init__(self, code_language='verilog', top_module='top', draw_graph=False):
         self.code_language = code_language
         self.top_module = top_module
         self.draw_graph = draw_graph
@@ -319,7 +318,7 @@ class RTLDFGGenerator:
         # if code_language == "verilog":
         # self.generate_DFG(verilog_file, output_path, top_module, draw_graph)
 
-    def process(self, verilog_path):
+    def process(self, verilog_path, output_path):
         '''
             parse the hw code to graph object
         '''
@@ -329,13 +328,13 @@ class RTLDFGGenerator:
 
         if self.code_language == "verilog":
             # self.DFG_gen = VerilogParser(verilog_path, self.output_path, self.top_module, self.draw_graph)
-            return VerilogParser(verilog_path, self.output_path, self.top_module, self.draw_graph)
+            return VerilogParser(verilog_path, output_path, self.top_module, self.draw_graph)
     
-    def process_batch(self, verilog_dir, file_name):
+    def process_batch(self, verilog_dir, output_path, file_name):
         ''' This function processs graphs in batch '''
         graphs = []
         for verilog_path in glob("%s/**/%s" % (verilog_dir, file_name), recursive=True):
-            graphs.append(VerilogParser(verilog_path, self.output_path, self.top_module, self.draw_graph))
+            graphs.append(VerilogParser(verilog_path, output_path, self.top_module, self.draw_graph))
         return graphs
 
     def export_json(self, graph, output_dir): # TODO: need to support a graph batch
