@@ -328,10 +328,15 @@ class RTLDFGGenerator:
 
         if self.code_language == "verilog":
             # self.DFG_gen = VerilogParser(verilog_path, self.output_path, self.top_module, self.draw_graph)
+            # step 1: parse the verilog with language parser provided by Pyverilog.
+            # step 2: convert the parsed results to singal graph using the convertor by Pyverilog. 
+            # step 3: perform our post-processing. 
+            # step 4: export the generated graph.
             return VerilogParser(verilog_path, output_path, self.top_module, self.draw_graph)
     
     def process_batch(self, verilog_dir, output_path, file_name):
         ''' This function processs graphs in batch '''
+        #TODO: please change this to call self.process().
         graphs = []
         for verilog_path in glob("%s/**/%s" % (verilog_dir, file_name), recursive=True):
             graphs.append(VerilogParser(verilog_path, output_path, self.top_module, self.draw_graph))
