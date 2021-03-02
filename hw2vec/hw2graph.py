@@ -342,7 +342,7 @@ class RTLDFGGenerator:
             graphs.append(VerilogParser(verilog_path, output_path, self.top_module, self.draw_graph))
         return graphs
 
-    def export_json(self, graph, output_dir): # TODO: need to support a graph batch
+    def export_json(self, graph_json, output_dir): # TODO: need to support a graph batch
         '''
             export the graph/graphs in self.DFG_gen to json
         '''
@@ -350,14 +350,37 @@ class RTLDFGGenerator:
         print(f'Outputting to : {output_dir}\n')
         if not output_dir.exists():
             raise IOError("Error: The output path doesn't exist.") # TODO: should create a new dir
-        graph.export_graphs(output_dir, output='graph')
+        print(f'Saving graph dictionary as a json...')
+        f = open(f'{output_dir}/topModule.json', 'w')
+        jsonstr = json.dumps(graph_json, indent=4)
+        f.write(jsonstr)
+        f.close()
+        print('The graph is saved as topModule.json.\n')
     
-    def draw_DFG(self):
-        pass
-    
-    def draw_signals_DFG(self):
-        pass
-    
+
+    def get_graph_json(self, graph_generator):
+        graph = graph_generator.graph
+        graph_json = {"edge_index":{}}
+        for node in graph.nodes():
+            graph_json["edge_index"][str(node)] = list()
+            for child in graph.successors(node):
+                edgeLabel = graph.get_edge(node, child).attr['label']
+                graph_json["edge_index"][str(node)].append((edgeLabel, str(child)))
+        root_nodes = [node for node in graph.nodes() if graph.in_degree(node) == 0]
+        all_nodes = (graph.nodes())
+        all_edges = list()
+        for edge in graph.edges():
+            all_edges.append((edge[0], edge[1], edge.attr['label']))
+        graph_json["nodes"] = all_nodes
+        graph_json["edges"] = all_edges
+        graph_json["root_nodes"] = root_nodes
+        return graph_json
+
+    def draw(self, graph_generator):
+        output_path = "?" # TODO: fix 
+        graph_generator.draw()
+        print('The pdf is saved in %s.' % output_path)
+
     def export_nodes(self):
         return self.DFG_gen.export_graphs(output='nodes')
     
