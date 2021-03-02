@@ -302,6 +302,9 @@ class VerilogParser:
             print('The graph is saved as topModule.json.\n')
             return jsondict
 
+class RTLASTGenerator:
+    def __init__(self):
+        pass
 
 class RTLDFGGenerator:
     '''
@@ -309,9 +312,9 @@ class RTLDFGGenerator:
     '''
     def __init__(self, output_path, code_language='verilog', top_module='top', draw_graph=False):
         self.output_path = output_path
-        self.code_language='verilog'
-        self.top_module = 'top'
-        self.draw_graph = False
+        self.code_language = code_language
+        self.top_module = top_module
+        self.draw_graph = draw_graph
 
         # if code_language == "verilog":
         # self.generate_DFG(verilog_file, output_path, top_module, draw_graph)
@@ -323,8 +326,10 @@ class RTLDFGGenerator:
         if not verilog_path.exists():
             raise IOError("file not found: " + verilog_path)
         print("Reading ", verilog_path)
-        # self.DFG_gen = VerilogParser(verilog_path, self.output_path, self.top_module, self.draw_graph)
-        return VerilogParser(verilog_path, self.output_path, self.top_module, self.draw_graph)
+
+        if self.code_language == "verilog":
+            # self.DFG_gen = VerilogParser(verilog_path, self.output_path, self.top_module, self.draw_graph)
+            return VerilogParser(verilog_path, self.output_path, self.top_module, self.draw_graph)
     
     def process_batch(self, verilog_dir, file_name):
         ''' This function processs graphs in batch '''
@@ -342,11 +347,6 @@ class RTLDFGGenerator:
         if not output_dir.exists():
             raise IOError("Error: The output path doesn't exist.") # TODO: should create a new dir
         graph.export_graphs(output_dir, output='graph')
-
-    # This function has been divided into process/process_batch and export_json functions
-    # def generate_DFG(self, verilog_file, output_path, top_module='top', draw_graph=False):
-    #     self.DFG_gen = VerilogParser(verilog_file, output_path, top_module, draw_graph)
-    #     self.DFG_gen.export_graphs(output='graph')
     
     def draw_DFG(self):
         pass
@@ -447,9 +447,3 @@ class PreprocessVerilog:
             for verilog_file in glob(fr'{input_path}/*.v'):
                 with open(verilog_file, "rt") as infile:
                     outfile.write(infile.read().replace(top_module, 'top'))
-        
-
-if __name__ == "__main__":
-    # This part will eventually goes to example script or test cases.
-
-    preprocess_verilog()
