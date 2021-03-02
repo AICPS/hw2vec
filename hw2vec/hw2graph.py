@@ -432,7 +432,6 @@ class RTLDFGGenerator:
         f.close()
         print('The graph is saved as topModule.json.\n')
     
-
     def get_graph_json(self, graph_generator):
         graph = graph_generator.graph
         graph_json = {"edge_index":{}}
