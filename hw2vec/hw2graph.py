@@ -159,7 +159,7 @@ class VerilogParser:
         the only class that interfaces with pyverilog.
     ''' 
     #holds a graph_generator instance
-    def __init__(self, verilog_file, output_directory, top_module, generate_cfg = False):
+    def __init__(self, verilog_file, output_directory, top_module, generate_cfg=False):
         print("Verilog file: ", verilog_file)
         print("Output directory: ", output_directory)
         self.output_directory = output_directory
@@ -405,20 +405,18 @@ class DFGgenerator:
     '''
     def __init__(self, verilog_file, output_path, code_language='verilog', top_module='top', draw_graph=False):
         if code_language == "verilog":
-            
             if not os.path.exists(verilog_file):
                 raise IOError("file not found: " + verilog_file)
     
             print("Reading ", verilog_file)
             print(f'Outputting to : {output_path}\n')
             if not os.path.exists(f'{output_path}'):
-                    os.makedirs(os.path.dirname(f'{output_path}'))  
+                    os.makedirs(os.path.dirname(f'{output_path}'))
+            self.verilog_parser = VerilogParser(verilog_file, output_path, top_module, draw_graph, generate_cfg=False)
             self._generate_DFG(verilog_file, output_path, draw_graph)
             
    
-    def _generate_DFG(self, verilog_file, output_path, top_module='top', draw_graph=False):
-
-        self.verilog_parser = VerilogParser(verilog_file, output_path, top_module, draw_graph)
+    def _generate_DFG(self):
         self.verilog_parser.graph_separate_modules()
         self.verilog_parser.merge_graphs()
         self.verilog_parser.export_dfg_graph(output='graph')
@@ -441,14 +439,17 @@ class CFGgenerator:
     '''
         This generator generates the Control Flow Graph (CFG) from RTL verilog code.
     '''
-    def __init__(self, verilog_file, output_path, code_language="verilog", top_module="top"):
+    def __init__(self, verilog_file, output_path, code_language="verilog", top_module="top", draw_graph=False):
         if code_language == "verilog":
             if not os.path.exists(verilog_file):
                 raise IOError("file not found: " + verilog_file)
     
             print("Reading ", verilog_file)
             print(f'Outputting to : {output_path}\n')
-            self.parser = VerilogParser(verilog_file, output_path, top_module, True)
+            if not os.path.exists(f'{output_path}'):
+                    os.makedirs(os.path.dirname(f'{output_path}'))
+                    
+            self.parser = VerilogParser(verilog_file, output_path, top_module,  generate_cfg=True)
             self._generate_CFG()
             
     def _generate_CFG(self):
