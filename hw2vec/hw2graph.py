@@ -4,8 +4,13 @@ import pyverilog
 from pyverilog.dataflow.dataflow_analyzer import VerilogDataflowAnalyzer as PyDataflowAnalyzer
 from pyverilog.dataflow.optimizer import VerilogDataflowOptimizer as PyDataflowOptimizer
 from pyverilog.dataflow.graphgen import VerilogGraphGenerator as PyGraphGenerator
+from pyverilog.controlflow.controlflow_analyzer import VerilogControlflowAnalyzer as PyControlflowAnalyzer
+
+import pyverilog.utils.util as util
+import pydot
 
 from json import dumps
+from collections import defaultdict
 
 import os, sys
 sys.path.append(os.path.dirname(sys.path[0]))
@@ -20,6 +25,7 @@ from sklearn.model_selection import train_test_split
 from glob import glob
 
 from hw2vec.graph2vec.trainers import *
+
 
 
 class JsonGraphParser:
@@ -93,16 +99,7 @@ class JsonGraphParser:
             with open(str(json_path), 'r') as json_file:
                 edge_list_dict = json.loads(json_file.read())
                 for src in edge_list_dict:
-                    node_name = src
-                    if '_graphrename' in src:
-                        node_name = src[:src.index('_graphrename')]
-                    if '.' in node_name: 
-                        type_of_node = node_name.split('.')[-1]
-                    elif '_' in node_name:
-                        type_of_node = node_name.split('_')[-1]
-                    else:
-                        type_of_node = node_name.lower()
-                    self.node_labels.add(type_of_node)
+                    self.node_labels.add((src.split(".")[-1].split("_")[0]).lower())
 
         self.label2idx = {v:k for k, v in enumerate(list(self.node_labels))}
         self.idx2label = {v:k for k, v in self.label2idx.items()}
@@ -125,18 +122,10 @@ class JsonGraphParser:
         hardware_graph = nx.DiGraph()
         edge_list_dict = json.loads(json_file.read())
         for src in edge_list_dict:
-            node_name = src
-            if '_graphrename' in src:
-                node_name = src[:src.index('_graphrename')]
-            if '.' in node_name: 
-                type_of_node = node_name.split('.')[-1]
-            elif '_' in node_name:
-                type_of_node = node_name.split('_')[-1]
-            else:
-                type_of_node = node_name.lower()
-
-            hardware_graph.add_node(src, x=self.label2idx[type_of_node], label=type_of_node) 
+            hardware_graph.add_node(src, label=src.split(".")[-1].split("_")[0].lower())
+            assert(type(edge_list_dict[src]) == list)
             for neighbor in edge_list_dict[src]:
+                edge_label = neighbor[0]
                 dst = neighbor[1]
                 hardware_graph.add_edge(src, dst)
 
@@ -148,12 +137,13 @@ class JsonGraphParser:
         idx2name = {}
         for idx, node in enumerate(graph.nodes(data=True)):
             node_name = node[0]
-            node_label = node[1]['x']
+            node_label = node[1]['label']
 
             name2idx[node_name] = idx
             idx2name[idx] = node_name
-            X.append(node_label)
-        X = torch.LongTensor(X)
+            X.append(self.label2idx[node_label])
+        
+        X = F.one_hot(torch.LongTensor(X), num_classes=len(self.label2idx)).float()
         return X, name2idx, idx2name
 
     def get_edge_idxs(self, graph, name2idx):
@@ -169,30 +159,104 @@ class VerilogParser:
         the only class that interfaces with pyverilog.
     ''' 
     #holds a graph_generator instance
-    def __init__(self, verilog_file, output_directory, top_module, draw_graph=False):
+    def __init__(self, verilog_file, output_directory, top_module, generate_cfg = False):
+        print("Verilog file: ", verilog_file)
+        print("Output directory: ", output_directory)
         self.output_directory = output_directory
-        self.signals_DFG  = self._generate_graph(verilog_file, top_module)
-        self.signals_DFG = self.generate_signals_DFG(self.signals_DFG, draw_graph)
-        self.graph_generator = self.merge_graphs(self.signals_DFG, draw_graph)
-        
+        self.dfg_graph_generator = None
+        self.cfg_graph_generator = None
+        self._create_graphgen_obj(verilog_file, top_module, generate_cfg)
+
     #helper fcn to __init__
-    def _generate_graph(self, verilog_file, top_module):
-        # create dataflow analyzer
+    def _create_graphgen_obj(self, verilog_file, top_module, generate_cfg):
         dataflow_analyzer = PyDataflowAnalyzer(verilog_file, top_module)
         dataflow_analyzer.generate()
         binddict = dataflow_analyzer.getBinddict()
         terms = dataflow_analyzer.getTerms()
         
-        # create dataflow optimizer
         dataflow_optimizer = PyDataflowOptimizer(terms, binddict)
         dataflow_optimizer.resolveConstant()
         resolved_terms = dataflow_optimizer.getResolvedTerms()
         resolved_binddict = dataflow_optimizer.getResolvedBinddict()
         constlist = dataflow_optimizer.getConstlist()
 
-        return PyGraphGenerator(top_module, terms, binddict, resolved_terms, 
-                            resolved_binddict, constlist, 
-                            f'{self.output_directory}seperate_modules.pdf')
+        if not generate_cfg: 
+            self.dfg_graph_generator = PyGraphGenerator(top_module, terms, binddict, resolved_terms, 
+                                resolved_binddict, constlist, 
+                                f'{self.output_directory}seperate_modules.pdf')
+        else:
+            fsm_vars = tuple(['fsm', 'state', 'count', 'cnt', 'step', 'mode'])
+            self.cfg_graph_generator = PyControlflowAnalyzer("top", terms, binddict,
+                                        resolved_terms, resolved_binddict, constlist, fsm_vars)
+    
+    #generates dot file
+    def generate_dot_file(self, graph_format='png',no_label=False):
+        assert self.cfg_graph_generator != None, "Error: Generate dot file only if you are generating CFG's "
+
+        fsms = self.cfg_graph_generator.getFiniteStateMachines()
+
+        print("VIEWING FSM's")
+        print("LENGTH OF FSM: ", len(fsms))
+        for signame, fsm in fsms.items():
+            print('# SIGNAL NAME: %s' % signame)
+            print('# DELAY CNT: %d' % fsm.delaycnt)
+            fsm.view()
+            fsm.tograph(filename=util.toFlatname(signame) + '.' + graph_format, nolabel=no_label)
+        
+    #generate CFG from dot file
+    def export_cfg_graph(self, output='graph'):
+        def default_val():
+            return []
+        graph = pydot.graph_from_dot_file("./file.dot")[0]
+
+        nodes = [node.get_name() for node in graph.get_node_list()]
+        root_nodes = [node.get_name() for node in graph.get_node_list() if node.obj_dict['parent_graph'] == None]
+        edges = [[edge.get_source(),edge.get_destination(),edge.obj_dict['attributes']['label']] for edge in graph.get_edge_list()]
+        topModule = defaultdict(default_val) #key: node, val: list of out going edges
+
+        for edge in edges:
+            if edge[2] == 'None':
+                topModule[edge[0]].append("")
+            else:
+                topModule[edge[0]].append(edge[2])
+        
+        if (output=='roots'):
+            print(f'Saving all {len(root_nodes)} nodes as json')
+            with open(f'{self.output_directory}root_nodes.json', 'w') as f:
+                f.write(dumps(root_nodes, indent=4))
+            print('List of root nodes saved in root_nodes.json.\n')
+            f.close()
+        
+        elif (output=='nodes'):
+            print(f'Saving all {len(nodes)} nodes as json')
+            with open(f'{self.output_directory}all_nodes.json', 'w') as f:
+                f.write(dumps(nodes, indent=4))
+            print('List of nodes saved in all_nodes.json.\n')
+            f.close()
+            
+        elif (output=='edges'):
+            print(f'Saving all {len(edges)} edges as json')
+            with open(f'{self.output_directory}all_edges.json', 'w') as f:
+                f.write(dumps(edges, indent=4))
+            print('List of edges saved in all_edges.json.\n')
+            f.close()
+            
+        elif (output=='graph'):
+            print(f'Saving cfg graph dictionary as a json')
+            with open(f'{self.output_directory}topModule.json', 'w') as f:
+                f.write(dumps(topModule, indent=4))
+            print('Saving cfg graph dictionary as a json.\n')
+            f.close()
+            print('The graph is saved as topModule.json.\n')
+
+
+    #cleanup dot file and other residual files generated earlier
+    def cleanup_files(self):
+        for file in ['file.dot','parser.out','parsetab.py','top_state.png']:
+            try:
+                os.remove(file)
+            except FileNotFoundError:
+                print("Error: The target file does not exist.")
     
     # This function returns True, if the child is a child of checkParent
     def _isChild(self, graph, checkParent, child):
@@ -216,256 +280,190 @@ class VerilogParser:
         return checkParent in allParents
 
     #generate separate graph separate modules 
-    def generate_signals_DFG(self, subgraph_gen, draw_graph=False):
+    def graph_separate_modules(self, draw_graph=False):
         # binddict with string keys
-        signals = [str(bind) for bind in subgraph_gen.binddict]
+        signals = [str(bind) for bind in self.dfg_graph_generator.binddict]
 
-        print(f'{len(signals)} signals to generate signals data flow graphs...')
+        print(f'{len(signals)} signals to generate seprate subgraphs...')
         for num, signal in enumerate(sorted(signals, key=str.casefold), start=1):
-            subgraph_gen.generate(signal, walk=False)
+            self.dfg_graph_generator.generate(signal, walk=False)
             print(f'\rProgress : {num} / {len(signals)}', end='', flush=True)
-        print('\nThe signals data flow graphs are generated.\n')
+        print('\nThe subgraphs are generated.\n')
 
         if draw_graph:
-            print(f'Saving signals data flow graphs with {len(subgraph_gen.graph.nodes())} nodes as a pdf...')
-            subgraph_gen.draw()
+            print(f'Saving subgraphs with {len(self.dfg_graph_generator.graph.nodes())} nodes as a pdf...')
+            self.dfg_graph_generator.draw()
             print('The subgraphs are saved.\n')
-            
-        return subgraph_gen
 
-    def draw_signals_DFG(self):
-        print(f'Drawing signals data flow graphs with {len(self.signals_DFG.graph.nodes())} nodes as a pdf...')
-        self.signals_DFG.draw()
-        print('The pdf is saved.\n')
-        
-    def draw_DFG(self):
-        print(f'Drawing data flow graph with {len(self.graph_generator.graph.nodes())} nodes as a pdf...')
-        self.graph_generator.draw()
-        print('The pdf is saved.\n')
-        
     #merge the graphs
-    def merge_graphs(self, graph_gen, draw_graph=False):
+    def merge_graphs(self, draw_graph=False):
         label_to_node = dict()
-        for node in graph_gen.graph.nodes():
-            if graph_gen.graph.in_degree(node) == 0:
+        for node in self.dfg_graph_generator.graph.nodes():
+            if self.dfg_graph_generator.graph.in_degree(node) == 0:
                 label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
                 label_to_node[label] = node
         
         deleted = 0
         print('Merging subgraphs... ')
-        for num, node in enumerate(graph_gen.graph.nodes(), start=1):
+        for num, node in enumerate(self.dfg_graph_generator.graph.nodes(), start=1):
             label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
             if '_' in label and label.replace('_', '.') in label_to_node:
-                parents = graph_gen.graph.predecessors(node)
-                graph_gen.graph.delete_node(node)
+                parents = self.dfg_graph_generator.graph.predecessors(node)
+                self.dfg_graph_generator.graph.delete_node(node)
                 deleted += 1
                 for parent in parents:
-                    if not self._isChild(graph_gen.graph, label_to_node[label.replace('_', '.')], parent):
-                        graph_gen.graph.add_edge(parent, label_to_node[label.replace('_', '.')])
-            print(f'\rProgress : {num - deleted} / {len(graph_gen.graph.nodes())}', end='', flush=True)
+                    if not self._isChild(self.dfg_graph_generator.graph, label_to_node[label.replace('_', '.')], parent):
+                        self.dfg_graph_generator.graph.add_edge(parent, label_to_node[label.replace('_', '.')])
+            print(f'\rProgress : {num - deleted} / {len(self.dfg_graph_generator.graph.nodes())}', end='', flush=True)
         print('\nThe signals subgraphs are merged.\n')
 
         if draw_graph:
-            print(f'Saving merged graph with {len(graph_gen.graph.nodes())} nodes as a pdf...')
-            graph_gen.draw(f'{self.output_directory}merged_graph.pdf')
+            print(f'Saving merged graph with {len(self.dfg_graph_generator.graph.nodes())} nodes as a pdf...')
+            self.dfg_graph_generator.draw(f'{self.output_directory}merged_graph.pdf')
             print('The graphs are saved.\n')
-            
-        return graph_gen
 
-    #export the graphs
-    def export_graphs(self, output_dir, output='graph'):
-        output_dir = str(output_dir)
+    #export the dfg graphs
+    def export_dfg_graph(self, output='graph'):
         if (output=='roots'):
-            root_nodes = [node for node in self.graph_generator.graph.nodes() if self.graph_generator.graph.in_degree(node) == 0]
+            root_nodes = [node for node in self.dfg_graph_generator.graph.nodes() if self.dfg_graph_generator.graph.in_degree(node) == 0]
             print(f'Saving {len(root_nodes)} root nodes as a json...')
-            with open(f'{output_dir}root_nodes.json', 'w') as f:
+            with open(f'{self.output_directory}root_nodes.json', 'w') as f:
                 f.write(dumps(root_nodes, indent=4))
             print('List of root nodes saved in root_nodes.json.\n')
             f.close()
-            return root_nodes
+            
         elif (output=='nodes'):
-            all_nodes = (self.graph_generator.graph.nodes())
+            all_nodes = (self.dfg_graph_generator.graph.nodes())
             print(f'Saving all {len(all_nodes)} nodes as a json...')
-            with open(f'{output_dir}all_nodes.json', 'w') as f:
+            with open(f'{self.output_directory}all_nodes.json', 'w') as f:
                 f.write(dumps(all_nodes, indent=4))
             print('List of nodes saved in all_nodes.json.\n')
             f.close()
-            return all_nodes
             
         elif (output=='edges'):
             all_edges = list()
-            for edge in self.graph_generator.graph.edges():
+            for edge in self.dfg_graph_generator.graph.edges():
                 all_edges.append((edge[0], edge[1], edge.attr['label']))
             print(f'Saving all {len(all_edges)} edges as a json...')
-            with open(f'{output_dir}all_edges.json', 'w') as f:
+            with open(f'{self.output_directory}all_edges.json', 'w') as f:
                 f.write(dumps(all_edges, indent=4))
             print('List of edges is saved in all_edges.json.\n')
             f.close()
-            return all_edges
             
         elif (output=='graph'):
             jsondict = {}
-            for node in self.graph_generator.graph.nodes():
+            for node in self.dfg_graph_generator.graph.nodes():
                 jsondict[str(node)] = list()
-                for child in self.graph_generator.graph.successors(node):
-                    edgeLabel = self.graph_generator.graph.get_edge(node, child).attr['label']
+                for child in self.dfg_graph_generator.graph.successors(node):
+                    edgeLabel = self.dfg_graph_generator.graph.get_edge(node, child).attr['label']
                     jsondict[str(node)].append((edgeLabel, str(child)))
             print(f'Saving graph dictionary as a json...')
-            f = open(f'{output_dir}/topModule.json', 'w')
+            f = open(f'{self.output_directory}topModule.json', 'w')
             jsonstr = dumps(jsondict, indent=4)
             f.write(jsonstr)
             f.close()
             print('The graph is saved as topModule.json.\n')
-            return jsondict
 
-class RTLASTGenerator:
-    def __init__(self):
-        pass
+    #to be refactored
+    def graph_input_dependencies(self,draw_graph=False):
+        labeltoNames = dict()
+        for node in self.dfg_graph_generator.graph.nodes():
+            label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
+            if label not in labeltoNames: 
+                labeltoNames[label] = list()
+            labeltoNames[label].append(str(node))
 
-class RTLDFGGenerator:
+        inputs = [self.dfg_graph_generator.graph.get_node(*labeltoNames[str(term).replace('.', '_')]) for x, term in zip(self.dfg_graph_generator.terms, self.dfg_graph_generator.terms.values()) if len(x.get_module_list()) == 1 and 'Input' in term.termtype]
+
+        print('Locating nodes not connected to inputs...')
+        to_delete = list()
+        for num, node in enumerate(self.dfg_graph_generator.graph.nodes(), start=1):
+            label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
+            if label not in inputs:
+                x = True
+                for input_ in inputs:
+                    if self._isChild(self.dfg_graph_generator.graph, node, input_):
+                        x = False
+                if x == True:
+                    to_delete.append(node)
+            print(f'\rProgress : {num} / {len(self.dfg_graph_generator.graph.nodes())}', end='', flush=True)
+        print('\nRemoving nodes not connected to inputs...')
+        for num, node in enumerate(to_delete, start=1):
+            self.dfg_graph_generator.graph.delete_node(node)
+            print(f'\rProgress : {num} / {len(to_delete)}', end='', flush=True)
+        print('\nRemoval is complete.\n')
+        
+        if draw_graph:   
+            print(f'Saving graph with {len(self.dfg_graph_generator.graph.nodes())} nodes as a pdf...')
+            self.dfg_graph_generator.draw(f'{self.output_directory}input_dependencies.pdf')
+            print('Graph saved.\n')
+
+
+class DFGgenerator:
     '''
         This generator generates DFG from RTL (Register Transfer Level) Verilog code.
     '''
-    def __init__(self, code_language='verilog', top_module='top', draw_graph=False):
-        self.code_language = code_language
-        self.top_module = top_module
-        self.draw_graph = draw_graph
-
-        # if code_language == "verilog":
-        # self.generate_DFG(verilog_file, output_path, top_module, draw_graph)
-
-    def process(self, verilog_path, output_path):
-        '''
-            parse the hw code to graph object
-        '''
-        if not verilog_path.exists():
-            raise IOError("file not found: " + verilog_path)
-        print("Reading ", verilog_path)
-
-        if self.code_language == "verilog":
-            # self.DFG_gen = VerilogParser(verilog_path, self.output_path, self.top_module, self.draw_graph)
-            # step 1: parse the verilog with language parser provided by Pyverilog.
-            # step 2: convert the parsed results to singal graph using the convertor by Pyverilog. 
-            # step 3: perform our post-processing. 
-            # step 4: export the generated graph.
-            return VerilogParser(verilog_path, output_path, self.top_module, self.draw_graph)
-    
-    def process_batch(self, verilog_dir, output_path, file_name):
-        ''' This function processs graphs in batch '''
-        #TODO: please change this to call self.process().
-        graphs = []
-        for verilog_path in glob("%s/**/%s" % (verilog_dir, file_name), recursive=True):
-            graphs.append(VerilogParser(verilog_path, output_path, self.top_module, self.draw_graph))
-        return graphs
-
-    def export_json(self, graph_json, output_dir): # TODO: need to support a graph batch
-        '''
-            export the graph/graphs in self.DFG_gen to json
-        '''
-        
-        print(f'Outputting to : {output_dir}\n')
-        if not output_dir.exists():
-            raise IOError("Error: The output path doesn't exist.") # TODO: should create a new dir
-        print(f'Saving graph dictionary as a json...')
-        f = open(f'{output_dir}/topModule.json', 'w')
-        jsonstr = json.dumps(graph_json, indent=4)
-        f.write(jsonstr)
-        f.close()
-        print('The graph is saved as topModule.json.\n')
-    
-
-    def get_graph_json(self, graph_generator):
-        graph = graph_generator.graph
-        graph_json = {"edge_index":{}}
-        for node in graph.nodes():
-            graph_json["edge_index"][str(node)] = list()
-            for child in graph.successors(node):
-                edgeLabel = graph.get_edge(node, child).attr['label']
-                graph_json["edge_index"][str(node)].append((edgeLabel, str(child)))
-        root_nodes = [node for node in graph.nodes() if graph.in_degree(node) == 0]
-        all_nodes = (graph.nodes())
-        all_edges = list()
-        for edge in graph.edges():
-            all_edges.append((edge[0], edge[1], edge.attr['label']))
-        graph_json["nodes"] = all_nodes
-        graph_json["edges"] = all_edges
-        graph_json["root_nodes"] = root_nodes
-        return graph_json
-
-    def draw(self, graph_generator):
-        output_path = "?" # TODO: fix 
-        graph_generator.draw()
-        print('The pdf is saved in %s.' % output_path)
-
-    def export_nodes(self):
-        return self.DFG_gen.export_graphs(output='nodes')
-    
-    def export_edges(self):
-        return self.DFG_gen.export_graphs(output='edges')
-    
-    def export_root_nodes(self):
-        return self.DFG_gen.export_graphs(output='roots')
-        
-        
-
-class GLNDFGGenerator:
-    '''
-        This generator generates DFG from GLN (Gate-Level Netlist) Verilog code.
-    '''
     def __init__(self, verilog_file, output_path, code_language='verilog', top_module='top', draw_graph=False):
         if code_language == "verilog":
+            
             if not os.path.exists(verilog_file):
                 raise IOError("file not found: " + verilog_file)
     
             print("Reading ", verilog_file)
             print(f'Outputting to : {output_path}\n')
             if not os.path.exists(f'{output_path}'):
-                    print("Error: The output path doesn't exist.") 
-            self.generate_DFG(verilog_file, output_path, top_module, draw_graph)
+                    os.makedirs(os.path.dirname(f'{output_path}'))  
+            self._generate_DFG(verilog_file, output_path, draw_graph)
             
    
-    def generate_DFG(self, verilog_file, output_path, top_module='top', draw_graph=False):
-        self.DFG_gen = VerilogParser(verilog_file, output_path, top_module, draw_graph)
-        self.DFG_gen.export_graphs(output='graph')
-    
-    def draw_DFG(self):
-        pass
-    
-    def draw_signals_DFG(self):
-        pass
+    def _generate_DFG(self, verilog_file, output_path, top_module='top', draw_graph=False):
+
+        self.verilog_parser = VerilogParser(verilog_file, output_path, top_module, draw_graph)
+        self.verilog_parser.graph_separate_modules()
+        self.verilog_parser.merge_graphs()
+        self.verilog_parser.export_dfg_graph(output='graph')
     
     def export_nodes(self):
-        return self.DFG_gen.export_graphs(output='nodes')
+        self.verilog_parser.export_dfg_graph(output='nodes')
     
     def export_edges(self):
-        return self.DFG_gen.export_graphs(output='edges')
+        self.verilog_parser.export_dfg_graph(output='edges')
     
     def export_root_nodes(self):
-        return self.DFG_gen.export_graphs(output='roots')
+        self.verilog_parser.export_dfg_graph(output='roots')
+        
+    def check_dependecny(self):
+        self.verilog_parser.graph_input_dependencies()
+        
 
 
-class RTLCFGGenerator:
+class CFGgenerator:
     '''
-        This generator generates the Control Flow Graph (CFG) from RTL (Register Transfer Level) verilog code.
+        This generator generates the Control Flow Graph (CFG) from RTL verilog code.
     '''
-    def __init__(self, code_language="verilog"):
+    def __init__(self, verilog_file, output_path, code_language="verilog", top_module="top"):
         if code_language == "verilog":
-            self.parser = VerilogParser()
+            if not os.path.exists(verilog_file):
+                raise IOError("file not found: " + verilog_file)
+    
+            print("Reading ", verilog_file)
+            print(f'Outputting to : {output_path}\n')
+            self.parser = VerilogParser(verilog_file, output_path, top_module, True)
+            self._generate_CFG()
+            
+    def _generate_CFG(self):
+        self.parser.generate_dot_file()
+        self.parser.export_cfg_graph(output='graph')
+        self.parser.cleanup_files()
 
-    def generate(self):
-        pass
-
-
-class GLNCFGGenerator:
-    '''
-        This generator generates CFG from GLN (Gate-Level Netlist) Verilog code.
-    '''
-    def __init__(self, code_language="verilog"):
-        if code_language == "verilog":
-            self.parser = VerilogParser()
-
-    def generate(self):
-        pass
+    def export_nodes(self):
+        self.verilog_parser.export_cfg_graph(output='nodes')
+    
+    def export_edges(self):
+        self.verilog_parser.export_cfg_graph(output='edges')
+    
+    def export_root_nodes(self):
+        self.verilog_parser.export_cfg_graph(output='roots')
 
 
 class PreprocessVerilog:
@@ -490,3 +488,9 @@ class PreprocessVerilog:
             for verilog_file in glob(fr'{input_path}/*.v'):
                 with open(verilog_file, "rt") as infile:
                     outfile.write(infile.read().replace(top_module, 'top'))
+        
+if __name__ == "__main__":
+    # This part will eventually goes to example script or test cases.
+    
+
+    preprocess_verilog()
