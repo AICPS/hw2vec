@@ -93,7 +93,16 @@ class JsonGraphParser:
             with open(str(json_path), 'r') as json_file:
                 edge_list_dict = json.loads(json_file.read())
                 for src in edge_list_dict:
-                    self.node_labels.add((src.split(".")[-1].split("_")[0]).lower())
+                    node_name = src
+                    if '_graphrename' in src:
+                        node_name = src[:src.index('_graphrename')]
+                    if '.' in node_name: 
+                        type_of_node = node_name.split('.')[-1]
+                    elif '_' in node_name:
+                        type_of_node = node_name.split('_')[-1]
+                    else:
+                        type_of_node = node_name.lower()
+                    self.node_labels.add(type_of_node)
 
         self.label2idx = {v:k for k, v in enumerate(list(self.node_labels))}
         self.idx2label = {v:k for k, v in self.label2idx.items()}
@@ -116,10 +125,18 @@ class JsonGraphParser:
         hardware_graph = nx.DiGraph()
         edge_list_dict = json.loads(json_file.read())
         for src in edge_list_dict:
-            hardware_graph.add_node(src, label=src.split(".")[-1].split("_")[0].lower())
-            assert(type(edge_list_dict[src]) == list)
+            node_name = src
+            if '_graphrename' in src:
+                node_name = src[:src.index('_graphrename')]
+            if '.' in node_name: 
+                type_of_node = node_name.split('.')[-1]
+            elif '_' in node_name:
+                type_of_node = node_name.split('_')[-1]
+            else:
+                type_of_node = node_name.lower()
+
+            hardware_graph.add_node(src, x=self.label2idx[type_of_node], label=type_of_node) 
             for neighbor in edge_list_dict[src]:
-                edge_label = neighbor[0]
                 dst = neighbor[1]
                 hardware_graph.add_edge(src, dst)
 
@@ -131,13 +148,12 @@ class JsonGraphParser:
         idx2name = {}
         for idx, node in enumerate(graph.nodes(data=True)):
             node_name = node[0]
-            node_label = node[1]['label']
+            node_label = node[1]['x']
 
             name2idx[node_name] = idx
             idx2name[idx] = node_name
-            X.append(self.label2idx[node_label])
-        
-        X = F.one_hot(torch.LongTensor(X), num_classes=len(self.label2idx)).float()
+            X.append(node_label)
+        X = torch.LongTensor(X)
         return X, name2idx, idx2name
 
     def get_edge_idxs(self, graph, name2idx):

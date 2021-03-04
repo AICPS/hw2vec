@@ -289,7 +289,8 @@ class GraphTrainer(BaseTrainer):
         test_data_list = [Data(x=x, edge_index=edge_idx, y=torch.LongTensor([y]), folder_name=folder_name, idx=name2idx) for x, edge_idx, y, folder_name, name2idx in self.test_graphs]
         self.test_loader = DataLoader(test_data_list, shuffle=True, batch_size=1)
 
-        self.config.num_feature_dim = self.train_graphs[0][0].shape[1]
+        self.config.num_feature_dim = len(dataset.label2idx)
+
         if self.class_weights.shape[0] < 2:
             self.loss_func = nn.CrossEntropyLoss()
         else:    
