@@ -249,19 +249,6 @@ class PairwiseGraphTrainer(BaseTrainer):
 
         return [((g1_key, g2_key), self.get_similarity(g1_key, g2_key)) for g1_key, g2_key in itertools.product(g1_keys, g2_keys)]
 
-    # def print_data_statistics(self):
-    #     avg_num_nodes = sum([item[0].shape[0] for item in self.graphs]) / len(self.graphs)
-    #     avg_num_edges = sum([item[1].shape[1] for item in self.graphs]) / len(self.graphs)
-    #     similar_pairs_count = sum([item[2] == 1 for item in self.graph_pairs])
-    #     dissimilar_pairs_count = sum([item[2] == -1 for item in self.graph_pairs])
-    #     print("avg. # of nodes per graph: %f" % (avg_num_nodes) )
-    #     print("avg. # of edges per graph: %f" % (avg_num_edges) )
-    #     print("total graphs for training: %d" % (self.training_graph_count))
-    #     print("total graphs for testing: %d" % (self.testing_graph_count))
-    #     print("total pairs for training: %d" % (len(self.graph_pairs_train)))
-    #     print("total pairs for testing: %d" % (len(self.graph_pairs_test)))
-    #     print("# of different hardware categories: %d" % (max(self.trunk)))
-    #     print("proportion of similar/disimilar in training set: %d/%d" %(similar_pairs_count, dissimilar_pairs_count))        
 
 class GraphTrainer(BaseTrainer):
     ''' trainer for graph classification ''' 
@@ -289,7 +276,8 @@ class GraphTrainer(BaseTrainer):
         test_data_list = [Data(x=x, edge_index=edge_idx, y=torch.LongTensor([y]), folder_name=folder_name, idx=name2idx) for x, edge_idx, y, folder_name, name2idx in self.test_graphs]
         self.test_loader = DataLoader(test_data_list, shuffle=True, batch_size=1)
 
-        self.config.num_feature_dim = self.train_graphs[0][0].shape[1]
+        self.config.num_feature_dim = len(dataset.label2idx)
+
         if self.class_weights.shape[0] < 2:
             self.loss_func = nn.CrossEntropyLoss()
         else:    
@@ -434,17 +422,3 @@ class GraphTrainer(BaseTrainer):
             ", %s recall: %.4f" % (header, recall) +
             ", %s specificity: %.4f" % (header, specificity) +
             ", %s NPV: %.4f" % (header, npv))
-
-    # def print_data_statistics():
-    #     avg_num_nodes = sum([item[0].shape[0] for item in self.graphs]) / len(self.graphs)
-    #     avg_num_edges = sum([item[1].shape[1] for item in self.graphs]) / len(self.graphs)
-    #     similar_pairs_count = sum([item[2] == 1 for item in self.graph_pairs])
-    #     dissimilar_pairs_count = sum([item[2] == -1 for item in self.graph_pairs])
-    #     print("avg. # of nodes per graph: %f" % (avg_num_nodes) )
-    #     print("avg. # of edges per graph: %f" % (avg_num_edges) )
-    #     print("total graphs for training: %d" % (self.training_graph_count))
-    #     print("total graphs for testing: %d" % (self.testing_graph_count))
-    #     print("total pairs for training: %d" % (len(self.graph_pairs_train)))
-    #     print("total pairs for testing: %d" % (len(self.graph_pairs_test)))
-    #     print("# of different hardware categories: %d" % (max(self.trunk)))
-    #     print("proportion of similar/disimilar in training set: %d/%d" %(similar_pairs_count, dissimilar_pairs_count))                
