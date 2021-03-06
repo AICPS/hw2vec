@@ -109,18 +109,13 @@ class GNN4IP:
 
     def init_trainer(self, dataset):
         graph_pairs_train, graph_pairs_test = dataset.get_pairs()
-        
         train_pairs = []
         test_pairs = []
         data = dataset.graphs['all']
-
         train_list = graph_pairs_train if not self.cfg.debug else graph_pairs_train[:1000]
         test_list = graph_pairs_test if not self.cfg.debug else graph_pairs_test[:1000]
         train_pairs = [(data[pairs[0]], data[pairs[1]], pairs[2]) for pairs in train_list]
-        test_pairs = [(data[pairs[0]], data[pairs[1]], pairs[2]) for pairs in test_list]
-        for pairs in test_list:
-            test_pairs.append((data[pairs[0]], data[pairs[1]], pairs[2]))
-                
+        test_pairs = [(data[pairs[0]], data[pairs[1]], pairs[2]) for pairs in test_list]               
         train_loader = DataLoader(train_pairs, batch_size=self.cfg.batch_size)
         test_loader  = DataLoader(test_pairs, batch_size=self.cfg.batch_size)
         
