@@ -1,5 +1,12 @@
-from optparse import OptionParser
-
+#!/usr/bin/env python
+#title           :hw2graph.py
+#description     :This file includes the neccessary functions in hw2graph.
+#author          :Rozhin
+#date            :2021/03/05
+#version         :0.2
+#notes           :
+#python_version  :3.6
+#==============================================================================
 import pyverilog
 from pyverilog.dataflow.dataflow_analyzer import VerilogDataflowAnalyzer as PyDataflowAnalyzer
 from pyverilog.dataflow.optimizer import VerilogDataflowOptimizer as PyDataflowOptimizer
@@ -542,9 +549,3 @@ class PreprocessVerilog:
             for verilog_file in glob(fr'{input_path}/*.v'):
                 with open(verilog_file, "rt") as infile:
                     outfile.write(infile.read().replace(top_module, 'top'))
-        
-if __name__ == "__main__":
-    # This part will eventually goes to example script or test cases.
-    
-
-    preprocess_verilog()

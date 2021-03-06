@@ -1,3 +1,12 @@
+#!/usr/bin/env python
+#title           :config.py
+#description     :This file includes the configs of hw2vec.
+#author          :Qingrong Zhou
+#date            :2021/03/05
+#version         :0.2
+#notes           :
+#python_version  :3.6
+#==============================================================================
 import yaml
 import os, sys
 sys.path.append(os.path.dirname(sys.path[0]))

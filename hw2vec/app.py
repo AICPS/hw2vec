@@ -1,3 +1,12 @@
+#!/usr/bin/env python
+#title           :app.py
+#description     :This file includes the application of hw2vec.
+#author          :Shih-Yuan Yu
+#date            :2021/03/05
+#version         :0.2
+#notes           :
+#python_version  :3.6
+#==============================================================================
 import os, sys, itertools
 sys.path.append(os.path.dirname(sys.path[0]))
 

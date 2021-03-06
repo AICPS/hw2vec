@@ -1,3 +1,12 @@
+#!/usr/bin/env python
+#title           :models.py
+#description     :This file includes the models of hw2vec.
+#author          :Shih-Yuan Yu
+#date            :2021/03/05
+#version         :0.2
+#notes           :
+#python_version  :3.6
+#==============================================================================
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
