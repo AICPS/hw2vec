@@ -7,6 +7,7 @@
 #notes           :
 #python_version  :3.6
 #==============================================================================
+from typing import Tuple
 import pyverilog
 from pyverilog.dataflow.dataflow_analyzer import VerilogDataflowAnalyzer as PyDataflowAnalyzer
 from pyverilog.dataflow.optimizer import VerilogDataflowOptimizer as PyDataflowOptimizer
@@ -126,10 +127,16 @@ class JsonGraphParser:
         sim_diff_label = []
 
         for data in dataset:
-            if data[2] == 1:
-                sim_diff_label.append(1)
+            if type(data) == tuple:
+                if data[2] == 1:
+                    sim_diff_label.append(1)
+                else:
+                    sim_diff_label.append(-1)
             else:
-                sim_diff_label.append(-1)
+                if data.label == 1:
+                    sim_diff_label.append(1)
+                else:
+                    sim_diff_label.append(-1)
 
         return train_test_split(dataset, train_size = train_size, shuffle = True, stratify=sim_diff_label, random_state=seed)
 

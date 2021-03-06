@@ -6,7 +6,7 @@ from hw2vec.app import GNN4TJ
 if __name__ == "__main__":
     cfg = Config("./example_gnn4tj.yaml")
     app = GNN4TJ(cfg)
-    app.parse_from_json()
-    app.init_trainer()
+    dataset = app.parse_from_json()
+    app.init_trainer(dataset)
     app.train()
     app.evaluate()

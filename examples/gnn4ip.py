@@ -6,7 +6,7 @@ from hw2vec.app import GNN4IP
 if __name__ == "__main__":
     cfg = Config("./example_gnn4ip.yaml")
     app = GNN4IP(cfg)
-    app.parse_from_json()
-    app.init_trainer()
+    dataset = app.parse_from_json()
+    app.init_trainer(dataset)
     app.train()
     app.evaluate()

@@ -26,8 +26,8 @@ def test_GNN4IP():
     cfg.debug = True
     cfg.batch_size = 1
     app = GNN4IP(cfg)
-    app.parse_from_json()
-    app.init_trainer()
+    dataset = app.parse_from_json()
+    app.init_trainer(dataset)
     app.train()
     app.evaluate()
 
@@ -40,8 +40,8 @@ def test_GNN4IP_yaml():
     cfg.raw_dataset_path = (Path('..')/"tests"/"data"/"IP-dataset").resolve()
     cfg.pkl_path = (Path('.')/'gnn4ip.pkl').resolve()
     app = GNN4IP(cfg)
-    app.parse_from_json()
-    app.init_trainer()
+    dataset = app.parse_from_json()
+    app.init_trainer(dataset)
     app.train()
     app.evaluate()
 
@@ -53,8 +53,8 @@ def test_GNN4TJ():
     cfg.debug = True
     cfg.batch_size = 1
     app = GNN4TJ(cfg)
-    app.parse_from_json()
-    app.init_trainer()
+    dataset = app.parse_from_json()
+    app.init_trainer(dataset)
     app.train()
     app.evaluate()
 
@@ -65,7 +65,7 @@ def test_GNN4TJ_yaml():
     cfg.debug = True
     cfg.batch_size = 1
     app = GNN4TJ(cfg)
-    app.parse_from_json()
-    app.init_trainer()
+    dataset = app.parse_from_json()
+    app.init_trainer(dataset)
     app.train()
     app.evaluate()
