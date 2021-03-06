@@ -50,29 +50,23 @@ def parse_single_verilog_code(verilog_path, output_path, graph_format="DFG"):
     # Initialize a generator.
     # Choose different generator based on graph_format: DFG, CFG, AST 
     if graph_format == "DFG":
-        graph_generator = RTLDFGGenerator()
+        graph_generator = DFGgenerator(str(verilog_path), str(output_path))
     elif graph_format == "CFG":
-        graph_generator = RTLCFGGenerator()
+        graph_generator = CFGgenerator(str(verilog_path), str(output_path))
     elif graph_format == "AST":
-        graph_generator = RTLASTGenerator()
+        graph_generator = ASTgenerator(str(verilog_path), str(output_path))
     
     # generator parses the code and generates a graph
-    graph = graph_generator.process(verilog_path, output_path) 
+    graph_generator.process() 
 
     # Put graph information into a dictionary called ‘graph_json’, which contains:
     # Nodes, edges, edge_index, root_nodes
-    graph_json = graph_generator.get_graph_json(graph.graph_generator)
+    graph_json = graph_generator.get_graph_json()
     pprint(graph_json['nodes'])
     pprint(graph_json['edges'])
     pprint(graph_json['edge_index'])
     pprint(graph_json['root_nodes'])
-
-    # Export ‘graph_json’ to a json file.
-    graph_generator.export_json(graph_json, output_path)
-    # Draw the graph.
-    graph_generator.draw(graph.graph_generator)
    
-
     '''
         Normalize node labels: numerical value, signal, input, concat, unand, unor, ... 
     '''

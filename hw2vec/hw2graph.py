@@ -339,6 +339,31 @@ class VerilogParser:
             self.dfg_graph_generator.draw(f'{self.output_directory}merged_graph.pdf')
             print('The graphs are saved.\n')
 
+    def get_root_nodes(self):
+        if self.dfg_graph_generator:
+            return [node for node in self.dfg_graph_generator.graph.nodes() if self.dfg_graph_generator.graph.in_degree(node) == 0]
+
+    def get_nodes(self):
+        if self.dfg_graph_generator:
+            return self.dfg_graph_generator.graph.nodes()
+    
+    def get_edges(self):
+        if self.dfg_graph_generator:
+            all_edges = list()
+            for edge in self.dfg_graph_generator.graph.edges():
+                all_edges.append((edge[0], edge[1], edge.attr['label']))
+            return all_edges
+    
+    def get_edge_list(self):
+        if self.dfg_graph_generator:
+            jsondict = {}
+            for node in self.dfg_graph_generator.graph.nodes():
+                jsondict[str(node)] = list()
+                for child in self.dfg_graph_generator.graph.successors(node):
+                    edgeLabel = self.dfg_graph_generator.graph.get_edge(node, child).attr['label']
+                    jsondict[str(node)].append((edgeLabel, str(child)))
+            return jsondict
+                    
     #export the dfg graphs
     def export_dfg_graph(self, output='graph'):
         if (output=='roots'):
@@ -429,10 +454,21 @@ class DFGgenerator:
             print(f'Outputting to : {output_path}\n')
             if not os.path.exists(f'{output_path}'):
                     os.makedirs(os.path.dirname(f'{output_path}'))
-            self.verilog_parser = VerilogParser(verilog_file, output_path, top_module, draw_graph, generate_cfg=False)
-            self._generate_DFG(verilog_file, output_path, draw_graph)
+            self.verilog_parser = VerilogParser(verilog_file, output_path, top_module, generate_cfg=False)
+            self._generate_DFG()
             
-   
+    def process(self):
+        self.verilog_parser.graph_separate_modules()
+        self.verilog_parser.merge_graphs()
+
+    def get_graph_json(self):
+        graph_json = {}
+        graph_json['root_nodes'] = self.verilog_parser.get_root_nodes()
+        graph_json['nodes'] = self.verilog_parser.get_nodes()
+        graph_json['edges'] = self.verilog_parser.get_edges()
+        graph_json['edge_index'] = self.verilog_parser.get_edge_list()
+        return graph_json
+    
     def _generate_DFG(self):
         self.verilog_parser.graph_separate_modules()
         self.verilog_parser.merge_graphs()
