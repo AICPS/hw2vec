@@ -163,27 +163,6 @@ class JsonGraphParser:
 
         return hardware_graph
 
-    def get_node_embeddeings(self, graph):
-        X=[]
-        name2idx = {}
-        idx2name = {}
-        for idx, node in enumerate(graph.nodes(data=True)):
-            node_name = node[0]
-            node_label = node[1]['x']
-
-            name2idx[node_name] = idx
-            idx2name[idx] = node_name
-            X.append(node_label)
-        X = torch.LongTensor(X)
-        return X, name2idx, idx2name
-
-    def get_edge_idxs(self, graph, name2idx):
-        edge_idx = []
-        for src, dst in graph.edges():
-            edge_idx.append((name2idx[src], name2idx[dst]))
-        edge_idx = torch.transpose(torch.LongTensor(edge_idx), 0, 1).detach()
-        return edge_idx
-
 
 class VerilogParser:
     '''
