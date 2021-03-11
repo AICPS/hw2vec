@@ -21,8 +21,18 @@ global_type2idx = {
     'uxor':4, 
     'signal':5, 
     'uand':6, 
-    'ulnot':7
+    'ulnot':7,
+    'uxnor':8,
+    'numeric':9,
+    'partselect':10,
+    'and':11,
+    'unot':12,
+    'branch':13, # TODO: is it an operation? or something else
+    'or':14,
+    'uor':15
 }
+
+more_type = set()
 
 def save_graph(nxgraph, file_name):
     plt.figure(num=None, figsize=(60, 60), dpi=80)
@@ -62,15 +72,15 @@ def parse_single_verilog_code(verilog_path, output_path, graph_format="DFG"):
     # Put graph information into a dictionary called ‘graph_json’, which contains:
     # Nodes, edges, edge_index, root_nodes
     graph_json = graph_generator.get_graph_json()
-    pprint(graph_json['nodes'])
-    pprint(graph_json['edges'])
-    pprint(graph_json['edge_index'])
-    pprint(graph_json['root_nodes'])
+    # pprint(graph_json['nodes'])
+    # pprint(graph_json['edges'])
+    # pprint(graph_json['edge_index'])
+    # pprint(graph_json['root_nodes'])
    
     '''
         Normalize node labels: numerical value, signal, input, concat, unand, unor, ... 
     '''
-    NORMALIZE=False
+    NORMALIZE=True
     # this allows users to choose whether they want normalization or not.
     
     if not NORMALIZE:
@@ -107,9 +117,15 @@ def parse_single_verilog_code(verilog_path, output_path, graph_format="DFG"):
                 type_of_node = "signal"
             elif '_' in node_name:
                 type_of_node = "input"
+            elif '\'d' in node_name:
+                type_of_node = "numeric"
             else:
-                type_of_node = node_name.lower()       
-            hardware_graph.add_node(src, x=global_type2idx[type_of_node], label=type_of_node)
+                type_of_node = node_name.lower()
+            if type_of_node not in global_type2idx:
+                print("----------------"+type_of_node+"--------------")
+                more_type.add(type_of_node)
+            else:
+                hardware_graph.add_node(src, x=global_type2idx[type_of_node], label=type_of_node)
         else: 
             if '.' in node_name: 
                 type_of_node = node_name.split('.')[-1]
@@ -119,29 +135,30 @@ def parse_single_verilog_code(verilog_path, output_path, graph_format="DFG"):
                 type_of_node = node_name.lower()
             hardware_graph.add_node(src, x=label2idx[type_of_node], label=type_of_node) 
 
-        for neighbor in graph_json['edge_index'][src]:
-            dst = neighbor[1]
-            hardware_graph.add_edge(src, dst)
+        # for neighbor in graph_json['edge_index'][src]:
+        #     dst = neighbor[1]
+        #     hardware_graph.add_edge(src, dst)
     
-    data = from_networkx(hardware_graph)
-    print(data.x) # demo the X 
-    print(data.edge_index) # demo the edge_index
+    # data = from_networkx(hardware_graph)
+    # print(data.x) # demo the X 
+    # print(data.edge_index) # demo the edge_index
 
     # Draw the graph with labels.
-    save_graph(hardware_graph, "hardware_design_output.png")
+    # save_graph(hardware_graph, "hardware_design_output.png")
     
     # X = F.one_hot(data.x, num_classes=len(label2idx)).float() ## one-hot encoding should be done in the training pipeline!
 
 
-def parse_multiple_verilog_code(verilog_path, output_path, graph_format="DFG"):
+def parse_multiple_verilog_code(dataset_directory, output_path, graph_format="DFG"):
     # handling verilog code in batch to DFGs.
     # graphs = hw2graph_dfg.process_batch(dataset_directory, "topModule.v")
     # dfg_generator = HW2Graph(graph_format="DFG", code_language="verilog", top_module='top')
     # json_graphs = dfg_generator.process_batch(dataset_directory)
     # dfg_generator.export_jsons(json_graphs, output_dir=dataset_output_dir_path)
     
-    # for verilog_path in glob("%s/**/topModule.v" % str(dataset_directory), recursive=True):
-    #     print(verilog_path)
+    for verilog_path in glob("%s/**/topModule.v" % str(dataset_directory), recursive=True):
+        print(verilog_path)
+        parse_single_verilog_code(verilog_path, output_path, graph_format="DFG")
     #     # import pdb;pdb.set_trace()
     #     try:
     #         graph_generator = RTLDFGGenerator(verilog_path, "./", code_language='verilog', top_module='top', draw_graph=False)
@@ -167,11 +184,12 @@ if __name__ == '__main__':
         USAGE:  python graph_generation_example.py 
     '''    
     verilog_path = Path('../tests/data/IP-dataset/Verilog/C432/c432/topModule.v')
-    dataset_directory = Path('../tests/data/IP-dataset/Verilog/C432').resolve()
+    dataset_directory = Path('../tests/data/IP-dataset/Verilog/C880').resolve()
     dataset_output_dir_path = Path('./').resolve()
     
     # example 1: parse a single verilog code and visualize.
-    parse_single_verilog_code(verilog_path, dataset_output_dir_path, graph_format="DFG")
+    # parse_single_verilog_code(verilog_path, dataset_output_dir_path, graph_format="DFG")
     
     # example 2: parse a batch of verilog code and package.
-    parse_multiple_verilog_code(verilog_path, dataset_output_dir_path, graph_format="DFG")
+    parse_multiple_verilog_code(dataset_directory, dataset_output_dir_path, graph_format="DFG")
+    print(more_type)

@@ -67,19 +67,28 @@ class BaseTrainer:
         save_path_file.write(" ".join(sys.argv))
         save_path_file.close()
 
-    def visualize_embeddings(self, path=None):
+    def visualize_embeddings(self, data_loader, path=None):
         save_path = self.config.data_loader_path.parent / "visualize_embeddings" if path is None else Path(path)
         save_path.mkdir(parents=True, exist_ok=True)
         self.model.eval()
         with open(str(save_path / "vectors.tsv"), "w") as vectors_file:
             with open(str(save_path / "metadata.tsv"), "w") as metadata_file:
                 metadata_file.write("Type\tInstance\n")
-                for graphs in self.data:
+                import pdb; pdb.set_trace()
+                for data in data_loader:
                     
-                    X = F.one_hot(graphs[0].to(self.config.device), num_classes=self.config.num_feature_dim).float().detach()
-                    embed_x, _ = self.model.embed_graph(X, graphs[1].to(self.config.device))
-                    vectors_file.write("\t".join([str(x) for x in embed_x.detach().cpu().numpy()[0]]) + "\n")
-                    metadata_file.write(str(graphs[2]).replace('/', '\t')+'\n')    
+                    if type(data) == list:
+                        graph1, graph2 = data[0].to(self.config.device), data[1].to(self.config.device)
+                        embed_x_1, _ = self.model.forward(graph1.x, graph1.edge_index, batch=graph1.batch)
+                        embed_x_2, _ = self.model.forward(graph2.x, graph2.edge_index, batch=graph2.batch)
+                        vectors_file.write("\t".join([str(x) for x in embed_x_1.detach().cpu().numpy()[0]]) + "\n")
+                        vectors_file.write("\t".join([str(x) for x in embed_x_2.detach().cpu().numpy()[0]]) + "\n")
+                    else:
+                        data.to(self.config.device)
+                        embed_x, _ = self.model.forward(data.x, data.edge_index, data.batch)
+                        embed_x = F.log_softmax(embed_x, dim=1)
+                        vectors_file.write("\t".join([str(x) for x in embed_x.detach().cpu().numpy()[0]]) + "\n")
+                    # metadata_file.write(str(graphs[2]).replace('/', '\t')+'\n') #TODO: what is this?   
 
 
 class PairwiseGraphTrainer(BaseTrainer):
@@ -90,13 +99,13 @@ class PairwiseGraphTrainer(BaseTrainer):
         self.cos_sim = torch.nn.CosineSimilarity(dim=-1, eps=1e-08).to(self.config.device)
         self.cos_loss = torch.nn.CosineEmbeddingLoss(margin=0.5).to(self.config.device)
    
-    def train(self):
+    def train(self, train_loader, test_loader):
 
         tqdm_bar = tqdm(range(self.config.epochs))
         for epoch_idx in tqdm_bar: # iterate through epoch
             acc_loss_train = 0
             acc_time = []
-            for data in self.train_loader:
+            for data in train_loader:
                 graph1, graph2, labels = data[0].to(self.config.device), data[1].to(self.config.device), data[2].to(self.config.device)
                 self.model.train()
                 self.optimizer.zero_grad()
@@ -117,14 +126,14 @@ class PairwiseGraphTrainer(BaseTrainer):
             tqdm_bar.set_description('Epoch: {:04d}, loss_train: {:.4f}'.format(epoch_idx, acc_loss_train))
             print(sum(acc_time) / len(acc_time))
             if epoch_idx % self.config.test_step == 0:
-                self.evaluate(epoch_idx)
+                self.evaluate(epoch_idx, train_loader, test_loader)
                 
-    def inference(self, dataset):
+    def inference(self, data_loader):
         labels = []
         outputs = []
         total_loss = 0
         acc_time = []
-        for data in dataset:
+        for data in data_loader:
             graph1, graph2, labels_batch = data[0].to(self.config.device), data[1].to(self.config.device), data[2].to(self.config.device)
                 
             self.model.eval()
@@ -146,7 +155,7 @@ class PairwiseGraphTrainer(BaseTrainer):
             labels += np.split(labels_batch.detach().cpu().numpy(), len(labels_batch.detach().cpu().numpy()))
         print(sum(acc_time) / len(acc_time))
         outputs = torch.cat(outputs).detach()
-        avg_loss = total_loss / (len(dataset))
+        avg_loss = total_loss / (len(data_loader))
 
         labels_tensor = (torch.LongTensor(labels)> 0).detach() 
         outputs_tensor = torch.FloatTensor(outputs).detach()
@@ -154,9 +163,9 @@ class PairwiseGraphTrainer(BaseTrainer):
 
         return avg_loss, labels_tensor, outputs_tensor, preds
 
-    def evaluate(self, epoch_idx):
-        train_loss, train_labels, _, train_preds = self.inference(self.train_loader)
-        test_loss, test_labels, _, test_preds = self.inference(self.test_loader)
+    def evaluate(self, epoch_idx, train_loader, test_loader):
+        train_loss, train_labels, _, train_preds = self.inference(train_loader)
+        test_loss, test_labels, _, test_preds = self.inference(test_loader)
 
         print("")
         print("Mini Test for Epochs %d:"%epoch_idx)

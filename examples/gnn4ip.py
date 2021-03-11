@@ -10,3 +10,4 @@ if __name__ == "__main__":
     app.init_trainer(dataset)
     app.train()
     app.evaluate()
+    # app.visualize_embeddings("./")

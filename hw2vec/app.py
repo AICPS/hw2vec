@@ -75,6 +75,8 @@ class GNN4TJ:
     def evaluate(self):
         self.trainer.evaluate(self.cfg.epochs, self.train_loader, self.test_loader)
 
+    def visualize_embeddings(self, path):
+        self.trainer.visualize_embeddings(self.train_loader, path)
 
 class GNN4IP: 
     def __init__(self, cfg):
@@ -111,7 +113,7 @@ class GNN4IP:
         graph_pairs_train, graph_pairs_test = dataset.get_pairs()
         train_pairs = []
         test_pairs = []
-        data = dataset.graphs['all']
+        data = dataset.graphs['all'] 
         train_list = graph_pairs_train if not self.cfg.debug else graph_pairs_train[:1000]
         test_list = graph_pairs_test if not self.cfg.debug else graph_pairs_test[:1000]
         train_pairs = [(data[pairs[0]], data[pairs[1]], pairs[2]) for pairs in train_list]
@@ -122,13 +124,16 @@ class GNN4IP:
         self.cfg.num_feature_dim = len(dataset.node_labels)
 
         self.trainer = PairwiseGraphTrainer(self.cfg)
-        self.trainer.train_loader = train_loader
-        self.trainer.test_loader = test_loader
+        self.train_loader = train_loader
+        self.test_loader = test_loader
 
         self.trainer.build()
 
     def train(self):
-        self.trainer.train()
+        self.trainer.train(self.train_loader, self.test_loader)
 
     def evaluate(self):
-        self.trainer.evaluate(self.cfg.epochs)
+        self.trainer.evaluate(self.cfg.epochs, self.train_loader, self.test_loader)
+
+    def visualize_embeddings(self, path):
+        self.trainer.visualize_embeddings(self.train_loader, path)
