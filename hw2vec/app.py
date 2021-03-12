@@ -1,3 +1,12 @@
+#!/usr/bin/env python
+#title           :app.py
+#description     :This file includes the application of hw2vec.
+#author          :Shih-Yuan Yu
+#date            :2021/03/05
+#version         :0.2
+#notes           :
+#python_version  :3.6
+#==============================================================================
 import os, sys, itertools
 sys.path.append(os.path.dirname(sys.path[0]))
 
@@ -5,6 +14,8 @@ from pathlib import Path
 from hw2vec.graph2vec.trainers import *
 from hw2vec.hw2graph import *
 from hw2vec.graph2vec.config import *
+
+from torch_geometric.utils.convert import from_networkx
 
 TROJAN = 1
 NON_TROJAN = 0
@@ -16,79 +27,113 @@ class GNN4TJ:
     def __init__(self, cfg):
         self.cfg = cfg
     
+    def process_a_json(self, dataset, json_path):
+        folder_name = "%s/%s" % (Path(json_path).parent.parent.name, Path(json_path).parent.name)
+        hardware_graph = dataset.get_graph_from_json(json_path)
+        data = from_networkx(hardware_graph)
+        data.folder_name = folder_name
+        return data
+
     def parse_from_json(self):
-        if self.cfg.pkl_path.exists() is False:
-            dataset = JsonGraphParser(self.cfg)
-            dataset.read_node_labels("")
+        dataset = JsonGraphParser(self.cfg)
+        dataset.read_node_labels("")
 
-            for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"TjFree"), recursive=True):
-                folder_name = "%s/%s" % (Path(json_path).parent.parent.name, Path(json_path).parent.name)
+        for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"TjFree"), recursive=True):
+            data = self.process_a_json(dataset, json_path)
+            data.label = NON_TROJAN
+            dataset.append_graph_data(data)
 
-                hardware_graph = dataset.get_graph_from_json(json_path)
-                node_embeddings, name2idx, idx2name = dataset.get_node_embeddeings(hardware_graph)
-                edge_idxs = dataset.get_edge_idxs(hardware_graph, name2idx)
-                dataset.append_graph_data((node_embeddings, edge_idxs, NON_TROJAN, folder_name, idx2name))
+        for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"TjIn"), recursive=True):
+            data = self.process_a_json(dataset, json_path)
+            data.label = TROJAN
+            dataset.append_graph_data(data)
 
-            for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"TjIn"), recursive=True):
-                folder_name = "%s/%s" % (Path(json_path).parent.parent.name, Path(json_path).parent.name)
+        return dataset
 
-                hardware_graph = dataset.get_graph_from_json(json_path)
-                node_embeddings, name2idx, idx2name = dataset.get_node_embeddeings(hardware_graph)
-                edge_idxs = dataset.get_edge_idxs(hardware_graph, name2idx)
-                dataset.append_graph_data((node_embeddings, edge_idxs, TROJAN, folder_name, idx2name))
+    def init_trainer(self, dataset):
+        train_graphs, test_graphs = dataset.get_graphs()
+        training_labels = [data.label for data in train_graphs]
+        class_weights = torch.from_numpy(compute_class_weight('balanced', np.unique(training_labels), training_labels))
 
-            dataset.do_pickle_dataset()
-    
-    def init_trainer(self):
-        self.trainer = GraphTrainer(self.cfg)
+        if self.cfg.debug:
+            train_graphs, test_graphs = train_graphs[:10], test_graphs[:10]
+        
+        print("Train on %d graphs, Test on %d graphs." % (len(train_graphs), len(test_graphs)))
+        print("Class weights (Tj-free/Tj-in)", class_weights.detach().tolist())
+
+        self.train_loader = DataLoader(train_graphs, shuffle=True, batch_size=self.cfg.batch_size)
+        self.test_loader = DataLoader(test_graphs, shuffle=True, batch_size=1)
+
+        self.cfg.num_feature_dim = len(dataset.label2idx)
+
+        self.trainer = GraphTrainer(self.cfg, class_weights=class_weights)
         self.trainer.build()
 
     def train(self):
-        self.trainer.train()
+        self.trainer.train(self.train_loader, self.test_loader)
 
     def evaluate(self):
-        self.trainer.evaluate(self.cfg.epochs)
+        self.trainer.evaluate(self.cfg.epochs, self.train_loader, self.test_loader)
 
+    def visualize_embeddings(self, path):
+        self.trainer.visualize_embeddings(self.train_loader, path)
 
 class GNN4IP: 
     def __init__(self, cfg):
         self.cfg = cfg
 
+    def process_a_json(self, dataset, json_path):
+        folder_name = "%s/%s" % (Path(json_path).parent.parent.name, Path(json_path).parent.name)
+        hardware_graph = dataset.get_graph_from_json(json_path)
+        data = from_networkx(hardware_graph)
+        data.folder_name = folder_name
+        return data
+
     def parse_from_json(self):
-        if self.cfg.pkl_path.exists() is False:
-            dataset = JsonGraphParser(self.cfg)
-            dataset.read_node_labels("DFG")
+        dataset = JsonGraphParser(self.cfg)
+        dataset.read_node_labels("DFG")
                 
-            trunk = []
+        trunk = []
 
-            for hw_cat_idx, hardware_root_path in enumerate(glob("%s/**" % str(self.cfg.raw_dataset_path/"DFG"), recursive=False)):
-                
-                for hardware_folder_path in glob("%s/**/topModule.json" % hardware_root_path, recursive=True):
-                    folder_name = "%s/%s" % (Path(hardware_folder_path).parent.parent.name, Path(hardware_folder_path).parent.name)
+        for hw_cat_idx, hardware_root_path in enumerate(glob("%s/**" % str(self.cfg.raw_dataset_path/"DFG"), recursive=False)):
+            for hardware_folder_path in glob("%s/**/topModule.json" % hardware_root_path, recursive=True):
+                data = self.process_a_json(dataset, hardware_folder_path)
+                trunk.append(hw_cat_idx)
+                dataset.append_graph_data(data)
+        
+        for idx_graph_a, idx_graph_b in itertools.combinations(range(len(trunk)), 2):
+            if trunk[idx_graph_a] == trunk[idx_graph_b]:
+                dataset.append_graph_pair((idx_graph_a, idx_graph_b, SIMILAR))
+            else:
+                dataset.append_graph_pair((idx_graph_a, idx_graph_b, DISSIMILAR))
+        
+        return dataset
 
-                    G = dataset.get_graph_from_json(hardware_folder_path)
-                    X, name2idx, idx2name = dataset.get_node_embeddeings(G)
-                    edge_idx = dataset.get_edge_idxs(G, name2idx)          
-                    
-                    trunk.append(hw_cat_idx)
-                    dataset.training_graph_count += 1
+    def init_trainer(self, dataset):
+        graph_pairs_train, graph_pairs_test = dataset.get_pairs()
+        train_pairs = []
+        test_pairs = []
+        data = dataset.graphs['all'] 
+        train_list = graph_pairs_train if not self.cfg.debug else graph_pairs_train[:1000]
+        test_list = graph_pairs_test if not self.cfg.debug else graph_pairs_test[:1000]
+        train_pairs = [(data[pairs[0]], data[pairs[1]], pairs[2]) for pairs in train_list]
+        test_pairs = [(data[pairs[0]], data[pairs[1]], pairs[2]) for pairs in test_list]               
+        train_loader = DataLoader(train_pairs, batch_size=self.cfg.batch_size)
+        test_loader  = DataLoader(test_pairs, batch_size=self.cfg.batch_size)
+        
+        self.cfg.num_feature_dim = len(dataset.node_labels)
 
-                    dataset.append_graph_data((X, edge_idx, folder_name))
-
-            for idx_graph_a, idx_graph_b in itertools.combinations(range(len(trunk)), 2):
-                if trunk[idx_graph_a] == trunk[idx_graph_b]:
-                    dataset.append_graph_pair((idx_graph_a, idx_graph_b, SIMILAR))
-                else:
-                    dataset.append_graph_pair((idx_graph_a, idx_graph_b, DISSIMILAR))
-
-            dataset.do_pickle_dataset()
-
-    def init_trainer(self):
         self.trainer = PairwiseGraphTrainer(self.cfg)
+        self.train_loader = train_loader
+        self.test_loader = test_loader
+
         self.trainer.build()
 
     def train(self):
-        self.trainer.train()
+        self.trainer.train(self.train_loader, self.test_loader)
 
     def evaluate(self):
-        self.trainer.evaluate(self.cfg.epochs)
+        self.trainer.evaluate(self.cfg.epochs, self.train_loader, self.test_loader)
+
+    def visualize_embeddings(self, path):
+        self.trainer.visualize_embeddings(self.train_loader, path)

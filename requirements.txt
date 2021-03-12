@@ -12,3 +12,4 @@ pyverilog
 pyunpack
 patool
 pathlib
+pydot

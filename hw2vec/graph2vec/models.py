@@ -1,3 +1,12 @@
+#!/usr/bin/env python
+#title           :models.py
+#description     :This file includes the models of hw2vec.
+#author          :Shih-Yuan Yu
+#date            :2021/03/05
+#version         :0.2
+#notes           :
+#python_version  :3.6
+#==============================================================================
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -27,7 +36,8 @@ class GCN(nn.Module):
 
     def embed_graph(self, x, edge_index, batch=None):
         attn_weights = dict()
-
+        
+        x = F.one_hot(x, num_classes=self.config.num_feature_dim).float()
         x = F.relu(self.gc1(x, edge_index))
         x = F.dropout(x, self.config.dropout, training=self.training)
         x = self.gc2(x, edge_index)
@@ -89,7 +99,8 @@ class GIN(nn.Module):
 
     def forward(self, x, edge_index, batch=None):
         attn_weights = dict()
-
+        
+        x = F.one_hot(x, num_classes=self.config.num_feature_dim).float()
         for layer in range(self.config.num_layers-1):
             x = F.relu(self.gin_convs[layer](x, edge_index))
             x = self.batch_norms[layer](x)

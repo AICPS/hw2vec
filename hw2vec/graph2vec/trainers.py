@@ -1,3 +1,12 @@
+#!/usr/bin/env python
+#title           :trainers.py
+#description     :This file includes the trainers of hw2vec.
+#author          :Shih-Yuan Yu
+#date            :2021/03/05
+#version         :0.2
+#notes           :
+#python_version  :3.6
+#==============================================================================
 import os, sys
 sys.path.append(os.path.dirname(sys.path[0]))
 
@@ -58,19 +67,28 @@ class BaseTrainer:
         save_path_file.write(" ".join(sys.argv))
         save_path_file.close()
 
-    def visualize_embeddings(self, path=None):
-        save_path = self.config.dataset_path.parent / "visualize_embeddings" if path is None else Path(path)
+    def visualize_embeddings(self, data_loader, path=None):
+        save_path = self.config.data_loader_path.parent / "visualize_embeddings" if path is None else Path(path)
         save_path.mkdir(parents=True, exist_ok=True)
         self.model.eval()
         with open(str(save_path / "vectors.tsv"), "w") as vectors_file:
             with open(str(save_path / "metadata.tsv"), "w") as metadata_file:
                 metadata_file.write("Type\tInstance\n")
-                for graphs in self.data:
+                import pdb; pdb.set_trace()
+                for data in data_loader:
                     
-                    X = F.one_hot(graphs[0].to(self.config.device), num_classes=self.config.num_feature_dim).float().detach()
-                    embed_x, _ = self.model.embed_graph(X, graphs[1].to(self.config.device))
-                    vectors_file.write("\t".join([str(x) for x in embed_x.detach().cpu().numpy()[0]]) + "\n")
-                    metadata_file.write(str(graphs[2]).replace('/', '\t')+'\n')    
+                    if type(data) == list:
+                        graph1, graph2 = data[0].to(self.config.device), data[1].to(self.config.device)
+                        embed_x_1, _ = self.model.forward(graph1.x, graph1.edge_index, batch=graph1.batch)
+                        embed_x_2, _ = self.model.forward(graph2.x, graph2.edge_index, batch=graph2.batch)
+                        vectors_file.write("\t".join([str(x) for x in embed_x_1.detach().cpu().numpy()[0]]) + "\n")
+                        vectors_file.write("\t".join([str(x) for x in embed_x_2.detach().cpu().numpy()[0]]) + "\n")
+                    else:
+                        data.to(self.config.device)
+                        embed_x, _ = self.model.forward(data.x, data.edge_index, data.batch)
+                        embed_x = F.log_softmax(embed_x, dim=1)
+                        vectors_file.write("\t".join([str(x) for x in embed_x.detach().cpu().numpy()[0]]) + "\n")
+                    # metadata_file.write(str(graphs[2]).replace('/', '\t')+'\n') #TODO: what is this?   
 
 
 class PairwiseGraphTrainer(BaseTrainer):
@@ -78,53 +96,16 @@ class PairwiseGraphTrainer(BaseTrainer):
     def __init__(self, cfg):
         super().__init__(cfg)
         self.min_test_loss = 1
-
-        with open(str(cfg.pkl_path), 'rb') as f:
-            dataset = pkl.load(f)
-      
-        graph_pairs_train, graph_pairs_test = dataset.get_pairs()
-        
-        # dataset.print_data_statistics()
-        self.train_pairs = []
-        self.test_pairs = []
-        self.data = dataset.graphs['all']
-        self.training_graph_count = dataset.training_graph_count
-        self.testing_graph_count = dataset.testing_graph_count
-
-        train_list = graph_pairs_train if not self.config.debug else graph_pairs_train[:1000]
-        test_list = graph_pairs_test if not self.config.debug else graph_pairs_test[:1000]
-        for pairs in train_list:
-            self.train_pairs.append((self.data[pairs[0]], self.data[pairs[1]], pairs[2]))
-        for pairs in test_list:
-            self.test_pairs.append((self.data[pairs[0]], self.data[pairs[1]], pairs[2]))
-        
-        train_data_list = [] 
-        for graph_1, graph_2, label in self.train_pairs:
-            g1 = Data(x=graph_1[0], edge_index=graph_1[1])
-            g2 = Data(x=graph_2[0], edge_index=graph_2[1])
-            train_data_list.append((g1, g2, label))
-
-        test_data_list = [] 
-        for graph_1, graph_2, label in self.test_pairs:
-            g1 = Data(x=graph_1[0], edge_index=graph_1[1])
-            g2 = Data(x=graph_2[0], edge_index=graph_2[1])
-            test_data_list.append((g1, g2, label))
-                
-        self.train_loader = DataLoader(train_data_list, batch_size=self.config.batch_size)
-        self.test_loader  = DataLoader(test_data_list, batch_size=self.config.batch_size)
-
-        self.config.num_feature_dim = len(dataset.node_labels)
-
         self.cos_sim = torch.nn.CosineSimilarity(dim=-1, eps=1e-08).to(self.config.device)
         self.cos_loss = torch.nn.CosineEmbeddingLoss(margin=0.5).to(self.config.device)
    
-    def train(self):
+    def train(self, train_loader, test_loader):
 
         tqdm_bar = tqdm(range(self.config.epochs))
         for epoch_idx in tqdm_bar: # iterate through epoch
             acc_loss_train = 0
             acc_time = []
-            for data in self.train_loader:
+            for data in train_loader:
                 graph1, graph2, labels = data[0].to(self.config.device), data[1].to(self.config.device), data[2].to(self.config.device)
                 self.model.train()
                 self.optimizer.zero_grad()
@@ -145,14 +126,14 @@ class PairwiseGraphTrainer(BaseTrainer):
             tqdm_bar.set_description('Epoch: {:04d}, loss_train: {:.4f}'.format(epoch_idx, acc_loss_train))
             print(sum(acc_time) / len(acc_time))
             if epoch_idx % self.config.test_step == 0:
-                self.evaluate(epoch_idx)
+                self.evaluate(epoch_idx, train_loader, test_loader)
                 
-    def inference(self, dataset):
+    def inference(self, data_loader):
         labels = []
         outputs = []
         total_loss = 0
         acc_time = []
-        for data in dataset:
+        for data in data_loader:
             graph1, graph2, labels_batch = data[0].to(self.config.device), data[1].to(self.config.device), data[2].to(self.config.device)
                 
             self.model.eval()
@@ -174,7 +155,7 @@ class PairwiseGraphTrainer(BaseTrainer):
             labels += np.split(labels_batch.detach().cpu().numpy(), len(labels_batch.detach().cpu().numpy()))
         print(sum(acc_time) / len(acc_time))
         outputs = torch.cat(outputs).detach()
-        avg_loss = total_loss / (len(dataset))
+        avg_loss = total_loss / (len(data_loader))
 
         labels_tensor = (torch.LongTensor(labels)> 0).detach() 
         outputs_tensor = torch.FloatTensor(outputs).detach()
@@ -182,9 +163,9 @@ class PairwiseGraphTrainer(BaseTrainer):
 
         return avg_loss, labels_tensor, outputs_tensor, preds
 
-    def evaluate(self, epoch_idx):
-        train_loss, train_labels, _, train_preds = self.inference(self.train_loader)
-        test_loss, test_labels, _, test_preds = self.inference(self.test_loader)
+    def evaluate(self, epoch_idx, train_loader, test_loader):
+        train_loss, train_labels, _, train_preds = self.inference(train_loader)
+        test_loss, test_labels, _, test_preds = self.inference(test_loader)
 
         print("")
         print("Mini Test for Epochs %d:"%epoch_idx)
@@ -249,60 +230,28 @@ class PairwiseGraphTrainer(BaseTrainer):
 
         return [((g1_key, g2_key), self.get_similarity(g1_key, g2_key)) for g1_key, g2_key in itertools.product(g1_keys, g2_keys)]
 
-    # def print_data_statistics(self):
-    #     avg_num_nodes = sum([item[0].shape[0] for item in self.graphs]) / len(self.graphs)
-    #     avg_num_edges = sum([item[1].shape[1] for item in self.graphs]) / len(self.graphs)
-    #     similar_pairs_count = sum([item[2] == 1 for item in self.graph_pairs])
-    #     dissimilar_pairs_count = sum([item[2] == -1 for item in self.graph_pairs])
-    #     print("avg. # of nodes per graph: %f" % (avg_num_nodes) )
-    #     print("avg. # of edges per graph: %f" % (avg_num_edges) )
-    #     print("total graphs for training: %d" % (self.training_graph_count))
-    #     print("total graphs for testing: %d" % (self.testing_graph_count))
-    #     print("total pairs for training: %d" % (len(self.graph_pairs_train)))
-    #     print("total pairs for testing: %d" % (len(self.graph_pairs_test)))
-    #     print("# of different hardware categories: %d" % (max(self.trunk)))
-    #     print("proportion of similar/disimilar in training set: %d/%d" %(similar_pairs_count, dissimilar_pairs_count))        
 
 class GraphTrainer(BaseTrainer):
     ''' trainer for graph classification ''' 
-    def __init__(self, cfg):
+    def __init__(self, cfg, class_weights=None):
         super().__init__(cfg)
         self.min_test_loss = 100
         self.train_time = 0
         self.test_time = 0
 
-        with open(str(cfg.pkl_path), 'rb') as f:
-            dataset = pkl.load(f)
-        
-        self.train_graphs, self.test_graphs = dataset.get_graphs()
-        self.training_labels = [data[2] for data in self.train_graphs]
-        self.testing_labels = [data[2] for data in self.test_graphs]
-        self.class_weights = torch.from_numpy(compute_class_weight('balanced', np.unique(self.training_labels), self.training_labels))
-
-        if self.config.debug:
-            self.train_graphs, self.test_graphs = self.train_graphs[:10], self.test_graphs[:10]
-        print("Train on %d graphs, Test on %d graphs." % (len(self.train_graphs), len(self.test_graphs)))
-        print("Class weights (Tj-free/Tj-in)", self.class_weights.detach().tolist())
-
-        train_data_list = [Data(x=x, edge_index=edge_idx, y=torch.LongTensor([y]), folder_name=folder_name, idx=name2idx) for x, edge_idx, y, folder_name, name2idx in self.train_graphs]
-        self.train_loader = DataLoader(train_data_list, shuffle=True, batch_size=self.config.batch_size)
-        test_data_list = [Data(x=x, edge_index=edge_idx, y=torch.LongTensor([y]), folder_name=folder_name, idx=name2idx) for x, edge_idx, y, folder_name, name2idx in self.test_graphs]
-        self.test_loader = DataLoader(test_data_list, shuffle=True, batch_size=1)
-
-        self.config.num_feature_dim = self.train_graphs[0][0].shape[1]
-        if self.class_weights.shape[0] < 2:
+        if class_weights.shape[0] < 2:
             self.loss_func = nn.CrossEntropyLoss()
         else:    
-           self.loss_func = nn.CrossEntropyLoss(weight=self.class_weights.float().to(self.config.device))
+            self.loss_func = nn.CrossEntropyLoss(weight=class_weights.float().to(cfg.device))
 
-    def train(self):
+    def train(self, data_loader, valid_data_loader):
         tqdm_bar = tqdm(range(self.config.epochs))
 
         for epoch_idx in tqdm_bar: # iterate through epoch
             start_time = time()
             acc_loss_train = 0
             
-            for data in self.train_loader: # iterate through scenegraphs
+            for data in data_loader: # iterate through scenegraphs
                 
                 data.to(self.config.device)
 
@@ -312,7 +261,7 @@ class GraphTrainer(BaseTrainer):
                 output, _ = self.model.forward(data.x, data.edge_index, data.batch)
                 output = F.log_softmax(output, dim=1)
 
-                loss_train = self.loss_func(output, data.y)
+                loss_train = self.loss_func(output, data.label)
                     
                 loss_train.backward()
 
@@ -324,22 +273,22 @@ class GraphTrainer(BaseTrainer):
             tqdm_bar.set_description('Epoch: {:04d}, loss_train: {:.4f}'.format(epoch_idx, acc_loss_train))
 
             if epoch_idx % self.config.test_step == 0:
-                self.evaluate(epoch_idx)
+                self.evaluate(epoch_idx, data_loader, valid_data_loader)
                 
-    def inference(self, dataset):
+    def inference(self, data_loader):
         labels = []
         outputs = []
         node_attns = []
         total_loss = 0
         folder_names = []
         
-        for i, data in enumerate(dataset): # iterate through graphs
+        for i, data in enumerate(data_loader): # iterate through graphs
             data.to(self.config.device)
             self.model.eval()
             output, attn = self.model.forward(data.x, data.edge_index, data.batch)
             output = F.log_softmax(output, dim=1)
 
-            loss = self.loss_func(output, data.y)
+            loss = self.loss_func(output, data.label)
             total_loss += loss.detach().cpu().numpy()
 
             outputs.append(output.cpu())
@@ -352,11 +301,11 @@ class GraphTrainer(BaseTrainer):
                 node_attn["pool_score"] = attn['pool_score'].detach().cpu().numpy().tolist()
                 node_attns.append(node_attn)
 
-            labels += np.split(data.y.cpu().numpy(), len(data.y.cpu().numpy()))
+            labels += np.split(data.label.cpu().numpy(), len(data.label.cpu().numpy()))
             folder_names += data.folder_name
 
         outputs = torch.cat(outputs).reshape(-1,2).detach()
-        avg_loss = total_loss / (len(dataset))
+        avg_loss = total_loss / (len(data_loader))
 
         labels_tensor = torch.LongTensor(labels).detach()
         outputs_tensor = torch.FloatTensor(outputs).detach()
@@ -364,10 +313,10 @@ class GraphTrainer(BaseTrainer):
 
         return avg_loss, labels_tensor, outputs_tensor, preds, node_attns, folder_names
 
-    def evaluate(self, epoch_idx):
+    def evaluate(self, epoch_idx, data_loader, valid_data_loader):
         start_time = time()
-        train_loss, train_labels, _, train_preds, train_node_attns, _ = self.inference(self.train_loader)
-        test_loss, test_labels, _, test_preds, test_node_attns, _ = self.inference(self.test_loader)
+        train_loss, train_labels, _, train_preds, train_node_attns, _ = self.inference(data_loader)
+        test_loss, test_labels, _, test_preds, test_node_attns, _ = self.inference(valid_data_loader)
         self.test_time += (time() - start_time)
         train_tn, train_fp, train_fn, train_tp = confusion_matrix(train_labels, train_preds).ravel()
         test_tn, test_fp, test_fn, test_tp = confusion_matrix(test_labels, test_preds).ravel()
@@ -382,8 +331,8 @@ class GraphTrainer(BaseTrainer):
         if(epoch_idx==self.config.epochs):
             self.metric_print(self.min_test_loss, **self.metrics, header="best ")
 
-            total_graphs = len(self.train_graphs)+len(self.test_graphs)
-            total_train_batches = len(self.train_graphs)/self.config.batch_size
+            total_graphs = len(data_loader)+len(valid_data_loader)
+            total_train_batches = len(data_loader)/self.config.batch_size
             total_evaluates = (self.config.epochs/self.config.test_step) + 1
             total_inferences = 2 * total_evaluates
             total_test_samples = total_evaluates * total_graphs
@@ -434,17 +383,3 @@ class GraphTrainer(BaseTrainer):
             ", %s recall: %.4f" % (header, recall) +
             ", %s specificity: %.4f" % (header, specificity) +
             ", %s NPV: %.4f" % (header, npv))
-
-    # def print_data_statistics():
-    #     avg_num_nodes = sum([item[0].shape[0] for item in self.graphs]) / len(self.graphs)
-    #     avg_num_edges = sum([item[1].shape[1] for item in self.graphs]) / len(self.graphs)
-    #     similar_pairs_count = sum([item[2] == 1 for item in self.graph_pairs])
-    #     dissimilar_pairs_count = sum([item[2] == -1 for item in self.graph_pairs])
-    #     print("avg. # of nodes per graph: %f" % (avg_num_nodes) )
-    #     print("avg. # of edges per graph: %f" % (avg_num_edges) )
-    #     print("total graphs for training: %d" % (self.training_graph_count))
-    #     print("total graphs for testing: %d" % (self.testing_graph_count))
-    #     print("total pairs for training: %d" % (len(self.graph_pairs_train)))
-    #     print("total pairs for testing: %d" % (len(self.graph_pairs_test)))
-    #     print("# of different hardware categories: %d" % (max(self.trunk)))
-    #     print("proportion of similar/disimilar in training set: %d/%d" %(similar_pairs_count, dissimilar_pairs_count))                
