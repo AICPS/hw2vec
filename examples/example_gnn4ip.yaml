@@ -8,7 +8,7 @@ dropout: 0.5 # Dropout rate (1 - keep probability).
 nclass: 8 # The number of classes for node.
 recursive: True # Recursive loading scenegraphs.
 batch_size: 4 # Number of graphs in a batch.
-device: "cuda" # The device to run on models (cuda or cpu) cpu in default.
+device: "cpu" # The device to run on models (cuda or cpu) cpu in default.
 model: "gcn" # Model to be used.
 num_layer: 5 # Number of layers in the neural network.
 hidden_dim: 32 # Hidden dimension in GIN.
