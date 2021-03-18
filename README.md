@@ -75,7 +75,7 @@ hidden_dim: 32 # Hidden dimension in GIN.
 test_step: 10 # The interval between mini evaluation along the training process.
 pooling_type: "sagpool" # Graph pooling type.
 readout_type: "max" # Readout type.
-rati0: 0.8 # Dataset splitting ratio
+ratio: 0.8 # Dataset splitting ratio
 poolratio: 0.75 # Ratio for graph pooling.
 raw_dataset_path: "../data/TJ-dataset" # Path to raw dataset for parsing if no precache.
 pkl_path: "tj.pkl" # Path to hardware graphs for parsing.
