@@ -8,12 +8,25 @@ from optparse import OptionParser
 import os
 
 
-  
+def remove_comments(input_path, target_path):
+    # read the file into a list of lines
+    with open(input_path,'r') as file_in:
+        lines = file_in.read().split("\n")
+
+    file_out = open(target_path, 'w')
+    modules_dic={}
+    for i,line in enumerate(lines):
+        idx = line.find('/')
+        file_out.write(line[0:idx]+'\n')
+                
+    file_in.close()
+    file_out.close()
+    
     
 def rename_topModule(input_path, target_path):
     # read the file into a list of lines
-    with open(input_path,'r') as f1:
-        lines = f1.read().split("\n")
+    with open(input_path,'r') as file_in:
+        lines = file_in.read().split("\n")
 
     modules_dic={}
     # iterate over lines, and list the module names.
@@ -23,8 +36,11 @@ def rename_topModule(input_path, target_path):
             if word == 'module':
                 module_name = words[j+1]
                 if '(' in module_name:
-                    module_name = module_name[:-1]
-                modules_dic[module_name]= 1
+                    idx = module_name.find('(')
+                    module_name = module_name[:idx]
+                    modules_dic[module_name]= 1
+                else:
+                    modules_dic[module_name]= 0
                 
     # iterate over file and count the occurance of each module name.                       
     for i,line in enumerate(lines):
@@ -42,11 +58,11 @@ def rename_topModule(input_path, target_path):
             break   
     
     # rename the top module to 'top'
-    f2 = open(target_path, 'w')
+    file_out = open(target_path, 'w')
     for line in lines:
-        f2.write(line.replace(top_module, 'top')+'\n')
-    f1.close()
-    f2.close()
+        file_out.write(line.replace(top_module, 'top')+'\n')
+    file_in.close()
+    file_out.close()
 
             
             
@@ -61,7 +77,8 @@ def flatten(input_path, target_path):
 if __name__ == '__main__':
     optparser = OptionParser()
     (options, args) = optparser.parse_args()
-    rename_topModule('test.v','topModule.v')
+    remove_comments('test.v', 'noComment.v')
+    rename_topModule('noComment.v','final.v')
   
     
   

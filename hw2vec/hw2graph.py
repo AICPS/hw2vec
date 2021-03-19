@@ -521,10 +521,25 @@ class PreprocessVerilog:
         if code_language == "verilog":
             pass
 
+    def remove_comments(input_path, target_path):
+        # read the file into a list of lines
+        with open(input_path,'r') as file_in:
+            lines = file_in.read().split("\n")
+    
+        file_out = open(target_path, 'w')
+        modules_dic={}
+        for i,line in enumerate(lines):
+            idx = line.find('/')
+            file_out.write(line[0:idx]+'\n')
+                    
+        file_in.close()
+        file_out.close()
+        
+        
     def rename_topModule(input_path, target_path):
         # read the file into a list of lines
-        with open(input_path,'r') as f1:
-            lines = f1.read().split("\n")
+        with open(input_path,'r') as file_in:
+            lines = file_in.read().split("\n")
     
         modules_dic={}
         # iterate over lines, and list the module names.
@@ -556,11 +571,11 @@ class PreprocessVerilog:
                 break   
         
         # rename the top module to 'top'
-        f2 = open(target_path, 'w')
+        file_out = open(target_path, 'w')
         for line in lines:
-            f2.write(line.replace(top_module, 'top')+'\n')
-        f1.close()
-        f2.close()
+            file_out.write(line.replace(top_module, 'top')+'\n')
+        file_in.close()
+        file_out.close()
 
             
             
