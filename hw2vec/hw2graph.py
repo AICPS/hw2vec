@@ -7,13 +7,19 @@
 #notes           :
 #python_version  :3.6
 #==============================================================================
+from __future__ import absolute_import
+from __future__ import print_function
 from typing import Tuple
 import pyverilog
 from pyverilog.dataflow.dataflow_analyzer import VerilogDataflowAnalyzer as PyDataflowAnalyzer
 from pyverilog.dataflow.optimizer import VerilogDataflowOptimizer as PyDataflowOptimizer
 from pyverilog.dataflow.graphgen import VerilogGraphGenerator as PyGraphGenerator
 from pyverilog.controlflow.controlflow_analyzer import VerilogControlflowAnalyzer as PyControlflowAnalyzer
+from pyverilog.ast_code_generator.codegen import ASTCodeGenerator
+from pyverilog.vparser.parser import parse
+from optparse import OptionParser
 
+import pyverilog.vparser.ast as vast
 import pyverilog.utils.util as util
 import pydot
 
@@ -167,18 +173,29 @@ class JsonGraphParser:
 class VerilogParser:
     '''
         the only class that interfaces with pyverilog.
+        https://github.com/Microsoft/vscode-tips-and-tricks#intellisense
     ''' 
-    #holds a graph_generator instance
-    def __init__(self, verilog_file, output_directory, top_module, generate_cfg=False):
+
+    #holds a GRAPH_GENERATOR INSTANCE
+    def __init__(self, verilog_file, output_directory, top_module, generate_cfg=False, generate_ast=False):
         print("Verilog file: ", verilog_file)
         print("Output directory: ", output_directory)
+        if not os.path.exists(verilog_file):
+            raise IOError("File Not Found:  ")
         self.output_directory = output_directory
+
+        #Options
         self.dfg_graph_generator = None
         self.cfg_graph_generator = None
-        self._create_graphgen_obj(verilog_file, top_module, generate_cfg)
+        self.ast = None
+        self.ARRAY_GEN = None
+        self.CONST_DICTIONARY_GEN = None
+        self.DICTIONARY_GEN = None 
+
+        self._create_graphgen_obj(verilog_file, top_module, generate_cfg, generate_ast)
 
     #helper fcn to __init__
-    def _create_graphgen_obj(self, verilog_file, top_module, generate_cfg):
+    def _create_graphgen_obj(self, verilog_file, top_module, generate_cfg, generate_ast):
         dataflow_analyzer = PyDataflowAnalyzer(verilog_file, top_module)
         dataflow_analyzer.generate()
         binddict = dataflow_analyzer.getBinddict()
@@ -190,16 +207,56 @@ class VerilogParser:
         resolved_binddict = dataflow_optimizer.getResolvedBinddict()
         constlist = dataflow_optimizer.getConstlist()
 
-        if not generate_cfg: 
-            self.dfg_graph_generator = PyGraphGenerator(top_module, terms, binddict, resolved_terms, 
-                                resolved_binddict, constlist, 
-                                f'{self.output_directory}seperate_modules.pdf')
-        else:
+        if generate_cfg: 
             fsm_vars = tuple(['fsm', 'state', 'count', 'cnt', 'step', 'mode'])
             self.cfg_graph_generator = PyControlflowAnalyzer("top", terms, binddict,
                                         resolved_terms, resolved_binddict, constlist, fsm_vars)
+        elif generate_ast:
+            #when generating AST, determines which substructure (dictionary/array) to generate
+            #before converting the json-like structure into actual json
+            self.DICTIONARY_GEN = ["Source","Description","Ioport","Decl","Lvalue"]
+            self.ARRAY_GEN = ["ModuleDef","Paramlist","Portlist","Input","Width","Reg","Wire","Rvalue","ParseSelect",
+            "Uplus","Uminus","Ulnot","Unot","Uand","Unand","Uor","Unor","Uxnor","Power","Times","Divide","Mod","Plus",
+            "Minus","Sll","Srl","Sla","Sra","LessThan","GreaterThan","LessEq","GreaterEq","Eq","Eql","NotEq","Eql","NotEql",
+            "And","Xor","Xnor","Or","Land","Lor","Cond","Assign","Always","AlwaysFF","AlwaysComb","AlwaysLatch",
+            "SensList","Sens","Substitution","BlockingSubstitution","NonblockingSubstitution","IfStatement","Block",
+            "Initial","Plus","Output","Partselect"]
+            self.CONST_DICTIONARY_GEN = ["IntConst","FloatConst","StringConst","Identifier"]
+
+            self.ast, _ = parse([verilog_file])
+            #self.ast.show(showlineno=False)
+            nested_dictionary = self._generate_ast_dict(self.ast)
+            print(nested_dictionary)
+        else:
+            self.dfg_graph_generator = PyGraphGenerator(top_module, terms, binddict, resolved_terms, 
+                                resolved_binddict, constlist, 
+                                f'{self.output_directory}seperate_modules.pdf')
     
-    #generates dot file
+        #pass in self.ast only, then the child nodes
+    
+    #generates nested dictionary for conversion to json
+    def _generate_ast_dict(self, ast_node):
+        class_name = ast_node.__class__.__name__
+        structure = {}
+        #based on the token class_name, determine the value type of class_name
+        if class_name in self.ARRAY_GEN:
+            structure[class_name] = [getattr(ast_node, n) for n in ast_node.attr_names] if ast_node.attr_names else []
+            for c in ast_node.children():
+                structure[class_name].append(self._generate_ast_dict(c))
+        elif class_name in self.DICTIONARY_GEN:
+            structure[class_name] = self._generate_ast_dict(ast_node.children()[0])
+        elif class_name in self.CONST_DICTIONARY_GEN:
+            structure = {}
+            structure[class_name] = getattr(ast_node,ast_node.attr_names[0])
+            return structure
+        else:
+            raise Exception(f"Error. Token name {class_name} is invalid or has not yet been supported")
+        return structure
+
+    def convert_to_json(self, nested_dictionary):
+        pass
+
+    #generates dot file (CFG helper)
     def generate_dot_file(self, graph_format='png',no_label=False):
         assert self.cfg_graph_generator != None, "Error: Generate dot file only if you are generating CFG's "
 
@@ -260,7 +317,7 @@ class VerilogParser:
             print('The graph is saved as topModule.json.\n')
 
 
-    #cleanup dot file and other residual files generated earlier
+    #cleanup dot file and other residual files generated earlier (CFG helper)
     def cleanup_files(self):
         for file in ['file.dot','parser.out','parsetab.py','top_state.png']:
             try:
@@ -479,8 +536,6 @@ class DFGgenerator:
     def check_dependecny(self):
         self.verilog_parser.graph_input_dependencies()
         
-
-
 class CFGgenerator:
     '''
         This generator generates the Control Flow Graph (CFG) from RTL verilog code.
@@ -511,6 +566,10 @@ class CFGgenerator:
     
     def export_root_nodes(self):
         self.verilog_parser.export_cfg_graph(output='roots')
+
+class ASTgenerator:
+    def __init__(self,verilog_file,output):
+        parse = VerilogParser(verilog_file,output,"top",generate_ast=True)
 
 class PreprocessVerilog:
     '''
