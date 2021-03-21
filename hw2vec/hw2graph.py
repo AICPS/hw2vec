@@ -225,8 +225,8 @@ class VerilogParser:
 
             self.ast, _ = parse([verilog_file])
             #self.ast.show(showlineno=False)
-            nested_dictionary = self._generate_ast_dict(self.ast)
-            print(nested_dictionary)
+            self.ast_dict = self._generate_ast_dict(self.ast)
+            self.export_ast(self.ast_dict)
         else:
             self.dfg_graph_generator = PyGraphGenerator(top_module, terms, binddict, resolved_terms, 
                                 resolved_binddict, constlist, 
@@ -234,7 +234,7 @@ class VerilogParser:
     
         #pass in self.ast only, then the child nodes
     
-    #generates nested dictionary for conversion to json
+    #generates nested dictionary for conversion to json (AST helper)
     def _generate_ast_dict(self, ast_node):
         class_name = ast_node.__class__.__name__
         structure = {}
@@ -253,8 +253,14 @@ class VerilogParser:
             raise Exception(f"Error. Token name {class_name} is invalid or has not yet been supported")
         return structure
 
-    def convert_to_json(self, nested_dictionary):
-        pass
+    #generates abstract syntax tree for conversion 
+    def export_ast(self, nested_dictionary):
+        print(f'Saving abstract syntax tree as json')
+        #print(f'{self.output_directory}/ast.json')
+        with open(f'{self.output_directory}/ast.json', 'w') as f:
+            f.write(dumps(nested_dictionary, indent=2))
+        print('List of root nodes saved in ast.json.\n')
+        f.close()
 
     #generates dot file (CFG helper)
     def generate_dot_file(self, graph_format='png',no_label=False):
