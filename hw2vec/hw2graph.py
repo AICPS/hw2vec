@@ -663,7 +663,3 @@ class PreprocessVerilog:
             for verilog_file in glob(fr'{input_path}/*.v'):
                 with open(verilog_file, "rt") as infile:
                     outfile.write(infile.read().replace(top_module, 'top'))
-
-if __name__ == "__main__":
-    ast_gen = ASTgenerator(f'{os.getcwd()}/test.v',os.getcwd())
-    ast_gen.generate_ast_json()
