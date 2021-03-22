@@ -169,7 +169,6 @@ class JsonGraphParser:
 
         return hardware_graph
 
-
 class VerilogParser:
     '''
         the only class that interfaces with pyverilog.
@@ -194,7 +193,7 @@ class VerilogParser:
 
         self._create_graphgen_obj(verilog_file, top_module, generate_cfg, generate_ast)
 
-    #helper fcn to __init__
+    #helper fcn to __init__, create a graph object used to generate json
     def _create_graphgen_obj(self, verilog_file, top_module, generate_cfg, generate_ast):
         dataflow_analyzer = PyDataflowAnalyzer(verilog_file, top_module)
         dataflow_analyzer.generate()
@@ -224,15 +223,11 @@ class VerilogParser:
             self.CONST_DICTIONARY_GEN = ["IntConst","FloatConst","StringConst","Identifier"]
 
             self.ast, _ = parse([verilog_file])
-            #self.ast.show(showlineno=False)
-            self.ast_dict = self._generate_ast_dict(self.ast)
-            self.export_ast(self.ast_dict)
-        else:
+
+        else: #generate dfg
             self.dfg_graph_generator = PyGraphGenerator(top_module, terms, binddict, resolved_terms, 
                                 resolved_binddict, constlist, 
                                 f'{self.output_directory}seperate_modules.pdf')
-    
-        #pass in self.ast only, then the child nodes
     
     #generates nested dictionary for conversion to json (AST helper)
     def _generate_ast_dict(self, ast_node):
@@ -253,7 +248,7 @@ class VerilogParser:
             raise Exception(f"Error. Token name {class_name} is invalid or has not yet been supported")
         return structure
 
-    #generates abstract syntax tree for conversion 
+    #generates abstract syntax tree for conversion (AST helper)
     def export_ast(self, nested_dictionary):
         print(f'Saving abstract syntax tree as json')
         #print(f'{self.output_directory}/ast.json')
@@ -321,15 +316,6 @@ class VerilogParser:
             print('Saving cfg graph dictionary as a json.\n')
             f.close()
             print('The graph is saved as topModule.json.\n')
-
-
-    #cleanup dot file and other residual files generated earlier (CFG helper)
-    def cleanup_files(self):
-        for file in ['file.dot','parser.out','parsetab.py','top_state.png']:
-            try:
-                os.remove(file)
-            except FileNotFoundError:
-                print("Error: The target file does not exist.")
     
     # This function returns True, if the child is a child of checkParent
     def _isChild(self, graph, checkParent, child):
@@ -496,6 +482,14 @@ class VerilogParser:
             self.dfg_graph_generator.draw(f'{self.output_directory}input_dependencies.pdf')
             print('Graph saved.\n')
 
+        #cleanup dot file and other residual files generated earlier
+    
+    def cleanup_files(self):
+        for file in ['file.dot','parser.out','parsetab.py','top_state.png']:
+            try:
+                os.remove(file)
+            except FileNotFoundError:
+                pass
 
 class DFGgenerator:
     '''
@@ -575,7 +569,11 @@ class CFGgenerator:
 
 class ASTgenerator:
     def __init__(self,verilog_file,output):
-        parse = VerilogParser(verilog_file,output,"top",generate_ast=True)
+        self.parser = VerilogParser(verilog_file,output,"top",generate_ast=True)
+    def generate_ast_json(self):
+        ast_dict = self.parser._generate_ast_dict(self.parser.ast)
+        self.parser.export_ast(ast_dict)
+        self.parser.cleanup_files()
 
 class PreprocessVerilog:
     '''
@@ -665,3 +663,7 @@ class PreprocessVerilog:
             for verilog_file in glob(fr'{input_path}/*.v'):
                 with open(verilog_file, "rt") as infile:
                     outfile.write(infile.read().replace(top_module, 'top'))
+
+if __name__ == "__main__":
+    ast_gen = ASTgenerator(f'{os.getcwd()}/test.v',os.getcwd())
+    ast_gen.generate_ast_json()

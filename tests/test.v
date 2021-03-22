@@ -8,8 +8,12 @@ module top
   );
   reg [31:0] count;
   reg [7:0] state;
-  assign led = count[23:16];
-  always @(posedge CLK) begin
+  reg temp;
+  wire alpha;
+  wire beta;
+  assign led = ~(beta >> 7) | count[23:16] ^ (alpha << 7) & (beta << 7) && (alpha >> 7);
+  assign temp = ~alpha;
+  always @(posedge CLK, negedge CLK) begin
     if(RST) begin
       count <= 0;
       state <= 0;
