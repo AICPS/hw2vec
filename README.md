@@ -1,10 +1,5 @@
-<<<<<<< HEAD
-# HW2Vec: A Python-based Design Automation Library for Embedding Hardware Designs
-[![Build Status](https://travis-ci.com/louisccc/hw2vec.svg?branch=master)](https://travis-ci.com/github/louisccc/hw2vec) [![GitHub license](https://img.shields.io/github/license/Sujit-O/pykg2vec.svg)](https://github.com/Sujit-O/pykg2vec/blob/master/LICENSE)
-=======
 # HW2Vec: A Python-based Hardware Designs Embedding Tool for Hardware Security
 [![Build Status](https://travis-ci.com/louisccc/hw2vec.svg?branch=master)](https://travis-ci.com/github/louisccc/hw2vec) [![GitHub license](https://img.shields.io/github/license/Sujit-O/pykg2vec.svg)](https://github.com/Sujit-O/pykg2vec/blob/master/LICENSE) ![PyPI version](https://badge.fury.io/py/hw2vec.svg)
->>>>>>> master
 
 HW2vec contains the tools and source code we used for our previous research projects. In this repo, we collect our previous codebases and standardize the pipeline and use-cases and hope that this tool can be helpful in researchers in hardware security field and drive the research progress in this field. The two previous research projects are 1) Hardware Trojan Detection in RTL/Gate-Level Netlist using Graph Learning (GNN4TJ), 2) IP Piracy Detection in hardware design using graph learning (GNN4IP), published in DATE2021 and DAC2021, respectively. In this repo, we leverage [Pyverilog](https://github.com/PyHDI/Pyverilog) from PyHDI as part of our graph extraction pipeline.
 
@@ -27,9 +22,6 @@ examples/gnn4ip_netlist.py: gnn4ip script running on netlist dataset.<br>
 examples/gnn4ip_RTL.py: gnn4ip script running on RTL dataset.<br>
 examples/gnn4tj.py:gnn4tj script running on dataset which has not been splitted into training and testing dataset. <br>
 examples/gnn4tj_presplit.py: gnn4tj script running on dataset which has been splitted into training and testing dataset. <br>
-
-
-
 
 # To Get Started
 We recommend our potential users to use [Anaconda](https://www.anaconda.com/) as the virtual environment. The requirments for hw2vec is as follows,
@@ -74,13 +66,6 @@ The sample code for this use case is examples/gnn4tj.py. The related research pa
 
 To run this use case, use the script examples/gnn4tj.py and the downloaded dataset (data/TJ-dataset). To train a model on a dataset, we provide the following command sequence.
 ```sh
-<<<<<<< HEAD
-$ conda install -c conda-forge iverilog
-$ conda install graphviz pygraphviz -c alubbock
-$ pip install pyverilog
-$ pip install pyunpack
-$ pip install patool
-=======
 $ cd examples
 $ python gnn4tj.py
 ```
@@ -109,7 +94,6 @@ raw_dataset_path: "../data/TJ-dataset" # Path to raw dataset for parsing if no p
 pkl_path: "tj.pkl" # Path to hardware graphs for parsing.
 embed_dim: 2 # The dimension of graph embeddings.
 debug: False # Debug mode.
->>>>>>> master
 ```
 
 ## Use Case 3: IP Piracy Detection in hardware design (Advanced Application)
