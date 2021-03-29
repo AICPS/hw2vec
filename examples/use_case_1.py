@@ -29,7 +29,8 @@ global_type2idx = {
     'unot':12,
     'branch':13,
     'or':14,
-    'uor':15
+    'uor':15,
+    'output':16
 }
 
 more_type = set()
@@ -72,6 +73,7 @@ def parse_single_verilog_code(verilog_path, output_path, graph_format="DFG"):
     # Put graph information into a dictionary called ‘graph_json’, which contains:
     # Nodes, edges, edge_index, root_nodes
     graph_json = graph_generator.get_graph_json()
+    import pdb; pdb.set_trace()
     pprint(graph_json['nodes'])
     pprint(graph_json['edges'])
     pprint(graph_json['edge_index'])
@@ -113,15 +115,23 @@ def parse_single_verilog_code(verilog_path, output_path, graph_format="DFG"):
             node_name = src[:src.index('_graphrename')]
         
         if NORMALIZE:
-            if '.' in node_name: 
-                type_of_node = "signal"
-            elif '_' in node_name:
-                type_of_node = "input"
-            elif '\'d' in node_name or '\'b' in node_name or '\'o' in node_name or '\'h' in node_name:
+            # if '.' in node_name: 
+            #     type_of_node = "signal"
+            # elif '_' in node_name:
+            #     type_of_node = "input"
+            if '\'d' in node_name or '\'b' in node_name or '\'o' in node_name or '\'h' in node_name:
                 type_of_node = "numeric"
+            elif graph_generator.verilog_parser.dfg_graph_generator.graph.in_degree(src) == 0:
+                type_of_node = "output"
+            elif len(graph_generator.verilog_parser.dfg_graph_generator.graph.successors(src)) == 0:
+                type_of_node = "input"
+            elif '.' in node_name or '_' in node_name:
+                type_of_node = "signal"
             else:
                 type_of_node = node_name.lower()
             if type_of_node not in global_type2idx:
+                # raise Exception("The operation is not in the global_type2idx table, please report the error to" +   
+                #                 "https://github.com/louisccc/hw2vec/issues")
                 print("----------------"+type_of_node+"--------------")
                 more_type.add(type_of_node)
             else:

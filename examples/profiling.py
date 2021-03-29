@@ -2,9 +2,19 @@ import cProfile
 import pstats
 import io
 from use_case_1 import *
+import os
+import sys
 
 verilog_path = Path('../tests/data/IP-dataset/Verilog/C432/c432/topModule.v')
 dataset_output_dir_path = Path('./').resolve()
+
+''' 
+    without printing: 53.77s
+    with printing: 54.27s
+'''
+
+# f_null = open(os.devnull, 'w')
+# sys.stdout = f_null
 
 pr = cProfile.Profile()
 pr.enable()
