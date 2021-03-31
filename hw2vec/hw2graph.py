@@ -68,6 +68,8 @@ class JsonGraphParser:
         self.training_graph_count = 0
         self.testing_graph_count = 0
 
+        self.do_normalize = True
+
     def append_training_graph_data(self, data):
         if 'train' not in self.graphs: 
             self.graphs['train'] = []
@@ -107,6 +109,10 @@ class JsonGraphParser:
                     self.graphs['all'] = self.graphs['all'][:200]   
             pkl.dump(self, f)
 
+    def normalize(self):
+        pass
+
+
     def read_node_labels(self, key):
         # read thru all the node labels in a dataset. 
         for json_path in glob("%s/**/**/topModule.json" % str(self.root_path/key), recursive=True):
@@ -145,6 +151,28 @@ class JsonGraphParser:
                     sim_diff_label.append(-1)
 
         return train_test_split(dataset, train_size = train_size, shuffle = True, stratify=sim_diff_label, random_state=seed)
+
+    def get_graph(self, json_string):
+        # create nx graph.
+        edge_list_dict = json_string['edge_index']
+        hardware_graph = nx.DiGraph()
+        for src in edge_list_dict:
+            node_name = src
+            if '_graphrename' in src:
+                node_name = src[:src.index('_graphrename')]
+            if '.' in node_name: 
+                type_of_node = node_name.split('.')[-1]
+            elif '_' in node_name:
+                type_of_node = node_name.split('_')[-1]
+            else:
+                type_of_node = node_name.lower()
+            hardware_graph.add_node(src, x=self.label2idx[type_of_node], label=type_of_node) 
+            assert(type(edge_list_dict[src]) == list)
+            for neighbor in edge_list_dict[src]:
+                edge_label = neighbor[0]
+                dst = neighbor[1]
+                hardware_graph.add_edge(src, dst)
+        #TODO: perform normalization
 
     def get_graph_from_json(self, json_path):
         json_file = open(str(json_path), 'r')
