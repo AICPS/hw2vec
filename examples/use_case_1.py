@@ -37,14 +37,14 @@ if __name__ == '__main__':
         An example on how to genreate the data flow graph for a dataset of Verilog harwdare designs
         USAGE:  python use_case_1.py 
     '''
-    verilog_path = Path('../tests/data/IP-dataset/Verilog/C432/c432/topModule.v')
-    output_path  = Path('./')
+    verilog_path = '../tests/data/IP-dataset/Verilog/C432/c432/topModule.v'
+    output_path  = './'
     
     graph_format = "DFG" # toggle this to select different graph generator. 
     if graph_format == "DFG":
-        graph_generator = DFGgenerator(str(verilog_path), str(output_path))
+        graph_generator = DFGgenerator(verilog_path, output_path)
     elif graph_format == "AST":
-        graph_generator = ASTgenerator(str(verilog_path), str(output_path))
+        graph_generator = ASTgenerator(verilog_path, output_path)
 
     graph_generator.process()
     graph_json = graph_generator.get_graph_json()
