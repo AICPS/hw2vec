@@ -45,4 +45,4 @@ if __name__ == '__main__':
         # data.label = xxx 
         graph_data.append(data)
 
-    # pickle to a file.
+    #TODO: pickle to a file.

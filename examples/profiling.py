@@ -4,7 +4,7 @@ import io
 from use_case_1 import *
 import os
 import sys
-
+#TODO: elinimate this file.
 verilog_path = Path('../tests/data/IP-dataset/Verilog/C432/c432/topModule.v')
 dataset_output_dir_path = Path('./').resolve()
 

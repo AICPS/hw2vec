@@ -4,6 +4,7 @@ from hw2vec.graph2vec.config import Config
 from hw2vec.app import GNN4IP
 
 if __name__ == "__main__":
+    #TODO: use the pickle file genreated from use_case 2 to run gnn4ip.    
     cfg = Config("./example_gnn4ip.yaml")
     app = GNN4IP(cfg)
     dataset = app.parse_from_json()

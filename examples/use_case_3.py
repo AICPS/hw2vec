@@ -5,6 +5,7 @@ from hw2vec.app import GNN4TJ
 
 
 if __name__ == "__main__":
+    #TODO: use the pickle file genreated from use_case 2 to run gnn4tj.
     cfg = Config("./example_gnn4tj.yaml")
     app = GNN4TJ(cfg)
     dataset = app.parse_from_json()

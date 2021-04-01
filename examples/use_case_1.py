@@ -14,7 +14,7 @@ from matplotlib import pylab
 import matplotlib.pyplot as plt
 
 
-# moved to utilities.py
+#TODO: moved to utilities.py
 def save_graph(nxgraph, file_name):
     plt.figure(num=None, figsize=(60, 60), dpi=80)
     plt.axis('off')
@@ -38,16 +38,16 @@ if __name__ == '__main__':
         USAGE:  python use_case_1.py 
     '''
     verilog_path = '../tests/data/IP-dataset/Verilog/C432/c432/topModule.v'
-    output_path  = './'
+    output_path  = './' #TODO: eliminate the use of output_path
     
-    graph_format = "DFG" # toggle this to select different graph generator. 
-    if graph_format == "DFG":
-        graph_generator = DFGgenerator(verilog_path, output_path)
-    elif graph_format == "AST":
-        graph_generator = ASTgenerator(verilog_path, output_path)
+    g_form = "DFG" # toggle this to select different graph generator. 
+    if g_form == "DFG":
+        gen = DFGgenerator(verilog_path, output_path)
+    elif g_form == "AST":
+        gen = ASTgenerator(verilog_path, output_path)
 
-    graph_generator.process()
-    graph_json = graph_generator.get_graph_json()
-    pprint(graph_json)
+    gen.process()
+    g_json = gen.get_graph_json()
+    pprint(g_json)
     
     #TODO: do some visualization
