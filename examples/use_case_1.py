@@ -34,7 +34,7 @@ def save_graph(nxgraph, file_name):
 
 if __name__ == '__main__':
     ''' 
-        An example on how to genreate the data flow graph for a dataset of Verilog harwdare designs
+        An example on how to genreate the data flow graph for one Verilog harwdare design
         USAGE:  python use_case_1.py 
     '''
     verilog_path = '../tests/data/IP-dataset/Verilog/C432/c432/topModule.v'

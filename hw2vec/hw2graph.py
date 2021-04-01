@@ -40,7 +40,25 @@ from glob import glob
 
 from hw2vec.graph2vec.trainers import *
 
-
+global_type2idx = {
+    'concat':0, 
+    'input':1, 
+    'unand':2, 
+    'unor':3, 
+    'uxor':4, 
+    'signal':5, 
+    'uand':6, 
+    'ulnot':7,
+    'uxnor':8,
+    'numeric':9,
+    'partselect':10,
+    'and':11,
+    'unot':12,
+    'branch':13,
+    'or':14,
+    'uor':15,
+    'output':16
+}
 
 class JsonGraphParser:
     def __init__(self, cfg):
@@ -67,8 +85,8 @@ class JsonGraphParser:
         # list to store names of graphs in each set
         self.training_graph_count = 0
         self.testing_graph_count = 0
-
-        self.do_normalize = True
+        
+        self.label2idx = None
 
     def append_training_graph_data(self, data):
         if 'train' not in self.graphs: 
@@ -109,9 +127,37 @@ class JsonGraphParser:
                     self.graphs['all'] = self.graphs['all'][:200]   
             pkl.dump(self, f)
 
-    def normalize(self):
-        pass
+    def normalize(self, nx_graph, normalize="keep_variable"):
+        ''' 
+            Normalization is a step to replace the label of a node to a value.
+            We have two options in hw2vec: 
+            1. keep the variable name/numeric value.
+            2. replace all the variable name and numeric values with a high-level type.
+        '''
+        if normalize == "keep_variable":
+            if self.label2idx == None:
+                self.label2idx = {v:k for k, v in enumerate(list(self.node_labels))}
+            for node in nx_graph.nodes(data=True):
+                node[1]['x'] = self.label2idx[node[1]['label']]
+        else:
+            for node in nx_graph.nodes(data=True):
+                node_name = [node[1]['label']]
+                if '\'d' in node_name or '\'b' in node_name or '\'o' in node_name or '\'h' in node_name:
+                    type_of_node = "numeric"
+                elif graph_generator.verilog_parser.dfg_graph_generator.graph.in_degree(src) == 0:
+                    type_of_node = "output"
+                elif len(graph_generator.verilog_parser.dfg_graph_generator.graph.successors(src)) == 0:
+                    type_of_node = "input"
+                elif '.' in node_name or '_' in node_name:
+                    type_of_node = "signal"
+                else:
+                    type_of_node = node_name.lower()
 
+                if type_of_node not in global_type2idx:
+                    raise Exception("The operation is not in the global_type2idx table, please report the error to" +   
+                                "https://github.com/louisccc/hw2vec/issues")
+                
+                node[1]['x'] = global_type2idx[type_of_node]
 
     def read_node_labels(self, key):
         # read thru all the node labels in a dataset. 
@@ -152,9 +198,9 @@ class JsonGraphParser:
 
         return train_test_split(dataset, train_size = train_size, shuffle = True, stratify=sim_diff_label, random_state=seed)
 
-    def get_graph(self, json_string):
+    def get_graph(self, graph_json):
         # create nx graph.
-        edge_list_dict = json_string['edge_index']
+        edge_list_dict = graph_json['edge_index']
         hardware_graph = nx.DiGraph()
         for src in edge_list_dict:
             node_name = src
@@ -166,13 +212,17 @@ class JsonGraphParser:
                 type_of_node = node_name.split('_')[-1]
             else:
                 type_of_node = node_name.lower()
-            hardware_graph.add_node(src, x=self.label2idx[type_of_node], label=type_of_node) 
+            self.node_labels.add(type_of_node)
+            # hardware_graph.add_node(src, x=self.label2idx[type_of_node], label=type_of_node) 
+            hardware_graph.add_node(src, label=type_of_node) 
             assert(type(edge_list_dict[src]) == list)
             for neighbor in edge_list_dict[src]:
                 edge_label = neighbor[0]
                 dst = neighbor[1]
                 hardware_graph.add_edge(src, dst)
-        #TODO: perform normalization
+
+        return hardware_graph
+
 
     def get_graph_from_json(self, json_path):
         json_file = open(str(json_path), 'r')
