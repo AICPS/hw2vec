@@ -13,6 +13,7 @@ import networkx as nx
 from torch_geometric.utils.convert import from_networkx
 from matplotlib import pylab
 import matplotlib.pyplot as plt
+import pickle
 
 
 if __name__ == '__main__': 
@@ -45,4 +46,5 @@ if __name__ == '__main__':
         # data.label = xxx 
         graph_data.append(data)
 
-    #TODO: pickle to a file.
+    with open('graph.pkl', 'wb+') as f:
+        pickle.dump(graph_data, f)

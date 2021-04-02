@@ -613,6 +613,9 @@ class DFGgenerator:
         
     def check_dependecny(self):
         self.verilog_parser.graph_input_dependencies()
+
+    def draw(self):
+        self.verilog_parser.dfg_graph_generator.draw()
         
 class CFGgenerator:
     '''

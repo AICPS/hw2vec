@@ -50,4 +50,9 @@ if __name__ == '__main__':
     g_json = gen.get_graph_json()
     pprint(g_json)
     
-    #TODO: do some visualization
+    gen.draw() 
+    '''
+        TODO: is it good enough to use the 
+        pyverilog draw() in this use case? 
+    '''
+    
