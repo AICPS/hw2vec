@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     graph_format = "DFG" # toggle this to select different graph generator.  
     cfg = Config("./example_gnn4tj.yaml") #TODO: temp cfg
-    NORMALIZATION = "keep_variable" # or "type_only"
+    NORMALIZATION = "type_only" # or "type_only"
 
     parser = JsonGraphParser(cfg)
 

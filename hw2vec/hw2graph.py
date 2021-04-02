@@ -140,13 +140,17 @@ class JsonGraphParser:
             for node in nx_graph.nodes(data=True):
                 node[1]['x'] = self.label2idx[node[1]['label']]
         else:
-            for node in nx_graph.nodes(data=True):
-                node_name = [node[1]['label']]
+            in_degrees = [val for (node, val) in nx_graph.in_degree()]
+            out_degrees = [val for (node, val) in nx_graph.out_degree()]
+            for idx, node in enumerate(nx_graph.nodes(data=True)):
+                node_name = node[0]
+                if '_graphrename' in node_name:
+                    node_name = node_name[:node_name.index('_graphrename')]
                 if '\'d' in node_name or '\'b' in node_name or '\'o' in node_name or '\'h' in node_name:
                     type_of_node = "numeric"
-                elif graph_generator.verilog_parser.dfg_graph_generator.graph.in_degree(src) == 0:
+                elif in_degrees[idx] == 0:
                     type_of_node = "output"
-                elif len(graph_generator.verilog_parser.dfg_graph_generator.graph.successors(src)) == 0:
+                elif out_degrees[idx] == 0:
                     type_of_node = "input"
                 elif '.' in node_name or '_' in node_name:
                     type_of_node = "signal"
@@ -154,6 +158,7 @@ class JsonGraphParser:
                     type_of_node = node_name.lower()
 
                 if type_of_node not in global_type2idx:
+                    print("----------"+type_of_node+"-------------")
                     raise Exception("The operation is not in the global_type2idx table, please report the error to" +   
                                 "https://github.com/louisccc/hw2vec/issues")
                 
