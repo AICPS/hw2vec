@@ -40,6 +40,13 @@ def code2graph(code_path, out_path, g_form="DFG"):
     gen.process()
     g_json = gen.get_graph_json()
     pprint(g_json)
+    gen.draw()
+
+    '''
+        TODO: is it good enough to use the 
+        pyverilog draw() in this use case? 
+    '''
+    
 
 if __name__ == '__main__':
     ''' 
@@ -49,11 +56,7 @@ if __name__ == '__main__':
     verilog_path = '../tests/data/IP-dataset/Verilog/C432/c432/topModule.v'
     output_path  = './' #TODO: eliminate the use of output_path
     
-    convert2graph(verilog_path, output_path, g_form="DFG")
+    code2graph(verilog_path, output_path, g_form="DFG")
     
-    gen.draw() 
-    '''
-        TODO: is it good enough to use the 
-        pyverilog draw() in this use case? 
-    '''
-    
+     
+   
