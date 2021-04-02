@@ -31,6 +31,15 @@ def save_graph(nxgraph, file_name):
     pylab.close()
     del fig
 
+def code2graph(code_path, out_path, g_form="DFG"):
+    g_form = "DFG" # toggle this to select different graph generator. 
+    if g_form == "DFG":
+        gen = DFGgenerator(code_path, out_path)
+    elif g_form == "AST":
+        gen = ASTgenerator(code_path, out_path)
+    gen.process()
+    g_json = gen.get_graph_json()
+    pprint(g_json)
 
 if __name__ == '__main__':
     ''' 
@@ -40,15 +49,7 @@ if __name__ == '__main__':
     verilog_path = '../tests/data/IP-dataset/Verilog/C432/c432/topModule.v'
     output_path  = './' #TODO: eliminate the use of output_path
     
-    g_form = "DFG" # toggle this to select different graph generator. 
-    if g_form == "DFG":
-        gen = DFGgenerator(verilog_path, output_path)
-    elif g_form == "AST":
-        gen = ASTgenerator(verilog_path, output_path)
-
-    gen.process()
-    g_json = gen.get_graph_json()
-    pprint(g_json)
+    convert2graph(verilog_path, output_path, g_form="DFG")
     
     gen.draw() 
     '''
