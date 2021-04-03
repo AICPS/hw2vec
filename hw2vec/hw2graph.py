@@ -203,7 +203,7 @@ class JsonGraphParser:
 
         return train_test_split(dataset, train_size = train_size, shuffle = True, stratify=sim_diff_label, random_state=seed)
 
-    def get_graph(self, graph_json):
+    def get_graph(self, graph_json): # TODO: get_nx_graph
         # create nx graph.
         edge_list_dict = graph_json['edge_index']
         hardware_graph = nx.DiGraph()
@@ -588,7 +588,7 @@ class DFGgenerator:
             if not os.path.exists(f'{output_path}'):
                     os.makedirs(os.path.dirname(f'{output_path}'))
             self.verilog_parser = VerilogParser(verilog_file, output_path, top_module, generate_cfg=False)
-            self._generate_DFG()
+            # self._generate_DFG()
             
     def process(self):
         self.verilog_parser.graph_separate_modules()

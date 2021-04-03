@@ -21,3 +21,4 @@ raw_dataset_path: "../tests/data/TJ-dataset" # Path to raw dataset for parsing i
 pkl_path: "tj.pkl" # Path to hardware graphs for parsing.
 embed_dim: 2 # The dimension of graph embeddings.
 debug: False # Debug mode.
+data_pkl_path: "./graph.pkl" # Path to the pickle file storing the graph dataset

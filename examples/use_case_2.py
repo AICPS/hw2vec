@@ -17,12 +17,12 @@ import pickle
 
 
 if __name__ == '__main__': 
-    dataset_directory = '../tests/data/IP-dataset/Verilog/C432/c432'
+    dataset_directory = '../tests/data/IP-dataset/Verilog'
     output_path = './'
 
     graph_format = "DFG" # toggle this to select different graph generator.  
     cfg = Config("./example_gnn4tj.yaml") #TODO: temp cfg
-    NORMALIZATION = "type_only" # or "type_only"
+    NORMALIZATION = "type_only" # or "keep_variable"
 
     parser = JsonGraphParser(cfg)
 

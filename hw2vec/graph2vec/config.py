@@ -38,6 +38,7 @@ class Config:
         self.raw_dataset_path = list_of_args['raw_dataset_path'] if ('raw_dataset_path' in list_of_args and list_of_args['raw_dataset_path']!=None ) else "../data/TJ-datasets"
         self.embed_dim = list_of_args['embed_dim'] if ('embed_dim' in list_of_args and list_of_args['embed_dim']!=None ) else 2
         self.debug = list_of_args['debug'] if ('debug' in list_of_args and list_of_args['debug']!=None ) else False
+        self.data_pkl_path = list_of_args['data_pkl_path'] if ('data_pkl_path' in list_of_args and list_of_args['data_pkl_path']!=None ) else "./graph.pkl"
 
         self.raw_dataset_path = Path(self.raw_dataset_path).resolve()
         self.pkl_path = Path(self.pkl_path).resolve()
