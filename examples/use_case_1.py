@@ -41,11 +41,6 @@ def code2graph(code_path, out_path, g_form="DFG"):
     g_json = gen.get_graph_json()
     pprint(g_json)
     gen.draw()
-
-    '''
-        TODO: is it good enough to use the 
-        pyverilog draw() in this use case? 
-    '''
     
 
 if __name__ == '__main__':

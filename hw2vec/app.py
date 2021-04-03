@@ -64,7 +64,7 @@ class GNN4TJ:
         self.train_loader = DataLoader(train_graphs, shuffle=True, batch_size=self.cfg.batch_size)
         self.test_loader = DataLoader(test_graphs, shuffle=True, batch_size=1)
 
-        self.cfg.num_feature_dim = len(dataset.label2idx)
+        self.cfg.num_feature_dim = dataset.num_node_labels
 
         self.trainer = GraphTrainer(self.cfg, class_weights=class_weights)
         self.trainer.build()
@@ -121,7 +121,7 @@ class GNN4IP:
         train_loader = DataLoader(train_pairs, batch_size=self.cfg.batch_size)
         test_loader  = DataLoader(test_pairs, batch_size=self.cfg.batch_size)
         
-        self.cfg.num_feature_dim = len(dataset.node_labels)
+        self.cfg.num_feature_dim = dataset.num_node_labels
 
         self.trainer = PairwiseGraphTrainer(self.cfg)
         self.train_loader = train_loader

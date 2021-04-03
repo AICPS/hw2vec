@@ -17,7 +17,7 @@ import pickle
 
 
 if __name__ == '__main__': 
-    dataset_directory = '../tests/data/IP-dataset/Verilog'
+    dataset_directory = '../tests/data/IP-dataset/Verilog_temp'
     output_path = './'
 
     graph_format = "DFG" # toggle this to select different graph generator.  
@@ -46,5 +46,5 @@ if __name__ == '__main__':
         # data.label = xxx 
         graph_data.append(data)
 
-    with open('graph.pkl', 'wb+') as f:
+    with open('graph_temp.pkl', 'wb+') as f:
         pickle.dump(graph_data, f)
