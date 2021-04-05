@@ -16,12 +16,19 @@ if __name__ == "__main__":
 
     with open(cfg.data_pkl_path, 'rb') as f:
         dataset = pickle.load(f)
+    
+    dataParser.num_node_labels = 1
+
     for data in dataset:
         if "TJFree" in data.folder_name:
             data.label = NON_TROJAN
         else:
             data.label = TROJAN
         dataParser.append_graph_data(data)
+
+        max_num_labels = torch.max(data.x).item() + 1
+        if max_num_labels > dataParser.num_node_labels: 
+            dataParser.num_node_labels = max_num_labels
 
     app.init_trainer(dataParser)
     app.train()
