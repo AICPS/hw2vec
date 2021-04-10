@@ -2,6 +2,9 @@ import os, sys
 sys.path.append(os.path.dirname(sys.path[0]))
 from hw2vec.graph2vec.config import Config
 from hw2vec.app import GNN4TJ
+from hw2vec.hw2graph import JsonGraphParser
+import pickle
+import torch
 
 TROJAN = 1
 NON_TROJAN = 0
@@ -25,10 +28,6 @@ if __name__ == "__main__":
         else:
             data.label = TROJAN
         dataParser.append_graph_data(data)
-
-        max_num_labels = torch.max(data.x).item() + 1
-        if max_num_labels > dataParser.num_node_labels: 
-            dataParser.num_node_labels = max_num_labels
 
     app.init_trainer(dataParser)
     app.train()

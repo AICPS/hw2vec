@@ -17,11 +17,11 @@ import pickle
 
 
 if __name__ == '__main__': 
-    dataset_directory = '../tests/data/IP-dataset/Verilog'
     output_path = './'
 
     graph_format = "DFG" # toggle this to select different graph generator.  
-    cfg = Config("./example_gnn4tj.yaml") #TODO: temp cfg
+    cfg = Config("./example_gnn4ip.yaml") #TODO: temp cfg
+    dataset_directory = cfg.raw_dataset_path
     NORMALIZATION = "type_only" # or "keep_variable"
 
     parser = JsonGraphParser(cfg)
@@ -38,13 +38,12 @@ if __name__ == '__main__':
         hardware_graph = parser.get_graph(graph_json)
         nx_graphs.append((hardware_graph, verilog_path))
 
-    graph_data = []
+    # graph_data = []
     for hw_graph, verilog_path in nx_graphs:
         parser.normalize(hw_graph, normalize=NORMALIZATION)
         data = from_networkx(hw_graph)
         data.folder_name = verilog_path
-        # data.label = xxx 
-        graph_data.append(data)
+        parser.append_graph_data(data)
 
-    with open('IP_graphs.pkl', 'wb+') as f:
-        pickle.dump(graph_data, f)
+    with open(cfg.data_pkl_path, 'wb+') as f:
+        pickle.dump(parser, f)

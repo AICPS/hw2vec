@@ -139,6 +139,7 @@ class JsonGraphParser:
                 self.label2idx = {v:k for k, v in enumerate(list(self.node_labels))}
             for node in nx_graph.nodes(data=True):
                 node[1]['x'] = self.label2idx[node[1]['label']]
+            self.num_node_labels = len(self.label2idx)
         else:
             in_degrees = [val for (node, val) in nx_graph.in_degree()]
             out_degrees = [val for (node, val) in nx_graph.out_degree()]
@@ -163,6 +164,7 @@ class JsonGraphParser:
                                 "https://github.com/louisccc/hw2vec/issues")
                 
                 node[1]['x'] = global_type2idx[type_of_node]
+            self.num_node_labels = len(global_type2idx)
 
     def read_node_labels(self, key):
         # read thru all the node labels in a dataset. 
@@ -447,7 +449,10 @@ class VerilogParser:
         
         deleted = 0
         print('Merging subgraphs... ')
+        num_nodes = len(self.dfg_graph_generator.graph.nodes())
         for num, node in enumerate(self.dfg_graph_generator.graph.nodes(), start=1):
+            # if num >= 2156:
+            #     import pdb; pdb.set_trace()
             label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
             if '_' in label and label.replace('_', '.') in label_to_node:
                 parents = self.dfg_graph_generator.graph.predecessors(node)
@@ -456,7 +461,7 @@ class VerilogParser:
                 for parent in parents:
                     if not self._isChild(self.dfg_graph_generator.graph, label_to_node[label.replace('_', '.')], parent):
                         self.dfg_graph_generator.graph.add_edge(parent, label_to_node[label.replace('_', '.')])
-            print(f'\rProgress : {num - deleted} / {len(self.dfg_graph_generator.graph.nodes())}', end='', flush=True)
+            print(f'\rProgress : {num} - {deleted} = {num - deleted} / {num_nodes}', end='', flush=True)
         print('\nThe signals subgraphs are merged.\n')
 
         if draw_graph:

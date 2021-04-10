@@ -28,6 +28,7 @@ from sklearn.utils.class_weight import compute_class_weight
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, precision_score, recall_score, roc_auc_score, roc_curve
 
 from hw2vec.graph2vec.models import *
+from hw2vec.utilities import *
 
 
 from time import time # needs to be here.
@@ -98,7 +99,7 @@ class PairwiseGraphTrainer(BaseTrainer):
         self.min_test_loss = 1
         self.cos_sim = torch.nn.CosineSimilarity(dim=-1, eps=1e-08).to(self.config.device)
         self.cos_loss = torch.nn.CosineEmbeddingLoss(margin=0.5).to(self.config.device)
-   
+    
     def train(self, train_loader, test_loader):
 
         tqdm_bar = tqdm(range(self.config.epochs))
@@ -111,12 +112,13 @@ class PairwiseGraphTrainer(BaseTrainer):
                 self.optimizer.zero_grad()
 
                 start = time()
-                g_emb_1, _ = self.model(graph1.x, graph1.edge_index, batch=graph1.batch)
-                g_emb_2, _ = self.model(graph2.x, graph2.edge_index, batch=graph2.batch)
+            
+                loss_train = self.train_epoch(graph1, graph2, labels)
 
-                loss_train = self.cos_loss(g_emb_1, g_emb_2, labels)
                 end = time()
                 acc_time.append(end-start)
+
+                
 
                 loss_train.backward()
                 self.optimizer.step()
@@ -127,7 +129,15 @@ class PairwiseGraphTrainer(BaseTrainer):
             print(sum(acc_time) / len(acc_time))
             if epoch_idx % self.config.test_step == 0:
                 self.evaluate(epoch_idx, train_loader, test_loader)
-                
+    
+    @profileit
+    def train_epoch(self, graph1, graph2, labels):
+        g_emb_1, _ = self.model(graph1.x, graph1.edge_index, batch=graph1.batch)
+        g_emb_2, _ = self.model(graph2.x, graph2.edge_index, batch=graph2.batch)
+
+        loss_train = self.cos_loss(g_emb_1, g_emb_2, labels)
+        return loss_train
+
     def inference(self, data_loader):
         labels = []
         outputs = []
@@ -139,10 +149,9 @@ class PairwiseGraphTrainer(BaseTrainer):
             self.model.eval()
 
             start = time()
-            g_emb_1, _ = self.model(graph1.x, graph1.edge_index, batch=graph1.batch)
-            g_emb_2, _ = self.model(graph2.x, graph2.edge_index, batch=graph2.batch)
+            
+            g_emb_1, g_emb_2, similarity = self.inference_epoch(graph1, graph2)
 
-            similarity = self.cos_sim(g_emb_1, g_emb_2)
             end = time()
             acc_time.append(end-start)
 
@@ -162,6 +171,14 @@ class PairwiseGraphTrainer(BaseTrainer):
         preds = (outputs > 0.5).detach()
 
         return avg_loss, labels_tensor, outputs_tensor, preds
+    
+    @profileit
+    def inference_epoch(self, graph1, graph2):
+        g_emb_1, _ = self.model(graph1.x, graph1.edge_index, batch=graph1.batch)
+        g_emb_2, _ = self.model(graph2.x, graph2.edge_index, batch=graph2.batch)
+
+        similarity = self.cos_sim(g_emb_1, g_emb_2)
+        return g_emb_1, g_emb_2, similarity
 
     def evaluate(self, epoch_idx, train_loader, test_loader):
         train_loss, train_labels, _, train_preds = self.inference(train_loader)
