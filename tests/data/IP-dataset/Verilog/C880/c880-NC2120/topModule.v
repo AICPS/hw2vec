@@ -265,7 +265,7 @@ nand NAND2_76 (N379, N326, N327);
 nand NAND2_77 (N382, N328, N329);
 nand NAND2_78 (N385, N330, N331);
   buf BUFF1_79 (keyinput_Wire_1, N290);
-  xor keyGate_1_0(N388, keyWire_0_2, keyinput_Wire_1);
+  xor keyGate_1_0(N388, KeyWire_0_2, keyinput_Wire_1);
 buf BUFF1_80 (N389, N291);
 buf BUFF1_81 (N390, N292);
 buf BUFF1_82 (N391, N297);

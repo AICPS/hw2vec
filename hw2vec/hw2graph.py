@@ -275,7 +275,6 @@ class VerilogParser:
         self.ARRAY_GEN = None
         self.CONST_DICTIONARY_GEN = None
         self.DICTIONARY_GEN = None 
-
         self._create_graphgen_obj(verilog_file, top_module, generate_cfg, generate_ast)
 
     #helper fcn to __init__, create a graph object used to generate json
@@ -451,16 +450,14 @@ class VerilogParser:
         print('Merging subgraphs... ')
         num_nodes = len(self.dfg_graph_generator.graph.nodes())
         for num, node in enumerate(self.dfg_graph_generator.graph.nodes(), start=1):
-            # if num >= 2156:
-            #     import pdb; pdb.set_trace()
             label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
             if '_' in label and label.replace('_', '.') in label_to_node:
                 parents = self.dfg_graph_generator.graph.predecessors(node)
                 self.dfg_graph_generator.graph.delete_node(node)
                 deleted += 1
                 for parent in parents:
-                    if not self._isChild(self.dfg_graph_generator.graph, label_to_node[label.replace('_', '.')], parent):
-                        self.dfg_graph_generator.graph.add_edge(parent, label_to_node[label.replace('_', '.')])
+                    # if not self._isChild(self.dfg_graph_generator.graph, label_to_node[label.replace('_', '.')], parent):
+                    self.dfg_graph_generator.graph.add_edge(parent, label_to_node[label.replace('_', '.')])
             print(f'\rProgress : {num} - {deleted} = {num - deleted} / {num_nodes}', end='', flush=True)
         print('\nThe signals subgraphs are merged.\n')
 

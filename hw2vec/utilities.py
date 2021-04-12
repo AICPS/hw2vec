@@ -9,7 +9,7 @@ import networkx as nx
 
 def profileit(func):
     def wrapper(*args, **kwargs):
-        datafn = func.__name__ + ".txt" # Name the data file sensibly
+        datafn = func.__name__ + ".txt" 
         last_time = 0
         count = 0
         if os.path.exists(datafn):
