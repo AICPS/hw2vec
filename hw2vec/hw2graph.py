@@ -591,10 +591,12 @@ class DFGgenerator:
                     os.makedirs(os.path.dirname(f'{output_path}'))
             self.verilog_parser = VerilogParser(verilog_file, output_path, top_module, generate_cfg=False)
             # self._generate_DFG()
-            
+
+    @profilegraph        
     def process(self):
         self.verilog_parser.graph_separate_modules()
         self.verilog_parser.merge_graphs()
+        return self.verilog_parser.dfg_graph_generator.graph # TODO: for profiling
 
     def get_graph_json(self):
         graph_json = {}
