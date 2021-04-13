@@ -65,6 +65,7 @@ class GNN4TJ:
         self.test_loader = DataLoader(test_graphs, shuffle=True, batch_size=1)
 
         self.cfg.num_feature_dim = dataset.num_node_labels
+        self.cfg.labels = [TROJAN, NON_TROJAN]
 
         self.trainer = GraphTrainer(self.cfg, class_weights=class_weights)
         self.trainer.build()
@@ -122,6 +123,7 @@ class GNN4IP:
         test_loader  = DataLoader(test_pairs, batch_size=self.cfg.batch_size)
         
         self.cfg.num_feature_dim = dataset.num_node_labels
+        self.cfg.labels = [SIMILAR, DISSIMILAR]
 
         self.trainer = PairwiseGraphTrainer(self.cfg)
         self.train_loader = train_loader

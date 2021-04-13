@@ -75,7 +75,7 @@ class BaseTrainer:
         with open(str(save_path / "vectors.tsv"), "w") as vectors_file:
             with open(str(save_path / "metadata.tsv"), "w") as metadata_file:
                 metadata_file.write("Type\tInstance\n")
-                import pdb; pdb.set_trace()
+             
                 for data in data_loader:
                     
                     if type(data) == list:
@@ -335,8 +335,8 @@ class GraphTrainer(BaseTrainer):
         train_loss, train_labels, _, train_preds, train_node_attns, _ = self.inference(data_loader)
         test_loss, test_labels, _, test_preds, test_node_attns, _ = self.inference(valid_data_loader)
         self.test_time += (time() - start_time)
-        train_tn, train_fp, train_fn, train_tp = confusion_matrix(train_labels, train_preds).ravel()
-        test_tn, test_fp, test_fn, test_tp = confusion_matrix(test_labels, test_preds).ravel()
+        train_tn, train_fp, train_fn, train_tp = confusion_matrix(train_labels, train_preds, labels=self.config.labels).ravel()
+        test_tn, test_fp, test_fn, test_tp = confusion_matrix(test_labels, test_preds, labels=self.config.labels).ravel()
 
         print("")
         print("Mini Test for Epochs %d:"%epoch_idx)

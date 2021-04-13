@@ -57,7 +57,22 @@ global_type2idx = {
     'branch':13,
     'or':14,
     'uor':15,
-    'output':16
+    'output':16,
+    'plus':17,
+    'eq':18,
+    'minus':19,
+    'xor':20,
+    'lor':21,
+    'noteq':22,
+    'land':23,
+    'greatereq':24,
+    'greaterthan':25,
+    'sll':26,
+    'lessthan':27,
+    'times':28,
+    'srl':29,
+    'pointer':30,
+    'mod':31
 }
 
 class JsonGraphParser:
@@ -160,7 +175,7 @@ class JsonGraphParser:
 
                 if type_of_node not in global_type2idx:
                     print("----------"+type_of_node+"-------------")
-                    raise Exception("The operation is not in the global_type2idx table, please report the error to" +   
+                    raise Exception("The operation is not in the global_type2idx table, please report the error to " +   
                                 "https://github.com/louisccc/hw2vec/issues")
                 
                 node[1]['x'] = global_type2idx[type_of_node]
