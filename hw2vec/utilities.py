@@ -41,12 +41,14 @@ def profilegraph(func):
         pr = cProfile.Profile()
         pr.enable()
 
-        result_graph = func(*args, **kwargs)
+        result_parser = func(*args, **kwargs)
 
         pr.disable()
         # re-enable stdout
         sys.stdout = sys.__stdout__
-        
+
+        result_graph = result_parser.dfg_graph_generator.graph
+        hardware_name = result_parser.verilog_file[:result_parser.verilog_file.index('/topModule.v')].split('/')[-1]
         node_num = len(result_graph.nodes())
         edge_num = len(result_graph.edges())
 
@@ -56,8 +58,8 @@ def profilegraph(func):
 
         with open(datafn, 'a') as f:
             time = float(st.getvalue().split('\n')[0].split(' ')[-2])
-            f.write(str(node_num) + " " + str(edge_num) + " " + str(time) + "\n")
-        return result_graph
+            f.write(str(hardware_name) + " " + str(node_num) + " " + str(edge_num) + " " + str(time) + "\n")
+        return result_parser
     wrapper.unwrapped = func
     return wrapper
 

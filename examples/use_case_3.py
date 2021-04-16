@@ -10,7 +10,6 @@ TROJAN = 1
 NON_TROJAN = 0
 
 if __name__ == "__main__":
-    #TODO: use the pickle file genreated from use_case 2 to run gnn4tj.
     cfg = Config("./example_gnn4tj.yaml")
     app = GNN4TJ(cfg)
     # dataset = app.parse_from_json()
@@ -18,16 +17,13 @@ if __name__ == "__main__":
     dataParser = JsonGraphParser(cfg)
 
     with open(cfg.data_pkl_path, 'rb') as f:
-        dataset = pickle.load(f)
-    
-    dataParser.num_node_labels = 1
+        dataParser = pickle.load(f)
 
-    for data in dataset:
-        if "TJFree" in data.folder_name:
+    for data in dataParser.graphs['all']:
+        if "TjFree" in data.folder_name:
             data.label = NON_TROJAN
         else:
             data.label = TROJAN
-        dataParser.append_graph_data(data)
 
     app.init_trainer(dataParser)
     app.train()
