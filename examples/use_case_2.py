@@ -16,34 +16,35 @@ import matplotlib.pyplot as plt
 import pickle
 
 
+def use_case_2(cfg):
+    pass
+
+
 if __name__ == '__main__': 
-    output_path = './'
-
-    graph_format = "DFG" # toggle this to select different graph generator.  
-    cfg = Config("./example_gnn4ip.yaml") #TODO: temp cfg
-    dataset_directory = cfg.raw_dataset_path
-    NORMALIZATION = "type_only" # or "keep_variable"
-
+    cfg = Config(sys.argv[1:])
     parser = JsonGraphParser(cfg)
 
     nx_graphs = []
-    for verilog_path in glob("%s/**/topModule.v" % str(dataset_directory), recursive=True):
-        if graph_format == "DFG":
-            graph_generator = DFGgenerator(verilog_path, output_path)
-        elif graph_format == "AST":
-            graph_generator = ASTgenerator(verilog_path, output_path)
-        graph_generator.process()
+    for verilog_path in glob("%s/**/topModule.v" % str(cfg.raw_dataset_path), recursive=True):
+        if cfg.graph_type == "DFG":
+            graph_generator = DFGgenerator(verilog_path, './')
+            graph_generator.process()
+            graph_json = graph_generator.get_graph_json()
+            hardware_graph = parser.get_graph(graph_json)
+            nx_graphs.append((hardware_graph, verilog_path))
+        elif cfg.graph_type == "AST":
+            graph_generator = ASTgenerator(verilog_path, './')
+            graph_generator.generate_ast_json()
+        break
 
-        graph_json = graph_generator.get_graph_json()
-        hardware_graph = parser.get_graph(graph_json)
-        nx_graphs.append((hardware_graph, verilog_path))
+    # import pdb; pdb.set_trace()
 
-    # graph_data = []
-    for hw_graph, verilog_path in nx_graphs:
-        parser.normalize(hw_graph, normalize=NORMALIZATION)
-        data = from_networkx(hw_graph)
-        data.folder_name = verilog_path
-        parser.append_graph_data(data)
+    # # graph_data = []
+    # for hw_graph, verilog_path in nx_graphs:
+    #     parser.normalize(hw_graph, normalize=cfg.NORMALIZATION)
+    #     data = from_networkx(hw_graph)
+    #     data.folder_name = verilog_path
+    #     parser.append_graph_data(data)
 
-    with open(cfg.data_pkl_path, 'wb+') as f:
-        pickle.dump(parser, f)
+    # with open(cfg.data_pkl_path, 'wb+') as f:
+    #     pickle.dump(parser, f)

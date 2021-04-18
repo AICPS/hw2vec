@@ -323,7 +323,7 @@ class VerilogParser:
             "Minus","Sll","Srl","Sla","Sra","LessThan","GreaterThan","LessEq","GreaterEq","Eq","Eql","NotEq","Eql","NotEql",
             "And","Xor","Xnor","Or","Land","Lor","Cond","Assign","Always","AlwaysFF","AlwaysComb","AlwaysLatch",
             "SensList","Sens","Substitution","BlockingSubstitution","NonblockingSubstitution","IfStatement","Block",
-            "Initial","Plus","Output","Partselect","InstanceList","Instance","PortArg"]
+            "Initial","Plus","Output","Partselect","Port","InstanceList","Instance","PortArg","Pointer"]
             self.CONST_DICTIONARY_GEN = ["IntConst","FloatConst","StringConst","Identifier"]
 
             self.ast, _ = parse([verilog_file])
