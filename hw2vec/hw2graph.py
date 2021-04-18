@@ -72,7 +72,11 @@ global_type2idx = {
     'times':28,
     'srl':29,
     'pointer':30,
-    'mod':31
+    'mod':31,
+    'divide':32,
+    'sra':33,
+    'sla':34,
+    'xnor':35
 }
 
 class JsonGraphParser:
@@ -282,6 +286,7 @@ class VerilogParser:
         if not os.path.exists(verilog_file):
             raise IOError("File Not Found:  ")
         self.output_directory = output_directory
+        self.verilog_file = verilog_file
 
         #Options
         self.dfg_graph_generator = None
@@ -318,7 +323,7 @@ class VerilogParser:
             "Minus","Sll","Srl","Sla","Sra","LessThan","GreaterThan","LessEq","GreaterEq","Eq","Eql","NotEq","Eql","NotEql",
             "And","Xor","Xnor","Or","Land","Lor","Cond","Assign","Always","AlwaysFF","AlwaysComb","AlwaysLatch",
             "SensList","Sens","Substitution","BlockingSubstitution","NonblockingSubstitution","IfStatement","Block",
-            "Initial","Plus","Output","Partselect"]
+            "Initial","Plus","Output","Partselect","InstanceList","Instance","PortArg"]
             self.CONST_DICTIONARY_GEN = ["IntConst","FloatConst","StringConst","Identifier"]
 
             self.ast, _ = parse([verilog_file])
@@ -604,14 +609,16 @@ class DFGgenerator:
             print(f'Outputting to : {output_path}\n')
             if not os.path.exists(f'{output_path}'):
                     os.makedirs(os.path.dirname(f'{output_path}'))
-            self.verilog_parser = VerilogParser(verilog_file, output_path, top_module, generate_cfg=False)
-            # self._generate_DFG()
+            self.verilog_file = verilog_file
+            self.output_path = output_path
+            self.top_module = top_module
 
     @profilegraph        
     def process(self):
+        self.verilog_parser = VerilogParser(self.verilog_file, self.output_path, self.top_module, generate_cfg=False)
         self.verilog_parser.graph_separate_modules()
         self.verilog_parser.merge_graphs()
-        return self.verilog_parser.dfg_graph_generator.graph # TODO: for profiling
+        return self.verilog_parser
 
     def get_graph_json(self):
         graph_json = {}
@@ -679,6 +686,35 @@ class ASTgenerator:
         ast_dict = self.parser._generate_ast_dict(self.parser.ast)
         self.parser.export_ast(ast_dict)
         self.parser.cleanup_files()
+    def get_nx_graph(self, json_file):
+        self.count = 0
+        with open(json_file, 'r') as f:
+            ast = json.load(f)
+    
+        graph = nx.DiGraph()
+        for key in ast.keys():
+            self.add_node(graph, None, key, ast[key])
+        return graph
+    
+    # helper function for getting networkx graph
+    def add_node(self, graph, parent, child, cur_dict):
+        index = self.count
+        graph.add_nodes_from([(index, {"label": child})])
+        if parent != None:
+            graph.add_edge(parent, index)
+        self.count = self.count + 1
+        if type(cur_dict) == dict:
+            for key in cur_dict.keys():
+                self.add_node(graph, index, key, cur_dict[key])
+        elif type(cur_dict) == list:
+            for ele in cur_dict:
+                if type(ele) == dict:
+                    self.add_node(graph, index, None, ele)
+                else:
+                    graph.add_nodes_from([(self.count, {"label": ele})])
+                    graph.add_edge(index, self.count)
+                    self.count = self.count + 1
+
 
 class PreprocessVerilog:
     '''

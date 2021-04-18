@@ -291,6 +291,9 @@ class GraphTrainer(BaseTrainer):
 
             if epoch_idx % self.config.test_step == 0:
                 self.evaluate(epoch_idx, data_loader, valid_data_loader)
+
+    def train_epoch_tj(self):
+        pass
                 
     def inference(self, data_loader):
         labels = []
