@@ -39,8 +39,9 @@ from sklearn.model_selection import train_test_split
 from glob import glob
 
 from hw2vec.graph2vec.trainers import *
+from hw2vec.utilities import isInt
 
-global_type2idx = {
+global_type2idx_DFG = {
     'concat':0, 
     'input':1, 
     'unand':2, 
@@ -77,6 +78,49 @@ global_type2idx = {
     'sra':33,
     'sla':34,
     'xnor':35
+}
+
+global_type2idx_AST = {
+    'names':0,
+    'always':1,
+    'none':2,
+    'senslist':3,
+    'sens':4,
+    'identifier':5,
+    'nonblockingsubstitution':6,
+    'lvalue':7,
+    'rvalue':8,
+    'intconst':9,
+    'pointer':10,
+    'ifstatement':11,
+    'pure numeric':12,
+    'assign':13,
+    'cond':14,
+    'unot':15,
+    'plus':16,
+    'land':17,
+    'reg':18,
+    'partselect':19,
+    'eq':20,
+    'lessthan':21,
+    'greaterthan':22,
+    'decl':23,
+    'wire':24,
+    'width':25,
+    'output':26,
+    'input':27,
+    'moduledef':28,
+    'portarg':29,
+    'instancelist':30,
+    'source':31,
+    'description':32,
+    'port':33,
+    'portlist':34,
+    'ulnot':35,
+    'instance':36,
+    'or':37,
+    'and':38,
+    'lor':39
 }
 
 class JsonGraphParser:
@@ -132,7 +176,7 @@ class JsonGraphParser:
             return self.split_dataset(ratio=self.cfg.ratio, seed=self.cfg.seed, dataset=self.graphs['all'])
 
     def get_pairs(self):
-        graph_pairs = self.graph_pairs if self.cfg.debug else self.graph_pairs[:100]
+        graph_pairs = self.graph_pairs
         self.graph_pairs_train, self.graph_pairs_test = self.split_dataset(ratio=self.cfg.ratio, seed=self.cfg.seed, dataset=graph_pairs)
         return self.graph_pairs_train, self.graph_pairs_test
 
@@ -146,7 +190,7 @@ class JsonGraphParser:
                     self.graphs['all'] = self.graphs['all'][:200]   
             pkl.dump(self, f)
 
-    def normalize(self, nx_graph, normalize="keep_variable"):
+    def normalize(self, nx_graph, graph_format="DFG", normalize="keep_variable"):
         ''' 
             Normalization is a step to replace the label of a node to a value.
             We have two options in hw2vec: 
@@ -159,7 +203,7 @@ class JsonGraphParser:
             for node in nx_graph.nodes(data=True):
                 node[1]['x'] = self.label2idx[node[1]['label']]
             self.num_node_labels = len(self.label2idx)
-        else:
+        elif graph_format == 'DFG': # normalize for DFG
             in_degrees = [val for (node, val) in nx_graph.in_degree()]
             out_degrees = [val for (node, val) in nx_graph.out_degree()]
             for idx, node in enumerate(nx_graph.nodes(data=True)):
@@ -177,13 +221,32 @@ class JsonGraphParser:
                 else:
                     type_of_node = node_name.lower()
 
-                if type_of_node not in global_type2idx:
+                if type_of_node not in global_type2idx_DFG:
                     print("----------"+type_of_node+"-------------")
-                    raise Exception("The operation is not in the global_type2idx table, please report the error to " +   
+                    raise Exception("The operation is not in the global_type2idx_DFG table, please report the error to " +   
                                 "https://github.com/louisccc/hw2vec/issues")
                 
-                node[1]['x'] = global_type2idx[type_of_node]
-            self.num_node_labels = len(global_type2idx)
+                node[1]['x'] = global_type2idx_DFG[type_of_node]
+            self.num_node_labels = len(global_type2idx_DFG)
+        else: # normalize for AST
+            out_degrees = [val for (node, val) in nx_graph.out_degree()]
+            for idx, node in enumerate(nx_graph.nodes(data=True)):
+                label = node[1]['label']
+                if out_degrees[idx] == 0 and not isInt(label):
+                    type_of_node = "names"
+                elif isInt(label):
+                    type_of_node = "pure numeric"
+                else:
+                    type_of_node = label.lower()
+                
+                if type_of_node not in global_type2idx_AST:
+                    print("----------"+type_of_node+"-------------")
+                    raise Exception("The operation is not in the global_type2idx_AST table, please report the error to " +   
+                                "https://github.com/louisccc/hw2vec/issues")
+                
+                node[1]['x'] = global_type2idx_AST[type_of_node]
+            self.num_node_labels = len(global_type2idx_AST)
+
 
     def read_node_labels(self, key):
         # read thru all the node labels in a dataset. 
@@ -224,30 +287,59 @@ class JsonGraphParser:
 
         return train_test_split(dataset, train_size = train_size, shuffle = True, stratify=sim_diff_label, random_state=seed)
 
-    def get_graph(self, graph_json): # TODO: get_nx_graph
-        # create nx graph.
-        edge_list_dict = graph_json['edge_index']
+    # create nx graph.
+    def get_graph(self, graph_json, graph_format='DFG'): 
         hardware_graph = nx.DiGraph()
-        for src in edge_list_dict:
-            node_name = src
-            if '_graphrename' in src:
-                node_name = src[:src.index('_graphrename')]
-            if '.' in node_name: 
-                type_of_node = node_name.split('.')[-1]
-            elif '_' in node_name:
-                type_of_node = node_name.split('_')[-1]
-            else:
-                type_of_node = node_name.lower()
-            self.node_labels.add(type_of_node)
-            # hardware_graph.add_node(src, x=self.label2idx[type_of_node], label=type_of_node) 
-            hardware_graph.add_node(src, label=type_of_node) 
-            assert(type(edge_list_dict[src]) == list)
-            for neighbor in edge_list_dict[src]:
-                edge_label = neighbor[0]
-                dst = neighbor[1]
-                hardware_graph.add_edge(src, dst)
-
+        if graph_format == 'DFG':
+            edge_list_dict = graph_json['edge_index']
+            for src in edge_list_dict:
+                node_name = src
+                if '_graphrename' in src:
+                    node_name = src[:src.index('_graphrename')]
+                if '.' in node_name: 
+                    type_of_node = node_name.split('.')[-1]
+                elif '_' in node_name:
+                    type_of_node = node_name.split('_')[-1]
+                else:
+                    type_of_node = node_name.lower()
+                self.node_labels.add(type_of_node)
+                # hardware_graph.add_node(src, x=self.label2idx[type_of_node], label=type_of_node) 
+                hardware_graph.add_node(src, label=type_of_node) 
+                assert(type(edge_list_dict[src]) == list)
+                for neighbor in edge_list_dict[src]:
+                    edge_label = neighbor[0]
+                    dst = neighbor[1]
+                    hardware_graph.add_edge(src, dst)
+        else:
+            self.count = 0
+            for key in graph_json.keys():
+                self.add_node(hardware_graph, 'None', key, graph_json[key])
         return hardware_graph
+    
+    # helper function for getting networkx graph
+    def add_node(self, graph, parent, child, cur_dict):
+        index = self.count
+        graph.add_nodes_from([(index, {"label": str(child)})])
+        if parent != 'None':
+            graph.add_edge(parent, index)
+        self.count = self.count + 1
+        self.node_labels.add(child)
+        if type(cur_dict) == dict:
+            for key in cur_dict.keys():
+                self.add_node(graph, index, key, cur_dict[key])
+        elif type(cur_dict) == list:
+            for ele in cur_dict:
+                if type(ele) == dict:
+                    self.add_node(graph, index, 'None', ele)
+                elif ele is not None:
+                    graph.add_nodes_from([(self.count, {"label": str(ele)})])
+                    graph.add_edge(index, self.count)
+                    self.count = self.count + 1
+        else:
+            graph.add_nodes_from([(self.count, {"label": str(cur_dict)})])
+            graph.add_edge(index, self.count)
+            self.count = self.count + 1
+            self.node_labels.add(cur_dict)
 
 
     def get_graph_from_json(self, json_path):
@@ -681,39 +773,21 @@ class CFGgenerator:
 
 class ASTgenerator:
     def __init__(self,verilog_file,output):
-        self.parser = VerilogParser(verilog_file,output,"top",generate_ast=True)
-    def generate_ast_json(self):
-        ast_dict = self.parser._generate_ast_dict(self.parser.ast)
-        self.parser.export_ast(ast_dict)
+        self.verilog_file = verilog_file
+        self.output = output
+        
+    def process(self):
+        self.parser = VerilogParser(self.verilog_file, self.output, "top", generate_ast=True)
+        self.ast_dict = self.parser._generate_ast_dict(self.parser.ast)
         self.parser.cleanup_files()
-    def get_nx_graph(self, json_file):
-        self.count = 0
-        with open(json_file, 'r') as f:
-            ast = json.load(f)
     
-        graph = nx.DiGraph()
-        for key in ast.keys():
-            self.add_node(graph, None, key, ast[key])
-        return graph
-    
-    # helper function for getting networkx graph
-    def add_node(self, graph, parent, child, cur_dict):
-        index = self.count
-        graph.add_nodes_from([(index, {"label": child})])
-        if parent != None:
-            graph.add_edge(parent, index)
-        self.count = self.count + 1
-        if type(cur_dict) == dict:
-            for key in cur_dict.keys():
-                self.add_node(graph, index, key, cur_dict[key])
-        elif type(cur_dict) == list:
-            for ele in cur_dict:
-                if type(ele) == dict:
-                    self.add_node(graph, index, None, ele)
-                else:
-                    graph.add_nodes_from([(self.count, {"label": ele})])
-                    graph.add_edge(index, self.count)
-                    self.count = self.count + 1
+    def get_graph_json(self):
+        return self.ast_dict
+        
+    def export_json(self):
+        self.parser.export_ast(self.ast_dict)
+        self.parser.cleanup_files()
+        
 
 
 class PreprocessVerilog:

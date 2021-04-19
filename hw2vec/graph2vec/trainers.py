@@ -267,7 +267,7 @@ class GraphTrainer(BaseTrainer):
         for epoch_idx in tqdm_bar: # iterate through epoch
             start_time = time()
             acc_loss_train = 0
-            
+
             for data in data_loader: # iterate through scenegraphs
                 
                 data.to(self.config.device)
@@ -275,14 +275,15 @@ class GraphTrainer(BaseTrainer):
                 self.model.train()
                 self.optimizer.zero_grad()
                                
-                output, _ = self.model.forward(data.x, data.edge_index, data.batch)
-                output = F.log_softmax(output, dim=1)
+                # output, _ = self.model.forward(data.x, data.edge_index, data.batch)
+                # output = F.log_softmax(output, dim=1)
 
-                loss_train = self.loss_func(output, data.label)
+                # loss_train = self.loss_func(output, data.label)
                     
-                loss_train.backward()
+                # loss_train.backward()
 
-                self.optimizer.step()
+                # self.optimizer.step()
+                loss_train = self.train_epoch_tj(data)
 
                 acc_loss_train += loss_train.detach().cpu().numpy()
 
@@ -292,8 +293,25 @@ class GraphTrainer(BaseTrainer):
             if epoch_idx % self.config.test_step == 0:
                 self.evaluate(epoch_idx, data_loader, valid_data_loader)
 
-    def train_epoch_tj(self):
-        pass
+    @profileit
+    def train_epoch_tj(self, data):
+        output, _ = self.model.forward(data.x, data.edge_index, data.batch)
+        output = F.log_softmax(output, dim=1)
+
+        loss_train = self.loss_func(output, data.label)
+            
+        loss_train.backward()
+
+        self.optimizer.step()
+        return loss_train
+
+    @profileit
+    def inference_epoch_tj(self, data):
+        output, attn = self.model.forward(data.x, data.edge_index, data.batch)
+        output = F.log_softmax(output, dim=1)
+
+        loss = self.loss_func(output, data.label)
+        return loss, output, attn
                 
     def inference(self, data_loader):
         labels = []
@@ -305,10 +323,11 @@ class GraphTrainer(BaseTrainer):
         for i, data in enumerate(data_loader): # iterate through graphs
             data.to(self.config.device)
             self.model.eval()
-            output, attn = self.model.forward(data.x, data.edge_index, data.batch)
-            output = F.log_softmax(output, dim=1)
+            # output, attn = self.model.forward(data.x, data.edge_index, data.batch)
+            # output = F.log_softmax(output, dim=1)
 
-            loss = self.loss_func(output, data.label)
+            # loss = self.loss_func(output, data.label)
+            loss, output, attn = self.inference_epoch_tj(data)
             total_loss += loss.detach().cpu().numpy()
 
             outputs.append(output.cpu())

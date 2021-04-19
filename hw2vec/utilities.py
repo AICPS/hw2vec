@@ -78,3 +78,10 @@ def save_graph(nxgraph, file_name):
     plt.savefig(file_name, bbox_inches="tight")
     pylab.close()
     del fig
+
+def isInt(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False

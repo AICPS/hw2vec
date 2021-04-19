@@ -116,7 +116,7 @@ class GNN4IP:
         test_pairs = []
         data = dataset.graphs['all'] 
         train_list = graph_pairs_train if not self.cfg.debug else graph_pairs_train[:1000]
-        test_list = graph_pairs_test if not self.cfg.debug else graph_pairs_test[:1000]
+        test_list = graph_pairs_test if not self.cfg.debug else graph_pairs_test[:250]
         train_pairs = [(data[pairs[0]], data[pairs[1]], pairs[2]) for pairs in train_list]
         test_pairs = [(data[pairs[0]], data[pairs[1]], pairs[2]) for pairs in test_list]               
         train_loader = DataLoader(train_pairs, batch_size=self.cfg.batch_size)
