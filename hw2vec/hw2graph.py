@@ -120,7 +120,13 @@ global_type2idx_AST = {
     'instance':36,
     'or':37,
     'and':38,
-    'lor':39
+    'lor':39,
+    'block':40,
+    'xor':41,
+    'ioport':42,
+    'blockingsubstitution':43,
+    'minus':44,
+    'times':45
 }
 
 class JsonGraphParser:
@@ -775,7 +781,8 @@ class ASTgenerator:
     def __init__(self,verilog_file,output):
         self.verilog_file = verilog_file
         self.output = output
-        
+
+    # @profilegraph   
     def process(self):
         self.parser = VerilogParser(self.verilog_file, self.output, "top", generate_ast=True)
         self.ast_dict = self.parser._generate_ast_dict(self.parser.ast)
