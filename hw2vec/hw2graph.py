@@ -421,7 +421,7 @@ class VerilogParser:
             "Minus","Sll","Srl","Sla","Sra","LessThan","GreaterThan","LessEq","GreaterEq","Eq","Eql","NotEq","Eql","NotEql",
             "And","Xor","Xnor","Or","Land","Lor","Cond","Assign","Always","AlwaysFF","AlwaysComb","AlwaysLatch",
             "SensList","Sens","Substitution","BlockingSubstitution","NonblockingSubstitution","IfStatement","Block",
-            "Initial","Plus","Output","Partselect","Port","InstanceList","Instance","PortArg","Pointer"]
+            "Initial","Plus","Output","Partselect","Port","InstanceList","Instance","PortArg","Pointer","Concat", "Parameter"]
             self.CONST_DICTIONARY_GEN = ["IntConst","FloatConst","StringConst","Identifier"]
 
             self.ast, _ = parse([verilog_file])
@@ -782,12 +782,17 @@ class ASTgenerator:
         self.verilog_file = verilog_file
         self.output = output
 
-    # @profilegraph   
+    @profileAST   
     def process(self):
         self.parser = VerilogParser(self.verilog_file, self.output, "top", generate_ast=True)
         self.ast_dict = self.parser._generate_ast_dict(self.parser.ast)
         self.parser.cleanup_files()
-    
+        self.count = 0
+        self.ast = nx.DiGraph()
+        for key in self.ast_dict.keys():
+            self.add_node(self.ast, 'None', key, self.ast_dict[key])
+        return self.ast, self.verilog_file
+
     def get_graph_json(self):
         return self.ast_dict
         
@@ -795,6 +800,28 @@ class ASTgenerator:
         self.parser.export_ast(self.ast_dict)
         self.parser.cleanup_files()
         
+    # helper function for getting networkx graph
+    def add_node(self, graph, parent, child, cur_dict):
+        index = self.count
+        graph.add_nodes_from([(index, {"label": str(child)})])
+        if parent != 'None':
+            graph.add_edge(parent, index)
+        self.count = self.count + 1
+        if type(cur_dict) == dict:
+            for key in cur_dict.keys():
+                self.add_node(graph, index, key, cur_dict[key])
+        elif type(cur_dict) == list:
+            for ele in cur_dict:
+                if type(ele) == dict:
+                    self.add_node(graph, index, 'None', ele)
+                elif ele is not None:
+                    graph.add_nodes_from([(self.count, {"label": str(ele)})])
+                    graph.add_edge(index, self.count)
+                    self.count = self.count + 1
+        else:
+            graph.add_nodes_from([(self.count, {"label": str(cur_dict)})])
+            graph.add_edge(index, self.count)
+            self.count = self.count + 1
 
 
 class PreprocessVerilog:

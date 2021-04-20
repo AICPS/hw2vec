@@ -63,6 +63,38 @@ def profilegraph(func):
     wrapper.unwrapped = func
     return wrapper
 
+# profiler for graph extraction 
+def profileAST(func):
+    def wrapper(*args, **kwargs):
+        datafn = func.__name__ + ".txt" 
+        #disable stdout
+        f_null = open(os.devnull, 'w')
+        sys.stdout = f_null
+        
+        pr = cProfile.Profile()
+        pr.enable()
+
+        result_graph, file_name = func(*args, **kwargs)
+
+        pr.disable()
+        # re-enable stdout
+        sys.stdout = sys.__stdout__
+
+        hardware_name = file_name[:file_name.index('/topModule.v')].split('/')[-1]
+        node_num = len(result_graph.nodes())
+        edge_num = len(result_graph.edges())
+
+        st = io.StringIO()
+        ps = pstats.Stats(pr, stream=st).sort_stats('tottime')
+        ps.print_stats()
+
+        with open(datafn, 'a') as f:
+            time = float(st.getvalue().split('\n')[0].split(' ')[-2])
+            f.write(str(hardware_name) + " " + str(node_num) + " " + str(edge_num) + " " + str(time) + "\n")
+        return result_graph, file_name
+    wrapper.unwrapped = func
+    return wrapper
+
 def save_graph(nxgraph, file_name):
     plt.figure(num=None, figsize=(60, 60), dpi=80)
     plt.axis('off')
