@@ -718,21 +718,16 @@ class DFGgenerator:
     '''
         This generator generates DFG from RTL (Register Transfer Level) Verilog code.
     '''
-    def __init__(self, verilog_file, output_path, code_language='verilog', top_module='top', draw_graph=False):
-        if code_language == "verilog":
-            if not os.path.exists(verilog_file):
-                raise IOError("file not found: " + verilog_file)
-    
-            print("Reading ", verilog_file)
-            print(f'Outputting to : {output_path}\n')
-            if not os.path.exists(f'{output_path}'):
-                    os.makedirs(os.path.dirname(f'{output_path}'))
-            self.verilog_file = verilog_file
-            self.output_path = output_path
-            self.top_module = top_module
+    def __init__(self, verilog_file, code_language='verilog'):
+        if not os.path.exists(verilog_file):
+            raise IOError("file not found: " + verilog_file)
+        self.verilog_file = verilog_file
 
     @profilegraph        
     def process(self):
+        print("Reading ", self.verilog_file)
+        self.output_path = './'
+        self.top_module='top'
         self.verilog_parser = VerilogParser(self.verilog_file, self.output_path, self.top_module, generate_cfg=False)
         self.verilog_parser.graph_separate_modules()
         self.verilog_parser.merge_graphs()
@@ -798,13 +793,12 @@ class CFGgenerator:
         self.verilog_parser.export_cfg_graph(output='roots')
 
 class ASTgenerator:
-    def __init__(self,verilog_file,output):
+    def __init__(self, verilog_file):
         self.verilog_file = verilog_file
-        self.output = output
 
     @profileAST   
     def process(self):
-        self.parser = VerilogParser(self.verilog_file, self.output, "top", generate_ast=True)
+        self.parser = VerilogParser(self.verilog_file, "./", "top", generate_ast=True)
         self.ast_dict = self.parser._generate_ast_dict(self.parser.ast)
         self.parser.cleanup_files()
         self.count = 0
