@@ -5,7 +5,6 @@ epochs: 200 # Number of epochs to train.
 weight_decay: 5e-4 # Weight decay (L2 loss on parameters).
 hidden: 200 # Number of hidden units.
 dropout: 0.5 # Dropout rate (1 - keep probability).
-nclass: 8 # The number of classes for node.
 recursive: True # Recursive loading scenegraphs.
 batch_size: 4 # Number of graphs in a batch.
 device: "cpu" # The device to run on models (cuda or cpu) cpu in default.
