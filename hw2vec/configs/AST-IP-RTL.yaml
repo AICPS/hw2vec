@@ -1,6 +1,6 @@
 ---
 learning_rate: 0.001 # The initial learning rate for the model.
-seed: 1 # Random seed.
+seed: 0 # Random seed.
 epochs: 200 # Number of epochs to train.
 weight_decay: 5e-4 # Weight decay (L2 loss on parameters).
 hidden: 200 # Number of hidden units.
@@ -8,7 +8,7 @@ dropout: 0.5 # Dropout rate (1 - keep probability).
 nclass: 8 # The number of classes for node.
 recursive: True # Recursive loading scenegraphs.
 batch_size: 4 # Number of graphs in a batch.
-device: "cpu" # The device to run on models (cuda or cpu) cpu in default.
+device: "cuda" # The device to run on models (cuda or cpu) cpu in default.
 model: "gcn" # Model to be used.
 num_layer: 5 # Number of layers in the neural network.
 hidden_dim: 32 # Hidden dimension in GIN.
@@ -21,6 +21,6 @@ raw_dataset_path: "/home/louisccc/NAS/louisccc/hw2vec/IP-RTL/" # Path to raw dat
 pkl_path: "ip.pkl" # Path to hardware graphs for parsing.
 embed_dim: 2 # The dimension of graph embeddings.
 debug: False # Debug mode.
-data_pkl_path: "./graph_ip.pkl" # Path to the pickle file storing the graph dataset
+data_pkl_path: "./AST-IP-RTL.pkl" # Path to the pickle file storing the graph dataset
 graph_type: "AST" # Graph type to create.
 NORMALIZATION: "type_only" # or "keep_variable"

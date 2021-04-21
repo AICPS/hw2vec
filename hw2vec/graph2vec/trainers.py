@@ -74,21 +74,25 @@ class BaseTrainer:
         self.model.eval()
         with open(str(save_path / "vectors.tsv"), "w") as vectors_file:
             with open(str(save_path / "metadata.tsv"), "w") as metadata_file:
-                metadata_file.write("Type\tInstance\n")
-             
+                #metadata_file.write("Type\tInstance\n")
+
                 for data in data_loader:
-                    
                     if type(data) == list:
+                        #import pdb; pdb.set_trace()
                         graph1, graph2 = data[0].to(self.config.device), data[1].to(self.config.device)
                         embed_x_1, _ = self.model.forward(graph1.x, graph1.edge_index, batch=graph1.batch)
                         embed_x_2, _ = self.model.forward(graph2.x, graph2.edge_index, batch=graph2.batch)
                         vectors_file.write("\t".join([str(x) for x in embed_x_1.detach().cpu().numpy()[0]]) + "\n")
                         vectors_file.write("\t".join([str(x) for x in embed_x_2.detach().cpu().numpy()[0]]) + "\n")
+                        # metadata_file.write(data[0].class_name[0]+"\n")
+                        # metadata_file.write(data[1].class_name[0]+"\n")
                     else:
                         data.to(self.config.device)
                         embed_x, _ = self.model.forward(data.x, data.edge_index, data.batch)
                         embed_x = F.log_softmax(embed_x, dim=1)
                         vectors_file.write("\t".join([str(x) for x in embed_x.detach().cpu().numpy()[0]]) + "\n")
+                        category_and_name = '.'.join(data.folder_name[0][data.folder_name[0].index(data.class_name[0]):].split("/")[:-1])
+                        metadata_file.write(category_and_name+"\n")
                     # metadata_file.write(str(graphs[2]).replace('/', '\t')+'\n') #TODO: what is this?   
 
 
@@ -188,25 +192,25 @@ class PairwiseGraphTrainer(BaseTrainer):
         print("Mini Test for Epochs %d:"%epoch_idx)
         print("train loss: %4f" % train_loss +
             ", train accuracy: %.4f" % accuracy_score(train_labels, train_preds) +
-            ", train f1 score: %.4f" % f1_score(train_labels, train_preds, average="micro")+
+            ", train f1 score: %.4f" % f1_score(train_labels, train_preds, average="binary")+
             ", train confusion_matrix: %s" % str(confusion_matrix(train_labels, train_preds)).replace('\n', ',')+
-            ", train precision: %.4f" % precision_score(train_labels, train_preds, average="micro")+
-            ", train recall: %.4f" % recall_score(train_labels, train_preds, average="micro"))
+            ", train precision: %.4f" % precision_score(train_labels, train_preds, average="binary")+
+            ", train recall: %.4f" % recall_score(train_labels, train_preds, average="binary"))
 
         print("test  loss: %4f" % test_loss +
             ", test  accuracy: %.4f" % accuracy_score(test_labels, test_preds) +
-            ", test  f1 score: %.4f" % f1_score(test_labels, test_preds, average="micro")+
+            ", test  f1 score: %.4f" % f1_score(test_labels, test_preds, average="binary")+
             ", test  confusion_matrix: %s" % str(confusion_matrix(test_labels, test_preds)).replace('\n', ',')+
-            ", test  precision: %.4f" % precision_score(test_labels, test_preds, average="micro")+
-            ", test  recall: %.4f" % recall_score(test_labels, test_preds, average="micro"))
+            ", test  precision: %.4f" % precision_score(test_labels, test_preds, average="binary")+
+            ", test  recall: %.4f" % recall_score(test_labels, test_preds, average="binary"))
 
         if(self.min_test_loss >= test_loss): 
             self.min_test_loss = test_loss
             self.metrics["acc"] = accuracy_score(test_labels, test_preds)
-            self.metrics["f1"] = f1_score(test_labels, test_preds, average="micro")
+            self.metrics["f1"] = f1_score(test_labels, test_preds, average="binary")
             self.metrics["conf_mtx"] = str(confusion_matrix(test_labels, test_preds)).replace('\n', ',')
-            self.metrics["prec"] = precision_score(test_labels, test_preds, average="micro")
-            self.metrics["rec"] = recall_score(test_labels, test_preds, average="micro")
+            self.metrics["prec"] = precision_score(test_labels, test_preds, average="binary")
+            self.metrics["rec"] = recall_score(test_labels, test_preds, average="binary")
             self.save_model("./ALU_excluded_result")
 
         if(epoch_idx==self.config.epochs):

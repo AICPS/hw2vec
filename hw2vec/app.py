@@ -121,6 +121,7 @@ class GNN4IP:
         test_pairs = [(data[pairs[0]], data[pairs[1]], pairs[2]) for pairs in test_list]               
         train_loader = DataLoader(train_pairs, batch_size=self.cfg.batch_size)
         test_loader  = DataLoader(test_pairs, batch_size=self.cfg.batch_size)
+        vis_loader   = DataLoader(data, batch_size=1)
         
         self.cfg.num_feature_dim = dataset.num_node_labels
         self.cfg.labels = [SIMILAR, DISSIMILAR]
@@ -128,6 +129,7 @@ class GNN4IP:
         self.trainer = PairwiseGraphTrainer(self.cfg)
         self.train_loader = train_loader
         self.test_loader = test_loader
+        self.vis_loader = vis_loader
 
         self.trainer.build()
 
@@ -138,4 +140,5 @@ class GNN4IP:
         self.trainer.evaluate(self.cfg.epochs, self.train_loader, self.test_loader)
 
     def visualize_embeddings(self, path):
-        self.trainer.visualize_embeddings(self.train_loader, path)
+        #self.trainer.visualize_embeddings(self.train_loader, path)
+        self.trainer.visualize_embeddings(self.vis_loader, path)
