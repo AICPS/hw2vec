@@ -17,8 +17,9 @@ from argparse import ArgumentParser
 
 class Config:
     def __init__(self, args):
-        ap = ArgumentParser(description='The parameters for use-case 2.')
+        ap = ArgumentParser(description='The parameters for general arugments.')
         ap.add_argument('--yaml_path', type=str, default="./IP-NetList.yaml", help="The path of yaml config file.")
+        ap.add_argument('--debug',     type=bool, default=False, help="The flag for enabling debug mode.")
         args_parsed = ap.parse_args(args)
         for arg_name in vars(args_parsed):
             self.__dict__[arg_name] = getattr(args_parsed, arg_name)
