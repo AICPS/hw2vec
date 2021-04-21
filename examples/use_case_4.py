@@ -1,6 +1,6 @@
 import os, sys, itertools
 sys.path.append(os.path.dirname(sys.path[0]))
-from hw2vec.graph2vec.config import Config
+from hw2vec.config import Config
 from hw2vec.app import GNN4IP
 from hw2vec.hw2graph import JsonGraphParser
 import pickle
