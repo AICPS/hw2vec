@@ -18,86 +18,16 @@ sys.path.append(os.path.dirname(sys.path[0]))
 
 from json import dumps
 from collections import defaultdict
-from pyverilog.dataflow.optimizer import VerilogDataflowOptimizer as PyDataflowOptimizer
-from pyverilog.dataflow.graphgen import VerilogGraphGenerator as PyGraphGenerator
-from pyverilog.controlflow.controlflow_analyzer import VerilogControlflowAnalyzer as PyControlflowAnalyzer
-from pyverilog.vparser.parser import VerilogCodeParser
-from pyverilog.dataflow.modulevisitor import ModuleVisitor
-from pyverilog.dataflow.signalvisitor import SignalVisitor
-from pyverilog.dataflow.bindvisitor import BindVisitor
-from pyverilog.vparser.parser import parse
+from pyverilog.dataflow.optimizer import VerilogDataflowOptimizer
+from pyverilog.dataflow.graphgen import VerilogGraphGenerator
+from pyverilog.controlflow.controlflow_analyzer import VerilogControlflowAnalyzer
 
+from pyverilog.vparser.parser import parse
 from sklearn.model_selection import train_test_split
 from glob import glob
 from hw2vec.graph2vec.trainers import *
-from hw2vec.utilities import isInt
+from hw2vec.utilities import *
 
-class VerilogDataflowAnalyzer(VerilogCodeParser):
-    def __init__(self, filelist, topmodule='TOP', noreorder=False, nobind=False,
-                 preprocess_include=None,
-                 preprocess_define=None):
-        self.topmodule = topmodule
-        self.terms = {}
-        self.binddict = {}
-        self.frametable = None
-        files = filelist if isinstance(filelist, tuple) or isinstance(
-            filelist, list) else [filelist]
-        VerilogCodeParser.__init__(self, files,
-                                   preprocess_include=preprocess_include,
-                                   preprocess_define=preprocess_define, debug=False)
-        self.noreorder = noreorder
-        self.nobind = nobind
-
-    def generate(self):
-        ast = self.parse()
-
-        module_visitor = ModuleVisitor()
-        module_visitor.visit(ast)
-        modulenames = module_visitor.get_modulenames()
-        moduleinfotable = module_visitor.get_moduleinfotable()
-
-        signal_visitor = SignalVisitor(moduleinfotable, self.topmodule)
-        signal_visitor.start_visit()
-        frametable = signal_visitor.getFrameTable()
-
-        if self.nobind:
-            self.frametable = frametable
-            return
-
-        bind_visitor = BindVisitor(moduleinfotable, self.topmodule, frametable,
-                                   noreorder=self.noreorder)
-
-        bind_visitor.start_visit()
-        dataflow = bind_visitor.getDataflows()
-
-        self.frametable = bind_visitor.getFrameTable()
-        self.terms = dataflow.getTerms()
-        self.binddict = dataflow.getBinddict()
-
-    def getFrameTable(self):
-        return self.frametable
-
-    # -------------------------------------------------------------------------
-    def getInstances(self):
-        if self.frametable is None:
-            return ()
-        return self.frametable.getAllInstances()
-
-    def getSignals(self):
-        if self.frametable is None:
-            return ()
-        return self.frametable.getAllSignals()
-
-    def getConsts(self):
-        if self.frametable is None:
-            return ()
-        return self.frametable.getAllConsts()
-
-    def getTerms(self):
-        return self.terms
-
-    def getBinddict(self):
-        return self.binddict
 
 class DataProcessor:
     def __init__(self, cfg):
@@ -284,14 +214,15 @@ class DFGGenerator:
         binddict = dataflow_analyzer.getBinddict()
         terms = dataflow_analyzer.getTerms()
         
-        dataflow_optimizer = PyDataflowOptimizer(terms, binddict)
+        dataflow_optimizer = VerilogDataflowOptimizer(terms, binddict)
         dataflow_optimizer.resolveConstant()
         resolved_terms = dataflow_optimizer.getResolvedTerms()
         resolved_binddict = dataflow_optimizer.getResolvedBinddict()
         constlist = dataflow_optimizer.getConstlist()
-        dfg_graph_generator = PyGraphGenerator("top", terms, binddict, resolved_terms, 
+        dfg_graph_generator = VerilogGraphGenerator("top", terms, binddict, resolved_terms, 
                             resolved_binddict, constlist, 
                             './seperate_modules.pdf')
+
         # binddict with string keys
         signals = [str(bind) for bind in dfg_graph_generator.binddict]
 
@@ -440,7 +371,7 @@ class CFGGenerator:
         resolved_terms = dataflow_optimizer.getResolvedTerms()
         resolved_binddict = dataflow_optimizer.getResolvedBinddict()
         constlist = dataflow_optimizer.getConstlist()
-        cfg_graph_generator = PyControlflowAnalyzer("top", terms, binddict, resolved_terms, resolved_binddict, constlist, fsm_vars)
+        cfg_graph_generator = VerilogControlflowAnalyzer("top", terms, binddict, resolved_terms, resolved_binddict, constlist, fsm_vars)
         fsms = cfg_graph_generator.getFiniteStateMachines()
 
         print("VIEWING FSM's")
