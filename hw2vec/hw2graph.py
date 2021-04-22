@@ -21,7 +21,6 @@ from collections import defaultdict
 from pyverilog.dataflow.optimizer import VerilogDataflowOptimizer
 from pyverilog.dataflow.graphgen import VerilogGraphGenerator
 from pyverilog.controlflow.controlflow_analyzer import VerilogControlflowAnalyzer
-
 from pyverilog.vparser.parser import parse
 from sklearn.model_selection import train_test_split
 from glob import glob
@@ -220,8 +219,7 @@ class DFGGenerator:
         resolved_binddict = dataflow_optimizer.getResolvedBinddict()
         constlist = dataflow_optimizer.getConstlist()
         dfg_graph_generator = VerilogGraphGenerator("top", terms, binddict, resolved_terms, 
-                            resolved_binddict, constlist, 
-                            './seperate_modules.pdf')
+                                                    resolved_binddict, constlist, './seperate_modules.pdf')
 
         # binddict with string keys
         signals = [str(bind) for bind in dfg_graph_generator.binddict]
@@ -230,86 +228,47 @@ class DFGGenerator:
             dfg_graph_generator.generate(signal, walk=False)
             # print(f'\rProgress : {num} / {len(signals)}', end='', flush=True)
 
+        # import pdb; pdb.set_trace()
         label_to_node = dict()
         for node in dfg_graph_generator.graph.nodes():
             if dfg_graph_generator.graph.in_degree(node) == 0:
                 label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
                 label_to_node[label] = node
         
-        deleted = 0
-        # print('Merging subgraphs... ')
+        # deleted = 0
+        print('\nMerging subgraphs... ')
         num_nodes = len(dfg_graph_generator.graph.nodes())
         for num, node in enumerate(dfg_graph_generator.graph.nodes(), start=1):
             label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
             if '_' in label and label.replace('_', '.') in label_to_node:
                 parents = dfg_graph_generator.graph.predecessors(node)
                 dfg_graph_generator.graph.delete_node(node)
-                deleted += 1
+                # deleted += 1
                 for parent in parents:
                     # if not self._isChild(self.dfg_graph_generator.graph, label_to_node[label.replace('_', '.')], parent):
                     dfg_graph_generator.graph.add_edge(parent, label_to_node[label.replace('_', '.')])
             # print(f'\rProgress : {num} - {deleted} = {num - deleted} / {num_nodes}', end='', flush=True)
         # print('\nThe signals subgraphs are merged.')
         
-        graph_json = {}
-        graph_json['root_nodes'] = [node for node in dfg_graph_generator.graph.nodes() if dfg_graph_generator.graph.in_degree(node) == 0]
-        graph_json['nodes'] = dfg_graph_generator.graph.nodes()
-        all_edges = list()
-        for edge in dfg_graph_generator.graph.edges():
-            all_edges.append((edge[0], edge[1], edge.attr['label']))
-        graph_json['edges'] = all_edges
-
-        jsondict = {}
-        for node in dfg_graph_generator.graph.nodes():
-            jsondict[str(node)] = list()
-            for child in dfg_graph_generator.graph.successors(node):
-                edgeLabel = dfg_graph_generator.graph.get_edge(node, child).attr['label']
-                jsondict[str(node)].append((edgeLabel, str(child)))
+        nx_graph = nx.DiGraph()
         
-        graph_json['edge_index'] = jsondict
-        hardware_graph = nx.DiGraph()
-        edge_list_dict = graph_json['edge_index']
-        for src in edge_list_dict:
-            node_name = src
-            if '_graphrename' in src:
-                node_name = src[:src.index('_graphrename')]
+        for node in dfg_graph_generator.graph.nodes():
+            node_name = node.name
+            if '_graphrename' in node.name:
+                node_name = node.name[:node.name.index('_graphrename')]
             if '.' in node_name: 
                 type_of_node = node_name.split('.')[-1]
             elif '_' in node_name:
                 type_of_node = node_name.split('_')[-1]
             else:
                 type_of_node = node_name.lower()
-            # self.node_labels.add(type_of_node)
-            # hardware_graph.add_node(src, x=self.label2idx[type_of_node], label=type_of_node) 
-            hardware_graph.add_node(src, label=type_of_node) 
-            assert(type(edge_list_dict[src]) == list)
-            for neighbor in edge_list_dict[src]:
-                edge_label = neighbor[0]
-                dst = neighbor[1]
-                hardware_graph.add_edge(src, dst)
-        return_obj = hardware_graph
-        return return_obj
+            nx_graph.add_node(node.name, label=type_of_node) 
+            for child in dfg_graph_generator.graph.successors(node):
+                # edgeLabel = dfg_graph_generator.graph.get_edge(node, child).attr['label']
+                nx_graph.add_edge(node.name, child.name)
+
+        return nx_graph
     
-    # This function returns True, if the child is a child of checkParent
-    def _isChild(self, graph, checkParent, child):
-        # This function recursively returns a list of all the parents of a node up to the root
-        def getAllParents(node):
-            # if node has no parents
-            if graph.in_degree(node) == 0:
-                return []
-            # if node has no grandparents
-            elif sum([graph.in_degree(parent) for parent in graph.predecessors(node)]) == 0:
-                return graph.predecessors(node)
-            # recursive call, node has unknown generations of parents
-            else:
-                retlist = list()
-                for parent in graph.predecessors(node):
-                    x = getAllParents(parent)
-                    x.append(parent)
-                    retlist += x
-                return retlist
-        allParents = getAllParents(child)
-        return checkParent in allParents
 
 class ASTGenerator:
     def __init__(self):
@@ -366,7 +325,7 @@ class CFGGenerator:
         binddict = dataflow_analyzer.getBinddict()
         terms = dataflow_analyzer.getTerms()
         
-        dataflow_optimizer = PyDataflowOptimizer(terms, binddict)
+        dataflow_optimizer = VerilogDataflowOptimizer(terms, binddict)
         dataflow_optimizer.resolveConstant()
         resolved_terms = dataflow_optimizer.getResolvedTerms()
         resolved_binddict = dataflow_optimizer.getResolvedBinddict()
