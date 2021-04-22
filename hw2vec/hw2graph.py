@@ -393,8 +393,7 @@ class DataProcessor:
 
 class HW2GRAPH:
     '''
-        the only class that interfaces with pyverilog.
-        https://github.com/Microsoft/vscode-tips-and-tricks#intellisense
+        the main class of hw2graph.
     ''' 
 
     #holds a GRAPH_GENERATOR INSTANCE
@@ -412,6 +411,7 @@ class HW2GRAPH:
         self.CONST_DICTIONARY_GEN = None
         self.DICTIONARY_GEN = None 
         self._create_graphgen_obj(verilog_file, top_module, generate_cfg, generate_ast)
+        self.count = 0
 
     #helper fcn to __init__, create a graph object used to generate json
     def _create_graphgen_obj(self, verilog_file, top_module, generate_cfg, generate_ast):
@@ -712,98 +712,6 @@ class HW2GRAPH:
             except FileNotFoundError:
                 pass
 
-class DFGgenerator:
-    '''
-        This generator generates DFG from RTL (Register Transfer Level) Verilog code.
-    '''
-    def __init__(self, verilog_file):
-        self.verilog_file = verilog_file
-
-    # @profilegraph  
-    def process(self):
-        self.output_path = './'
-        self.top_module='top'
-        self.verilog_parser = HW2GRAPH(self.verilog_file, self.output_path, self.top_module, generate_cfg=False)
-        self.verilog_parser.graph_separate_modules()
-        self.verilog_parser.merge_graphs()
-
-    def get_graph_json(self):
-        graph_json = {}
-        graph_json['root_nodes'] = self.verilog_parser.get_root_nodes()
-        graph_json['nodes'] = self.verilog_parser.get_nodes()
-        graph_json['edges'] = self.verilog_parser.get_edges()
-        graph_json['edge_index'] = self.verilog_parser.get_edge_list()
-        return graph_json
-    
-    def export_nodes(self):
-        self.verilog_parser.export_dfg_graph(output='nodes')
-    
-    def export_edges(self):
-        self.verilog_parser.export_dfg_graph(output='edges')
-    
-    def export_root_nodes(self):
-        self.verilog_parser.export_dfg_graph(output='roots')
-        
-    def check_dependecny(self):
-        self.verilog_parser.graph_input_dependencies()
-
-    def draw(self):
-        self.verilog_parser.dfg_graph_generator.draw()
-        
-class CFGgenerator:
-    '''
-        This generator generates the Control Flow Graph (CFG) from RTL verilog code.
-    '''
-    def __init__(self, verilog_file, output_path, code_language="verilog", top_module="top", draw_graph=False):
-        if code_language == "verilog":
-            if not os.path.exists(verilog_file):
-                raise IOError("file not found: " + verilog_file)
-    
-            print("Reading ", verilog_file)
-            print(f'Outputting to : {output_path}\n')
-            if not os.path.exists(f'{output_path}'):
-                    os.makedirs(os.path.dirname(f'{output_path}'))
-                    
-            self.parser = HW2GRAPH(verilog_file, output_path, top_module,  generate_cfg=True)
-            self._generate_CFG()
-            
-    def _generate_CFG(self):
-        self.parser.generate_dot_file()
-        self.parser.export_cfg_graph(output='graph')
-        self.parser.cleanup_files()
-
-    def export_nodes(self):
-        self.verilog_parser.export_cfg_graph(output='nodes')
-    
-    def export_edges(self):
-        self.verilog_parser.export_cfg_graph(output='edges')
-    
-    def export_root_nodes(self):
-        self.verilog_parser.export_cfg_graph(output='roots')
-
-class ASTgenerator:
-    def __init__(self, verilog_file):
-        self.verilog_file = verilog_file
-
-    @profileAST   
-    def process(self):
-        self.parser = HW2GRAPH(self.verilog_file, "./", "top", generate_ast=True)
-        self.ast_dict = self.parser._generate_ast_dict(self.parser.ast)
-        self.parser.cleanup_files()
-        self.count = 0
-        self.ast = nx.DiGraph()
-        for key in self.ast_dict.keys():
-            self.add_node(self.ast, 'None', key, self.ast_dict[key])
-        return self.ast, self.verilog_file
-
-    def get_graph_json(self):
-        return self.ast_dict
-        
-    def export_json(self):
-        self.parser.export_ast(self.ast_dict)
-        self.parser.cleanup_files()
-        
-    # helper function for getting networkx graph
     def add_node(self, graph, parent, child, cur_dict):
         index = self.count
         graph.add_nodes_from([(index, {"label": str(child)})])
