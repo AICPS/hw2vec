@@ -14,15 +14,18 @@ from torch_geometric.utils.convert import from_networkx
 from matplotlib import pylab
 import matplotlib.pyplot as plt
 import pickle
-
+from time import time
 
 def process_graphs(cfg):
     # step1: process graph with hw2graph     
     nx_graphs = []
     for verilog_path in glob("%s/**/topModule.v" % str(cfg.raw_dataset_path), recursive=True):
-        print("Reading ", verilog_path)
         hw2graph = HW2GRAPH(cfg)
+        start = time()
         hardware_graph = hw2graph.process(verilog_path) #TODO: not implemented for CFG.
+        end = time()
+        if hardware_graph != None:
+            print(verilog_path, ",", len(hardware_graph.nodes), ",", len(hardware_graph.edges), ",", end-start)
         nx_graphs.append((hardware_graph, verilog_path)) 
     
     # step2: use data_proc to create the dataset.
