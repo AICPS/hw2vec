@@ -7,10 +7,8 @@
 #notes           :
 #python_version  :3.6
 #==============================================================================
-import yaml
-import os, sys
+import yaml, os, sys
 sys.path.append(os.path.dirname(sys.path[0]))
-import random
 from pathlib import Path
 from argparse import ArgumentParser
 

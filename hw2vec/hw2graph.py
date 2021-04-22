@@ -9,158 +9,24 @@
 #==============================================================================
 from __future__ import absolute_import
 from __future__ import print_function
-from typing import Tuple
-import pyverilog
-from pyverilog.dataflow.dataflow_analyzer import VerilogDataflowAnalyzer as PyDataflowAnalyzer
-from pyverilog.dataflow.optimizer import VerilogDataflowOptimizer as PyDataflowOptimizer
-from pyverilog.dataflow.graphgen import VerilogGraphGenerator as PyGraphGenerator
-from pyverilog.controlflow.controlflow_analyzer import VerilogControlflowAnalyzer as PyControlflowAnalyzer
-from pyverilog.ast_code_generator.codegen import ASTCodeGenerator
-from pyverilog.vparser.parser import parse
-from optparse import OptionParser
 
-import pyverilog.vparser.ast as vast
 import pyverilog.utils.util as util
-import pydot
+import networkx as nx
+
+import pyverilog, pydot, json, os, sys
+sys.path.append(os.path.dirname(sys.path[0]))
 
 from json import dumps
 from collections import defaultdict
-
-import os, sys
-sys.path.append(os.path.dirname(sys.path[0]))
-
-import torch
-import torch.nn.functional as F
-
-import json
-import networkx as nx
-
+from pyverilog.dataflow.optimizer import VerilogDataflowOptimizer
+from pyverilog.dataflow.graphgen import VerilogGraphGenerator
+from pyverilog.controlflow.controlflow_analyzer import VerilogControlflowAnalyzer
+from pyverilog.vparser.parser import parse
 from sklearn.model_selection import train_test_split
 from glob import glob
-
 from hw2vec.graph2vec.trainers import *
-from hw2vec.utilities import isInt
+from hw2vec.utilities import *
 
-global_type2idx_DFG = {
-    'concat':0, 
-    'input':1, 
-    'unand':2, 
-    'unor':3, 
-    'uxor':4, 
-    'signal':5, 
-    'uand':6, 
-    'ulnot':7,
-    'uxnor':8,
-    'numeric':9,
-    'partselect':10,
-    'and':11,
-    'unot':12,
-    'branch':13,
-    'or':14,
-    'uor':15,
-    'output':16,
-    'plus':17,
-    'eq':18,
-    'minus':19,
-    'xor':20,
-    'lor':21,
-    'noteq':22,
-    'land':23,
-    'greatereq':24,
-    'greaterthan':25,
-    'sll':26,
-    'lessthan':27,
-    'times':28,
-    'srl':29,
-    'pointer':30,
-    'mod':31,
-    'divide':32,
-    'sra':33,
-    'sla':34,
-    'xnor':35
-}
-
-global_type2idx_AST = {
-    'names':0,
-    'always':1,
-    'none':2,
-    'senslist':3,
-    'sens':4,
-    'identifier':5,
-    'nonblockingsubstitution':6,
-    'lvalue':7,
-    'rvalue':8,
-    'intconst':9,
-    'pointer':10,
-    'ifstatement':11,
-    'pure numeric':12,
-    'assign':13,
-    'cond':14,
-    'unot':15,
-    'plus':16,
-    'land':17,
-    'reg':18,
-    'partselect':19,
-    'eq':20,
-    'lessthan':21,
-    'greaterthan':22,
-    'decl':23,
-    'wire':24,
-    'width':25,
-    'output':26,
-    'input':27,
-    'moduledef':28,
-    'portarg':29,
-    'instancelist':30,
-    'source':31,
-    'description':32,
-    'port':33,
-    'portlist':34,
-    'ulnot':35,
-    'instance':36,
-    'or':37,
-    'and':38,
-    'lor':39,
-    'block':40,
-    'xor':41,
-    'ioport':42,
-    'blockingsubstitution':43,
-    'minus':44,
-    'times':45,
-    'casestatement':46,
-    'case':47,
-    'parameter':48,
-    'sll':49,
-    'srl':50,
-    'sra':51,
-    'divide':52,
-    'systemcall':53,
-    'singlestatement':54,
-    'stringconst':55,
-    'noteq':56,
-    'concat':57,
-    'repeat':58,
-    'integer':59,
-    'xnor':60,
-    'dimensions':61,
-    'length':62,
-    'lconcat':63,
-    'uminus':64,
-    'greatereq':65,
-    'initial':66,
-    'uor':67,
-    'casexstatement':68,
-    'forstatement':69,
-    'localparam':70,
-    'eventstatement':71,
-    'mod':72,
-    'delaystatement':73,
-    'floatconst':74,
-    'task':75,
-    'paramarg':76,
-    'paramlist':77,
-    'inout':78
-}
 
 class DataProcessor:
     def __init__(self, cfg):
@@ -190,6 +56,25 @@ class DataProcessor:
         
         self.label2idx = None
 
+        self.global_type2idx_AST_list = ['names','always','none','senslist','sens','identifier','nonblockingsubstitution',
+                                         'lvalue','rvalue','intconst','pointer','ifstatement','pure numeric','assign','cond',
+                                         'unot','plus','land','reg','partselect','eq','lessthan','greaterthan','decl','wire',
+                                         'width','output','input','moduledef','portarg','instancelist','source','description',
+                                         'port','portlist','ulnot','instance','or','and','lor','block','xor','ioport',
+                                         'blockingsubstitution','minus','times','casestatement','case','parameter','sll','srl',
+                                         'sra','divide','systemcall','singlestatement','stringconst','noteq','concat','repeat',
+                                         'integer','xnor','dimensions','length','lconcat','uminus','greatereq','initial','uor',
+                                         'casexstatement','forstatement','localparam','eventstatement','mod','delaystatement',
+                                         'floatconst','task','paramarg', 'paramlist', 'inout']
+        self.global_type2idx_AST = {v:k for k, v in enumerate(self.global_type2idx_AST_list)}
+
+        self.global_type2idx_DFG_list = ['concat','input','unand','unor','uxor','signal','uand','ulnot','uxnor','numeric','partselect',
+                                         'and','unot','branch','or','uor','output','plus','eq','minus','xor','lor','noteq','land',
+                                         'greatereq','greaterthan','sll','lessthan','times','srl','pointer','mod','divide','sra','sla',
+                                         'xnor']
+
+        self.global_type2idx_DFG = {v:k for k, v in enumerate(self.global_type2idx_DFG_list)}
+
     def append_training_graph_data(self, data):
         if 'train' not in self.graphs: 
             self.graphs['train'] = []
@@ -218,16 +103,6 @@ class DataProcessor:
         graph_pairs = self.graph_pairs
         self.graph_pairs_train, self.graph_pairs_test = self.split_dataset(ratio=self.cfg.ratio, seed=self.cfg.seed, dataset=graph_pairs)
         return self.graph_pairs_train, self.graph_pairs_test
-
-    def do_pickle_dataset(self):
-        with open(self.cfg.pkl_path, 'wb') as f:
-            if self.cfg.debug and len(self.graph_pairs) is 0:
-                if 'train' in self.graphs and 'test' in self.graphs:
-                    self.graphs['train'] = self.graphs['train'][:100]
-                    self.graphs['test'] = self.graphs['test'][:100] 
-                elif 'all' in self.graphs:
-                    self.graphs['all'] = self.graphs['all'][:200]   
-            pkl.dump(self, f)
 
     def normalize(self, nx_graph, graph_format="DFG", normalize="keep_variable"):
         ''' 
@@ -260,13 +135,14 @@ class DataProcessor:
                 else:
                     type_of_node = node_name.lower()
 
-                if type_of_node not in global_type2idx_DFG:
+                if type_of_node not in self.global_type2idx_DFG:
                     print("----------"+type_of_node+"-------------")
                     raise Exception("The operation is not in the global_type2idx_DFG table, please report the error to " +   
                                 "https://github.com/louisccc/hw2vec/issues")
                 
-                node[1]['x'] = global_type2idx_DFG[type_of_node]
-            self.num_node_labels = len(global_type2idx_DFG)
+                node[1]['x'] = self.global_type2idx_DFG[type_of_node]
+            self.num_node_labels = len(self.global_type2idx_DFG)
+        
         else: # normalize for AST
             out_degrees = [val for (node, val) in nx_graph.out_degree()]
             for idx, node in enumerate(nx_graph.nodes(data=True)):
@@ -278,13 +154,13 @@ class DataProcessor:
                 else:
                     type_of_node = label.lower()
                 
-                if type_of_node not in global_type2idx_AST:
+                if type_of_node not in self.global_type2idx_AST:
                     print("----------"+type_of_node+"-------------")
                     raise Exception("The operation is not in the global_type2idx_AST table, please report the error to " +   
                                 "https://github.com/louisccc/hw2vec/issues")
                 
-                node[1]['x'] = global_type2idx_AST[type_of_node]
-            self.num_node_labels = len(global_type2idx_AST)
+                node[1]['x'] = self.global_type2idx_AST[type_of_node]
+            self.num_node_labels = len(self.global_type2idx_AST)
 
 
     def read_node_labels(self, key):
@@ -325,167 +201,74 @@ class DataProcessor:
                     sim_diff_label.append(-1)
 
         return train_test_split(dataset, train_size = train_size, shuffle = True, stratify=sim_diff_label, random_state=seed)
-
-    # create nx graph.
-    def get_graph(self, graph_json, graph_format='DFG'): 
-        hardware_graph = nx.DiGraph()
-        if graph_format == 'DFG':
-            edge_list_dict = graph_json['edge_index']
-            for src in edge_list_dict:
-                node_name = src
-                if '_graphrename' in src:
-                    node_name = src[:src.index('_graphrename')]
-                if '.' in node_name: 
-                    type_of_node = node_name.split('.')[-1]
-                elif '_' in node_name:
-                    type_of_node = node_name.split('_')[-1]
-                else:
-                    type_of_node = node_name.lower()
-                self.node_labels.add(type_of_node)
-                # hardware_graph.add_node(src, x=self.label2idx[type_of_node], label=type_of_node) 
-                hardware_graph.add_node(src, label=type_of_node) 
-                assert(type(edge_list_dict[src]) == list)
-                for neighbor in edge_list_dict[src]:
-                    edge_label = neighbor[0]
-                    dst = neighbor[1]
-                    hardware_graph.add_edge(src, dst)
-        else:
-            self.count = 0
-            for key in graph_json.keys():
-                self.add_node(hardware_graph, 'None', key, graph_json[key])
-        return hardware_graph
     
-    # helper function for getting networkx graph
-    def add_node(self, graph, parent, child, cur_dict):
-        index = self.count
-        graph.add_nodes_from([(index, {"label": str(child)})])
-        if parent != 'None':
-            graph.add_edge(parent, index)
-        self.count = self.count + 1
-        self.node_labels.add(child)
-        if type(cur_dict) == dict:
-            for key in cur_dict.keys():
-                self.add_node(graph, index, key, cur_dict[key])
-        elif type(cur_dict) == list:
-            for ele in cur_dict:
-                if type(ele) == dict:
-                    self.add_node(graph, index, 'None', ele)
-                elif ele is not None:
-                    graph.add_nodes_from([(self.count, {"label": str(ele)})])
-                    graph.add_edge(index, self.count)
-                    self.count = self.count + 1
-        else:
-            graph.add_nodes_from([(self.count, {"label": str(cur_dict)})])
-            graph.add_edge(index, self.count)
-            self.count = self.count + 1
-            self.node_labels.add(cur_dict)
-
 
 class DFGGenerator:
     def __init__(self):
         pass
 
     def process(self, verilog_file):
-        dataflow_analyzer = PyDataflowAnalyzer(verilog_file, "top")
+        dataflow_analyzer = VerilogDataflowAnalyzer(verilog_file, "top")
         dataflow_analyzer.generate()
         binddict = dataflow_analyzer.getBinddict()
         terms = dataflow_analyzer.getTerms()
         
-        dataflow_optimizer = PyDataflowOptimizer(terms, binddict)
+        dataflow_optimizer = VerilogDataflowOptimizer(terms, binddict)
         dataflow_optimizer.resolveConstant()
         resolved_terms = dataflow_optimizer.getResolvedTerms()
         resolved_binddict = dataflow_optimizer.getResolvedBinddict()
         constlist = dataflow_optimizer.getConstlist()
-        dfg_graph_generator = PyGraphGenerator("top", terms, binddict, resolved_terms, 
-                            resolved_binddict, constlist, 
-                            './seperate_modules.pdf')
+        dfg_graph_generator = VerilogGraphGenerator("top", terms, binddict, resolved_terms, 
+                                                    resolved_binddict, constlist, './seperate_modules.pdf')
+
         # binddict with string keys
         signals = [str(bind) for bind in dfg_graph_generator.binddict]
 
         for num, signal in enumerate(sorted(signals, key=str.casefold), start=1):
             dfg_graph_generator.generate(signal, walk=False)
-            print(f'\rProgress : {num} / {len(signals)}', end='', flush=True)
+            # print(f'\rProgress : {num} / {len(signals)}', end='', flush=True)
 
+        # import pdb; pdb.set_trace()
         label_to_node = dict()
         for node in dfg_graph_generator.graph.nodes():
             if dfg_graph_generator.graph.in_degree(node) == 0:
                 label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
                 label_to_node[label] = node
         
-        deleted = 0
-        print('Merging subgraphs... ')
+        # deleted = 0
+        # print('\nMerging subgraphs... ')
         num_nodes = len(dfg_graph_generator.graph.nodes())
         for num, node in enumerate(dfg_graph_generator.graph.nodes(), start=1):
             label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
             if '_' in label and label.replace('_', '.') in label_to_node:
                 parents = dfg_graph_generator.graph.predecessors(node)
                 dfg_graph_generator.graph.delete_node(node)
-                deleted += 1
+                # deleted += 1
                 for parent in parents:
                     # if not self._isChild(self.dfg_graph_generator.graph, label_to_node[label.replace('_', '.')], parent):
                     dfg_graph_generator.graph.add_edge(parent, label_to_node[label.replace('_', '.')])
-            print(f'\rProgress : {num} - {deleted} = {num - deleted} / {num_nodes}', end='', flush=True)
-        print('\nThe signals subgraphs are merged.')
+            # print(f'\rProgress : {num} - {deleted} = {num - deleted} / {num_nodes}', end='', flush=True)
+        # print('\nThe signals subgraphs are merged.')
         
-        graph_json = {}
-        graph_json['root_nodes'] = [node for node in dfg_graph_generator.graph.nodes() if dfg_graph_generator.graph.in_degree(node) == 0]
-        graph_json['nodes'] = dfg_graph_generator.graph.nodes()
-        all_edges = list()
-        for edge in dfg_graph_generator.graph.edges():
-            all_edges.append((edge[0], edge[1], edge.attr['label']))
-        graph_json['edges'] = all_edges
-
-        jsondict = {}
+        nx_graph = nx.DiGraph()
+        
         for node in dfg_graph_generator.graph.nodes():
-            jsondict[str(node)] = list()
-            for child in dfg_graph_generator.graph.successors(node):
-                edgeLabel = dfg_graph_generator.graph.get_edge(node, child).attr['label']
-                jsondict[str(node)].append((edgeLabel, str(child)))
-        
-        graph_json['edge_index'] = jsondict
-        hardware_graph = nx.DiGraph()
-        edge_list_dict = graph_json['edge_index']
-        for src in edge_list_dict:
-            node_name = src
-            if '_graphrename' in src:
-                node_name = src[:src.index('_graphrename')]
+            node_name = node.name
+            if '_graphrename' in node.name:
+                node_name = node.name[:node.name.index('_graphrename')]
             if '.' in node_name: 
                 type_of_node = node_name.split('.')[-1]
             elif '_' in node_name:
                 type_of_node = node_name.split('_')[-1]
             else:
                 type_of_node = node_name.lower()
-            # self.node_labels.add(type_of_node)
-            # hardware_graph.add_node(src, x=self.label2idx[type_of_node], label=type_of_node) 
-            hardware_graph.add_node(src, label=type_of_node) 
-            assert(type(edge_list_dict[src]) == list)
-            for neighbor in edge_list_dict[src]:
-                edge_label = neighbor[0]
-                dst = neighbor[1]
-                hardware_graph.add_edge(src, dst)
-        return_obj = hardware_graph
-        return return_obj
+            nx_graph.add_node(node.name, label=type_of_node) 
+            for child in dfg_graph_generator.graph.successors(node):
+                # edgeLabel = dfg_graph_generator.graph.get_edge(node, child).attr['label']
+                nx_graph.add_edge(node.name, child.name)
+
+        return nx_graph
     
-    # This function returns True, if the child is a child of checkParent
-    def _isChild(self, graph, checkParent, child):
-        # This function recursively returns a list of all the parents of a node up to the root
-        def getAllParents(node):
-            # if node has no parents
-            if graph.in_degree(node) == 0:
-                return []
-            # if node has no grandparents
-            elif sum([graph.in_degree(parent) for parent in graph.predecessors(node)]) == 0:
-                return graph.predecessors(node)
-            # recursive call, node has unknown generations of parents
-            else:
-                retlist = list()
-                for parent in graph.predecessors(node):
-                    x = getAllParents(parent)
-                    x.append(parent)
-                    retlist += x
-                return retlist
-        allParents = getAllParents(child)
-        return checkParent in allParents
 
 class ASTGenerator:
     def __init__(self):
@@ -508,7 +291,7 @@ class ASTGenerator:
         #when generating AST, determines which substructure (dictionary/array) to generate
         #before converting the json-like structure into actual json
         
-        self.ast, _ = parse([verilog_file])
+        self.ast, _ = parse([verilog_file], debug=False)
         ast_dict = self._generate_ast_dict(self.ast)
         return ast_dict
 
@@ -542,13 +325,12 @@ class CFGGenerator:
         binddict = dataflow_analyzer.getBinddict()
         terms = dataflow_analyzer.getTerms()
         
-        dataflow_optimizer = PyDataflowOptimizer(terms, binddict)
+        dataflow_optimizer = VerilogDataflowOptimizer(terms, binddict)
         dataflow_optimizer.resolveConstant()
         resolved_terms = dataflow_optimizer.getResolvedTerms()
         resolved_binddict = dataflow_optimizer.getResolvedBinddict()
         constlist = dataflow_optimizer.getConstlist()
-        cfg_graph_generator = PyControlflowAnalyzer("top", terms, binddict,
-                                    resolved_terms, resolved_binddict, constlist, fsm_vars)
+        cfg_graph_generator = VerilogControlflowAnalyzer("top", terms, binddict, resolved_terms, resolved_binddict, constlist, fsm_vars)
         fsms = cfg_graph_generator.getFiniteStateMachines()
 
         print("VIEWING FSM's")
@@ -602,32 +384,29 @@ class CFGGenerator:
             print('The graph is saved as topModule.json.\n')
         return None
 
+
 class HW2GRAPH:
     '''the main class of hw2graph.''' 
-
-    def __init__(self, cfg, verilog_file):
+    def __init__(self, cfg):
         self.cfg = cfg
-        self.verilog_file = verilog_file
         self.count = 0
 
-    def process(self):
-        return_obj = None
+    def process(self, verilog_file):
         if self.cfg.graph_type == "CFG":
             generator = CFGGenerator()
-            return_obj = generator.process(self.verilog_file)
+            return_obj = generator.process(verilog_file)
             nx_graph = None
         
         elif self.cfg.graph_type == "AST":
             generator = ASTGenerator()
-            ast_dict = generator.process(self.verilog_file)
-            ast_nx_graph = nx.DiGraph()
+            ast_dict = generator.process(verilog_file)
+            nx_graph = nx.DiGraph()
             for key in ast_dict.keys():
-                self.add_node(ast_nx_graph, 'None', key, ast_dict[key])
-            return_obj = ast_nx_graph
+                self.add_node(nx_graph, 'None', key, ast_dict[key])
 
         elif self.cfg.graph_type == "DFG":
             generator = DFGGenerator()
-            return_obj = generator.process(self.verilog_file)
+            nx_graph = generator.process(verilog_file)
         
         else:
             pass
@@ -638,7 +417,7 @@ class HW2GRAPH:
             except FileNotFoundError:
                 pass
 
-        return return_obj
+        return nx_graph
 
     def add_node(self, graph, parent, child, cur_dict):
         index = self.count
@@ -664,12 +443,9 @@ class HW2GRAPH:
 
 
 class PreprocessVerilog:
-    '''
-        This class comprise the preprocessing functions for Verilog files in RTL (Register Transfer Level) and GLN (Gate-Level Netlist).
-    '''
-    def __init__(self, code_language="verilog"):
-        if code_language == "verilog":
-            pass
+    '''This class comprise the preprocessing functions for Verilog files in RTL (Register Transfer Level) and GLN (Gate-Level Netlist).'''
+    def __init__(self):
+        pass
 
     def remove_comments(input_path, target_path):
         # read the file into a list of lines
