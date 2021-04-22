@@ -30,12 +30,9 @@ def process_graphs(cfg):
             nx_graphs.append((hardware_graph, verilog_path))
 
         elif cfg.graph_type == "AST":
-            ast_dict = hw2graph.process()
-            ast_nx_graph = nx.DiGraph()
-            for key in ast_dict.keys():
-                hw2graph.add_node(ast_nx_graph, 'None', key, ast_dict[key])
-            data_proc.normalize(ast_nx_graph, normalize=cfg.NORMALIZATION, graph_format=cfg.graph_type)
-            data = from_networkx(ast_nx_graph)
+            nx_graph = hw2graph.process()
+            data_proc.normalize(nx_graph, normalize=cfg.NORMALIZATION, graph_format=cfg.graph_type)
+            data = from_networkx(nx_graph)
             data.folder_name = verilog_path
             data_proc.append_graph_data(data)
 

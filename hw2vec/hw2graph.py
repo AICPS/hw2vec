@@ -375,29 +375,6 @@ class DataProcessor:
             self.node_labels.add(cur_dict)
 
 
-    def get_graph_from_json(self, json_path):
-        json_file = open(str(json_path), 'r')
-        hardware_graph = nx.DiGraph()
-        edge_list_dict = json.loads(json_file.read())
-        for src in edge_list_dict:
-            node_name = src
-            if '_graphrename' in src:
-                node_name = src[:src.index('_graphrename')]
-            if '.' in node_name: 
-                type_of_node = node_name.split('.')[-1]
-            elif '_' in node_name:
-                type_of_node = node_name.split('_')[-1]
-            else:
-                type_of_node = node_name.lower()
-            hardware_graph.add_node(src, x=self.label2idx[type_of_node], label=type_of_node) 
-            assert(type(edge_list_dict[src]) == list)
-            for neighbor in edge_list_dict[src]:
-                edge_label = neighbor[0]
-                dst = neighbor[1]
-                hardware_graph.add_edge(src, dst)
-
-        return hardware_graph
-
 class DFGGenerator:
     def __init__(self):
         pass
@@ -486,22 +463,25 @@ class DFGGenerator:
 
 class ASTGenerator:
     def __init__(self):
-        pass
+        self.DICTIONARY_GEN = \
+            ["Source","Description","Ioport","Decl","Lvalue"]
+        self.ARRAY_GEN = \
+            ["ModuleDef","Paramlist","Portlist","Input","Width","Reg","Wire","Rvalue","ParseSelect",
+             "Uplus","Uminus","Ulnot","Unot","Uand","Unand","Uor","Unor","Uxnor","Power","Times","Divide","Mod","Plus",
+             "Minus","Sll","Srl","Sla","Sra","LessThan","GreaterThan","LessEq","GreaterEq","Eq","Eql","NotEq","Eql","NotEql",
+             "And","Xor","Xnor","Or","Land","Lor","Cond","Assign","Always","AlwaysFF","AlwaysComb","AlwaysLatch",
+             "SensList","Sens","Substitution","BlockingSubstitution","NonblockingSubstitution","IfStatement","Block",
+             "Initial","Plus","Output","Partselect","Port","InstanceList","Instance","PortArg","Pointer","Concat", "Parameter", 
+             "SystemCall", "CaseStatement", "Case", "Function", "CasezStatement", "FunctionCall", "Dimensions", "Length", 
+             "LConcat", "Concat", "SingleStatement", "Repeat", "Integer", "CasexStatement", "ForStatement", "Localparam",
+             "EventStatement", "DelayStatement"]
+        self.CONST_DICTIONARY_GEN = \
+            ["IntConst","FloatConst","StringConst","Identifier"]
 
     def process(self, verilog_file):
         #when generating AST, determines which substructure (dictionary/array) to generate
         #before converting the json-like structure into actual json
-        self.DICTIONARY_GEN = ["Source","Description","Ioport","Decl","Lvalue"]
-        self.ARRAY_GEN = ["ModuleDef","Paramlist","Portlist","Input","Width","Reg","Wire","Rvalue","ParseSelect",
-        "Uplus","Uminus","Ulnot","Unot","Uand","Unand","Uor","Unor","Uxnor","Power","Times","Divide","Mod","Plus",
-        "Minus","Sll","Srl","Sla","Sra","LessThan","GreaterThan","LessEq","GreaterEq","Eq","Eql","NotEq","Eql","NotEql",
-        "And","Xor","Xnor","Or","Land","Lor","Cond","Assign","Always","AlwaysFF","AlwaysComb","AlwaysLatch",
-        "SensList","Sens","Substitution","BlockingSubstitution","NonblockingSubstitution","IfStatement","Block",
-        "Initial","Plus","Output","Partselect","Port","InstanceList","Instance","PortArg","Pointer","Concat", "Parameter", 
-        "SystemCall", "CaseStatement", "Case", "Function", "CasezStatement", "FunctionCall", "Dimensions", "Length", 
-        "LConcat", "Concat", "SingleStatement", "Repeat", "Integer", "CasexStatement", "ForStatement", "Localparam",
-        "EventStatement", "DelayStatement"]
-        self.CONST_DICTIONARY_GEN = ["IntConst","FloatConst","StringConst","Identifier"]
+        
         self.ast, _ = parse([verilog_file])
         ast_dict = self._generate_ast_dict(self.ast)
         return ast_dict
@@ -528,6 +508,7 @@ class ASTGenerator:
 class CFGGenerator:
     def __init__(self):
         pass
+
     def process(self, verilog_file): 
         fsm_vars = tuple(['fsm', 'state', 'count', 'cnt', 'step', 'mode'])
         dataflow_analyzer = PyDataflowAnalyzer(self.verilog_file, "top")
@@ -597,26 +578,27 @@ class CFGGenerator:
 
 
 class HW2GRAPH:
-    '''
-        the main class of hw2graph.
-    ''' 
+    '''the main class of hw2graph.''' 
 
-    #holds a GRAPH_GENERATOR INSTANCE
     def __init__(self, cfg, verilog_file):
         self.cfg = cfg
         self.verilog_file = verilog_file
         self.count = 0
 
-    #helper fcn to __init__, create a graph object used to generate json
     def process(self):
         return_obj = None
         if self.cfg.graph_type == "CFG":
             generator = CFGGenerator()
             return_obj = generator.process(self.verilog_file)
+            nx_graph = None
         
         elif self.cfg.graph_type == "AST":
             generator = DFGGenerator()
-            return_obj = generator.process(self.verilog_file)
+            ast_dict = generator.process(self.verilog_file)
+            ast_nx_graph = nx.DiGraph()
+            for key in ast_dict.keys():
+                hw2graph.add_node(ast_nx_graph, 'None', key, ast_dict[key])
+            nx_graph = ast_nx_graph
 
         elif self.cfg.graph_type == "DFG":
             generator = DFGGenerator()
