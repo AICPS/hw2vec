@@ -13,7 +13,7 @@ sys.path.append(os.path.dirname(sys.path[0]))
 from pathlib import Path
 from hw2vec.graph2vec.trainers import *
 from hw2vec.hw2graph import *
-from hw2vec.graph2vec.config import *
+from hw2vec.config import *
 
 from torch_geometric.utils.convert import from_networkx
 

@@ -8,7 +8,7 @@ The architecture of hw2vec is as follows:
 - **hw2vec/graph2vec**: code of graph training trainers and models.
 
 General Pipeline Architecture is shown as below:
-![](https://github.com/louisccc/hw2vec/blob/master/figures/pipeline_add%20visual.jpg?raw=true)
+![](https://drive.google.com/file/d/1-UjL87QGUAOs0K_yb4-c0WI9ojNJ3-Am/view?usp=sharing)
 
 # Directories Structure
 Directories structure (temporary) figure is shown below:
