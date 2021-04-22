@@ -157,8 +157,9 @@ global_type2idx_AST = {
     'delaystatement':73,
     'floatconst':74,
     'task':75,
-    'paramarg':76
-
+    'paramarg':76,
+    'paramlist':77,
+    'inout':78
 }
 
 class DataProcessor:

@@ -74,11 +74,9 @@ class BaseTrainer:
         self.model.eval()
         with open(str(save_path / "vectors.tsv"), "w") as vectors_file:
             with open(str(save_path / "metadata.tsv"), "w") as metadata_file:
-                #metadata_file.write("Type\tInstance\n")
 
                 for data in data_loader:
                     if type(data) == list:
-                        #import pdb; pdb.set_trace()
                         graph1, graph2 = data[0].to(self.config.device), data[1].to(self.config.device)
                         embed_x_1, _ = self.model.forward(graph1.x, graph1.edge_index, batch=graph1.batch)
                         embed_x_2, _ = self.model.forward(graph2.x, graph2.edge_index, batch=graph2.batch)
@@ -93,7 +91,6 @@ class BaseTrainer:
                         vectors_file.write("\t".join([str(x) for x in embed_x.detach().cpu().numpy()[0]]) + "\n")
                         category_and_name = '.'.join(data.folder_name[0][data.folder_name[0].index(data.class_name[0]):].split("/")[:-1])
                         metadata_file.write(category_and_name+"\n")
-                    # metadata_file.write(str(graphs[2]).replace('/', '\t')+'\n') #TODO: what is this?   
 
 
 class PairwiseGraphTrainer(BaseTrainer):
@@ -211,7 +208,7 @@ class PairwiseGraphTrainer(BaseTrainer):
             self.metrics["conf_mtx"] = str(confusion_matrix(test_labels, test_preds)).replace('\n', ',')
             self.metrics["prec"] = precision_score(test_labels, test_preds, average="binary")
             self.metrics["rec"] = recall_score(test_labels, test_preds, average="binary")
-            self.save_model("./ALU_excluded_result")
+            self.save_model("./best_result")
 
         if(epoch_idx==self.config.epochs):
             print("best  loss: %4f" % self.min_test_loss+
