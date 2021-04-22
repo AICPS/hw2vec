@@ -597,7 +597,7 @@ class HW2GRAPH:
             ast_dict = generator.process(self.verilog_file)
             ast_nx_graph = nx.DiGraph()
             for key in ast_dict.keys():
-                hw2graph.add_node(ast_nx_graph, 'None', key, ast_dict[key])
+                self.add_node(ast_nx_graph, 'None', key, ast_dict[key])
             nx_graph = ast_nx_graph
 
         elif self.cfg.graph_type == "DFG":
