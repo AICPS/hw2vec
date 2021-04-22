@@ -2,7 +2,7 @@ import os, sys
 sys.path.append(os.path.dirname(sys.path[0]))
 from hw2vec.config import Config
 from hw2vec.app import GNN4TJ
-from hw2vec.hw2graph import JsonGraphParser
+from hw2vec.hw2graph import DataProcessor
 import pickle
 import torch
 
@@ -14,7 +14,7 @@ if __name__ == "__main__":
     app = GNN4TJ(cfg)
     # dataset = app.parse_from_json()
 
-    dataParser = JsonGraphParser(cfg)
+    dataParser = DataProcessor(cfg)
 
     with open(cfg.data_pkl_path, 'rb') as f:
         dataParser = pickle.load(f)

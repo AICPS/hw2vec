@@ -149,7 +149,7 @@ global_type2idx_AST = {
     'greatereq':65
 }
 
-class JsonGraphParser:
+class DataProcessor:
     def __init__(self, cfg):
         self.cfg = cfg
         self.root_path = self.cfg.raw_dataset_path.resolve()

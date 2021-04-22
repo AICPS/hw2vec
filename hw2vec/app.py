@@ -35,7 +35,7 @@ class GNN4TJ:
         return data
 
     def parse_from_json(self):
-        dataset = JsonGraphParser(self.cfg)
+        dataset = DataProcessor(self.cfg)
         dataset.read_node_labels("")
 
         for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"TjFree"), recursive=True):
@@ -91,7 +91,7 @@ class GNN4IP:
         return data
 
     def parse_from_json(self):
-        dataset = JsonGraphParser(self.cfg)
+        dataset = DataProcessor(self.cfg)
         dataset.read_node_labels("DFG")
                 
         trunk = []
