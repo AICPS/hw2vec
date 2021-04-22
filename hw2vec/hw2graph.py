@@ -391,7 +391,7 @@ class JsonGraphParser:
 
         return hardware_graph
 
-class VerilogParser:
+class HW2GRAPH:
     '''
         the only class that interfaces with pyverilog.
         https://github.com/Microsoft/vscode-tips-and-tricks#intellisense
@@ -399,8 +399,6 @@ class VerilogParser:
 
     #holds a GRAPH_GENERATOR INSTANCE
     def __init__(self, verilog_file, output_directory, top_module, generate_cfg=False, generate_ast=False):
-        print("Verilog file: ", verilog_file)
-        print("Output directory: ", output_directory)
         if not os.path.exists(verilog_file):
             raise IOError("File Not Found:  ")
         self.output_directory = output_directory
@@ -718,20 +716,16 @@ class DFGgenerator:
     '''
         This generator generates DFG from RTL (Register Transfer Level) Verilog code.
     '''
-    def __init__(self, verilog_file, code_language='verilog'):
-        if not os.path.exists(verilog_file):
-            raise IOError("file not found: " + verilog_file)
+    def __init__(self, verilog_file):
         self.verilog_file = verilog_file
 
-    @profilegraph        
+    # @profilegraph  
     def process(self):
-        print("Reading ", self.verilog_file)
         self.output_path = './'
         self.top_module='top'
-        self.verilog_parser = VerilogParser(self.verilog_file, self.output_path, self.top_module, generate_cfg=False)
+        self.verilog_parser = HW2GRAPH(self.verilog_file, self.output_path, self.top_module, generate_cfg=False)
         self.verilog_parser.graph_separate_modules()
         self.verilog_parser.merge_graphs()
-        return self.verilog_parser
 
     def get_graph_json(self):
         graph_json = {}
@@ -740,11 +734,6 @@ class DFGgenerator:
         graph_json['edges'] = self.verilog_parser.get_edges()
         graph_json['edge_index'] = self.verilog_parser.get_edge_list()
         return graph_json
-    
-    def _generate_DFG(self):
-        self.verilog_parser.graph_separate_modules()
-        self.verilog_parser.merge_graphs()
-        self.verilog_parser.export_dfg_graph(output='graph')
     
     def export_nodes(self):
         self.verilog_parser.export_dfg_graph(output='nodes')
@@ -775,7 +764,7 @@ class CFGgenerator:
             if not os.path.exists(f'{output_path}'):
                     os.makedirs(os.path.dirname(f'{output_path}'))
                     
-            self.parser = VerilogParser(verilog_file, output_path, top_module,  generate_cfg=True)
+            self.parser = HW2GRAPH(verilog_file, output_path, top_module,  generate_cfg=True)
             self._generate_CFG()
             
     def _generate_CFG(self):
@@ -798,7 +787,7 @@ class ASTgenerator:
 
     @profileAST   
     def process(self):
-        self.parser = VerilogParser(self.verilog_file, "./", "top", generate_ast=True)
+        self.parser = HW2GRAPH(self.verilog_file, "./", "top", generate_ast=True)
         self.ast_dict = self.parser._generate_ast_dict(self.parser.ast)
         self.parser.cleanup_files()
         self.count = 0
