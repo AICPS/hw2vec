@@ -437,7 +437,27 @@ class DFGGenerator:
                 jsondict[str(node)].append((edgeLabel, str(child)))
         
         graph_json['edge_index'] = jsondict
-        return_obj = graph_json
+        hardware_graph = nx.DiGraph()
+        edge_list_dict = graph_json['edge_index']
+        for src in edge_list_dict:
+            node_name = src
+            if '_graphrename' in src:
+                node_name = src[:src.index('_graphrename')]
+            if '.' in node_name: 
+                type_of_node = node_name.split('.')[-1]
+            elif '_' in node_name:
+                type_of_node = node_name.split('_')[-1]
+            else:
+                type_of_node = node_name.lower()
+            # self.node_labels.add(type_of_node)
+            # hardware_graph.add_node(src, x=self.label2idx[type_of_node], label=type_of_node) 
+            hardware_graph.add_node(src, label=type_of_node) 
+            assert(type(edge_list_dict[src]) == list)
+            for neighbor in edge_list_dict[src]:
+                edge_label = neighbor[0]
+                dst = neighbor[1]
+                hardware_graph.add_edge(src, dst)
+        return_obj = hardware_graph
         return return_obj
     
     # This function returns True, if the child is a child of checkParent
@@ -575,7 +595,6 @@ class CFGGenerator:
             f.close()
             print('The graph is saved as topModule.json.\n')
         return None
-
 
 class HW2GRAPH:
     '''the main class of hw2graph.''' 
