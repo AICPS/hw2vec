@@ -40,10 +40,10 @@ This set of commands assumes you to have cuda10.1 in your local and you are usin
 
 # Use Cases Examples
 
-## Use Case 1: Create Your Own Graph Dataset From hardware code
-To be filled. (DFG, CFG, AST)
+## Use Case 1: Transforming a hardwaer design to a graph then to a graph embedding
+To be filled.
 
-## Use Case 2: Hardware Trojan Detection in RTL-level (Advanced Application)
+## Use Case 2: Hardware Trojan Detection
 The sample code for this use case is examples/gnn4tj.py. The related research paper is [Graph Neural Networks for Hardware Trojan Detection at Register Transfer Level](https://drive.google.com/file/d/1XFgWWO4v2oA-lmkwleG0h03znAvmJV5i/view). The dataset used in this paper is obtained from a famous trojan [benchmark](https://www.trust-hub.org/benchmarks/trojan). The converted hardware DFG dataset can be downloaded from [here](http://ieee-dataport.org/3640).
 
 To run this use case, use the script examples/gnn4tj.py and the downloaded dataset (data/TJ-dataset). To train a model on a dataset, we provide the following command sequence.
@@ -78,7 +78,7 @@ embed_dim: 2 # The dimension of graph embeddings.
 debug: False # Debug mode.
 ```
 
-## Use Case 3: IP Piracy Detection in hardware design (Advanced Application)
+## Use Case 3: IP Piracy Detection
 The sample code for this use case is examples/gnn4ip.py and examples/gnn4ip_RTL.py. The related research paper is [GNN4IP: Graph Neural Network for HardwareIntellectual Property Piracy Detection]() (still under review). The dataset used in this paper is obtained from a famous trojan [benchmark](https://www.trust-hub.org/benchmarks/trojan). The converted hardware DFG dataset can be downloaded from [here](http://ieee-dataport.org/3640). In this use case, we demonstrate how to use hw2vec to develop a model that detects IP piracy in RTL and Netlist levels. In other word, we want to develop a model to check similarity between two Verilog code and determine if they are for the same hardware design or not. In order to do that, we need to create two batch of samples; clone pair, and non-clone pair. 
 
 To run this use case, use the script examples/gnn4ip.py and the downloaded dataset (data/IP-dataset). To train a model on a dataset, we provide the following command sequence.
