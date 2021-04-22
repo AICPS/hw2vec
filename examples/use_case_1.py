@@ -21,7 +21,6 @@ def code2graph(code_path, out_path, g_form="DFG"):
     gen.process()
     g_json = gen.get_graph_json()
     pprint(g_json)
-    gen.draw()
     
 
 if __name__ == '__main__':

@@ -58,7 +58,7 @@ def test_GNN4TIP():
     SIMILAR = 1
     DISSIMILAR = -1
     
-    dataset = JsonGraphParser(cfg)
+    dataset = DataProcessor(cfg)
     dataset.read_node_labels("RTL")
     dataset.read_node_labels("subgraph")
 
@@ -148,7 +148,7 @@ def test_GNN4TJ():
     NON_TROJAN = 0
 
     
-    dataset = JsonGraphParser(cfg)
+    dataset = DataProcessor(cfg)
     dataset.read_node_labels("")
 
     for json_path in glob("%s/**/topModule.json" % str(dataset.root_path/"TjFree"), recursive=True):

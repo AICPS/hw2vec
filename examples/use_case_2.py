@@ -22,7 +22,7 @@ def use_case_2(cfg):
 
 if __name__ == '__main__': 
     cfg = Config(sys.argv[1:])
-    parser = JsonGraphParser(cfg)
+    parser = DataProcessor(cfg)
 
     # for skipping buggy .v files in IP-RTL (gets pyverilog parse error or definition error)
     pyverilog_buggy_files = ["mips_single_cycle (114)", "mips_single_cycle (12)", "mips_single_cycle (132)", "mips_single_cycle (134)", "mips_single_cycle (138)", "mips_single_cycle (15)", 

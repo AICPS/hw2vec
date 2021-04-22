@@ -156,7 +156,7 @@ global_type2idx_AST = {
     'mod':72
 }
 
-class JsonGraphParser:
+class DataProcessor:
     def __init__(self, cfg):
         self.cfg = cfg
         self.root_path = self.cfg.raw_dataset_path.resolve()
@@ -398,45 +398,41 @@ class JsonGraphParser:
 
         return hardware_graph
 
-class VerilogParser:
+class HW2GRAPH:
     '''
-        the only class that interfaces with pyverilog.
-        https://github.com/Microsoft/vscode-tips-and-tricks#intellisense
+        the main class of hw2graph.
     ''' 
 
     #holds a GRAPH_GENERATOR INSTANCE
     def __init__(self, verilog_file, output_directory, top_module, generate_cfg=False, generate_ast=False):
-        print("Verilog file: ", verilog_file)
-        print("Output directory: ", output_directory)
         if not os.path.exists(verilog_file):
             raise IOError("File Not Found:  ")
         self.output_directory = output_directory
         self.verilog_file = verilog_file
 
-        #Options
         self.dfg_graph_generator = None
         self.cfg_graph_generator = None
         self.ast = None
         self.ARRAY_GEN = None
         self.CONST_DICTIONARY_GEN = None
         self.DICTIONARY_GEN = None 
-        self._create_graphgen_obj(verilog_file, top_module, generate_cfg, generate_ast)
+        self.process(verilog_file, top_module, generate_cfg, generate_ast)
+        self.count = 0
 
     #helper fcn to __init__, create a graph object used to generate json
-    def _create_graphgen_obj(self, verilog_file, top_module, generate_cfg, generate_ast):
-        dataflow_analyzer = PyDataflowAnalyzer(verilog_file, top_module)
-        dataflow_analyzer.generate()
-        binddict = dataflow_analyzer.getBinddict()
-        terms = dataflow_analyzer.getTerms()
-        
-        dataflow_optimizer = PyDataflowOptimizer(terms, binddict)
-        dataflow_optimizer.resolveConstant()
-        resolved_terms = dataflow_optimizer.getResolvedTerms()
-        resolved_binddict = dataflow_optimizer.getResolvedBinddict()
-        constlist = dataflow_optimizer.getConstlist()
-
+    def process(self, verilog_file, top_module, generate_cfg, generate_ast):
         if generate_cfg: 
             fsm_vars = tuple(['fsm', 'state', 'count', 'cnt', 'step', 'mode'])
+            dataflow_analyzer = PyDataflowAnalyzer(verilog_file, top_module)
+            dataflow_analyzer.generate()
+            binddict = dataflow_analyzer.getBinddict()
+            terms = dataflow_analyzer.getTerms()
+            
+            dataflow_optimizer = PyDataflowOptimizer(terms, binddict)
+            dataflow_optimizer.resolveConstant()
+            resolved_terms = dataflow_optimizer.getResolvedTerms()
+            resolved_binddict = dataflow_optimizer.getResolvedBinddict()
+            constlist = dataflow_optimizer.getConstlist()
             self.cfg_graph_generator = PyControlflowAnalyzer("top", terms, binddict,
                                         resolved_terms, resolved_binddict, constlist, fsm_vars)
         elif generate_ast:
@@ -453,10 +449,19 @@ class VerilogParser:
             "LConcat", "Concat", "SingleStatement", "Repeat", "Integer", "CasexStatement", "ForStatement", "Localparam",
             "EventStatement", "DelayStatement"]
             self.CONST_DICTIONARY_GEN = ["IntConst","FloatConst","StringConst","Identifier"]
-
             self.ast, _ = parse([verilog_file])
 
         else: #generate dfg
+            dataflow_analyzer = PyDataflowAnalyzer(verilog_file, top_module)
+            dataflow_analyzer.generate()
+            binddict = dataflow_analyzer.getBinddict()
+            terms = dataflow_analyzer.getTerms()
+            
+            dataflow_optimizer = PyDataflowOptimizer(terms, binddict)
+            dataflow_optimizer.resolveConstant()
+            resolved_terms = dataflow_optimizer.getResolvedTerms()
+            resolved_binddict = dataflow_optimizer.getResolvedBinddict()
+            constlist = dataflow_optimizer.getConstlist()
             self.dfg_graph_generator = PyGraphGenerator(top_module, terms, binddict, resolved_terms, 
                                 resolved_binddict, constlist, 
                                 f'{self.output_directory}seperate_modules.pdf')
@@ -724,107 +729,6 @@ class VerilogParser:
             except FileNotFoundError:
                 pass
 
-class DFGgenerator:
-    '''
-        This generator generates DFG from RTL (Register Transfer Level) Verilog code.
-    '''
-    def __init__(self, verilog_file, code_language='verilog'):
-        if not os.path.exists(verilog_file):
-            raise IOError("file not found: " + verilog_file)
-        self.verilog_file = verilog_file
-
-    @profilegraph        
-    def process(self):
-        print("Reading ", self.verilog_file)
-        self.output_path = './'
-        self.top_module='top'
-        self.verilog_parser = VerilogParser(self.verilog_file, self.output_path, self.top_module, generate_cfg=False)
-        self.verilog_parser.graph_separate_modules()
-        self.verilog_parser.merge_graphs()
-        return self.verilog_parser
-
-    def get_graph_json(self):
-        graph_json = {}
-        graph_json['root_nodes'] = self.verilog_parser.get_root_nodes()
-        graph_json['nodes'] = self.verilog_parser.get_nodes()
-        graph_json['edges'] = self.verilog_parser.get_edges()
-        graph_json['edge_index'] = self.verilog_parser.get_edge_list()
-        return graph_json
-    
-    def _generate_DFG(self):
-        self.verilog_parser.graph_separate_modules()
-        self.verilog_parser.merge_graphs()
-        self.verilog_parser.export_dfg_graph(output='graph')
-    
-    def export_nodes(self):
-        self.verilog_parser.export_dfg_graph(output='nodes')
-    
-    def export_edges(self):
-        self.verilog_parser.export_dfg_graph(output='edges')
-    
-    def export_root_nodes(self):
-        self.verilog_parser.export_dfg_graph(output='roots')
-        
-    def check_dependecny(self):
-        self.verilog_parser.graph_input_dependencies()
-
-    def draw(self):
-        self.verilog_parser.dfg_graph_generator.draw()
-        
-class CFGgenerator:
-    '''
-        This generator generates the Control Flow Graph (CFG) from RTL verilog code.
-    '''
-    def __init__(self, verilog_file, output_path, code_language="verilog", top_module="top", draw_graph=False):
-        if code_language == "verilog":
-            if not os.path.exists(verilog_file):
-                raise IOError("file not found: " + verilog_file)
-    
-            print("Reading ", verilog_file)
-            print(f'Outputting to : {output_path}\n')
-            if not os.path.exists(f'{output_path}'):
-                    os.makedirs(os.path.dirname(f'{output_path}'))
-                    
-            self.parser = VerilogParser(verilog_file, output_path, top_module,  generate_cfg=True)
-            self._generate_CFG()
-            
-    def _generate_CFG(self):
-        self.parser.generate_dot_file()
-        self.parser.export_cfg_graph(output='graph')
-        self.parser.cleanup_files()
-
-    def export_nodes(self):
-        self.verilog_parser.export_cfg_graph(output='nodes')
-    
-    def export_edges(self):
-        self.verilog_parser.export_cfg_graph(output='edges')
-    
-    def export_root_nodes(self):
-        self.verilog_parser.export_cfg_graph(output='roots')
-
-class ASTgenerator:
-    def __init__(self, verilog_file):
-        self.verilog_file = verilog_file
-
-    @profileAST   
-    def process(self):
-        self.parser = VerilogParser(self.verilog_file, "./", "top", generate_ast=True)
-        self.ast_dict = self.parser._generate_ast_dict(self.parser.ast)
-        self.parser.cleanup_files()
-        self.count = 0
-        self.ast = nx.DiGraph()
-        for key in self.ast_dict.keys():
-            self.add_node(self.ast, 'None', key, self.ast_dict[key])
-        return self.ast, self.verilog_file
-
-    def get_graph_json(self):
-        return self.ast_dict
-        
-    def export_json(self):
-        self.parser.export_ast(self.ast_dict)
-        self.parser.cleanup_files()
-        
-    # helper function for getting networkx graph
     def add_node(self, graph, parent, child, cur_dict):
         index = self.count
         graph.add_nodes_from([(index, {"label": str(child)})])

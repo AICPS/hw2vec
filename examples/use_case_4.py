@@ -2,7 +2,7 @@ import os, sys, itertools
 sys.path.append(os.path.dirname(sys.path[0]))
 from hw2vec.config import Config
 from hw2vec.app import GNN4IP
-from hw2vec.hw2graph import JsonGraphParser
+from hw2vec.hw2graph import DataProcessor
 import pickle
 import torch
 from pathlib import Path
