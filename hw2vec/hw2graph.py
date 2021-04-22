@@ -29,126 +29,6 @@ from hw2vec.graph2vec.trainers import *
 from hw2vec.utilities import isInt
 
 
-global_type2idx_DFG = {
-    'concat':0, 
-    'input':1, 
-    'unand':2, 
-    'unor':3, 
-    'uxor':4, 
-    'signal':5, 
-    'uand':6, 
-    'ulnot':7,
-    'uxnor':8,
-    'numeric':9,
-    'partselect':10,
-    'and':11,
-    'unot':12,
-    'branch':13,
-    'or':14,
-    'uor':15,
-    'output':16,
-    'plus':17,
-    'eq':18,
-    'minus':19,
-    'xor':20,
-    'lor':21,
-    'noteq':22,
-    'land':23,
-    'greatereq':24,
-    'greaterthan':25,
-    'sll':26,
-    'lessthan':27,
-    'times':28,
-    'srl':29,
-    'pointer':30,
-    'mod':31,
-    'divide':32,
-    'sra':33,
-    'sla':34,
-    'xnor':35
-}
-
-global_type2idx_AST = {
-    'names':0,
-    'always':1,
-    'none':2,
-    'senslist':3,
-    'sens':4,
-    'identifier':5,
-    'nonblockingsubstitution':6,
-    'lvalue':7,
-    'rvalue':8,
-    'intconst':9,
-    'pointer':10,
-    'ifstatement':11,
-    'pure numeric':12,
-    'assign':13,
-    'cond':14,
-    'unot':15,
-    'plus':16,
-    'land':17,
-    'reg':18,
-    'partselect':19,
-    'eq':20,
-    'lessthan':21,
-    'greaterthan':22,
-    'decl':23,
-    'wire':24,
-    'width':25,
-    'output':26,
-    'input':27,
-    'moduledef':28,
-    'portarg':29,
-    'instancelist':30,
-    'source':31,
-    'description':32,
-    'port':33,
-    'portlist':34,
-    'ulnot':35,
-    'instance':36,
-    'or':37,
-    'and':38,
-    'lor':39,
-    'block':40,
-    'xor':41,
-    'ioport':42,
-    'blockingsubstitution':43,
-    'minus':44,
-    'times':45,
-    'casestatement':46,
-    'case':47,
-    'parameter':48,
-    'sll':49,
-    'srl':50,
-    'sra':51,
-    'divide':52,
-    'systemcall':53,
-    'singlestatement':54,
-    'stringconst':55,
-    'noteq':56,
-    'concat':57,
-    'repeat':58,
-    'integer':59,
-    'xnor':60,
-    'dimensions':61,
-    'length':62,
-    'lconcat':63,
-    'uminus':64,
-    'greatereq':65,
-    'initial':66,
-    'uor':67,
-    'casexstatement':68,
-    'forstatement':69,
-    'localparam':70,
-    'eventstatement':71,
-    'mod':72,
-    'delaystatement':73,
-    'floatconst':74,
-    'task':75,
-    'paramarg':76
-
-}
-
 class DataProcessor:
     def __init__(self, cfg):
         self.cfg = cfg
@@ -176,6 +56,25 @@ class DataProcessor:
         self.testing_graph_count = 0
         
         self.label2idx = None
+
+        self.global_type2idx_AST_list = ['names','always','none','senslist','sens','identifier','nonblockingsubstitution',
+                                         'lvalue','rvalue','intconst','pointer','ifstatement','pure numeric','assign','cond',
+                                         'unot','plus','land','reg','partselect','eq','lessthan','greaterthan','decl','wire',
+                                         'width','output','input','moduledef','portarg','instancelist','source','description',
+                                         'port','portlist','ulnot','instance','or','and','lor','block','xor','ioport',
+                                         'blockingsubstitution','minus','times','casestatement','case','parameter','sll','srl',
+                                         'sra','divide','systemcall','singlestatement','stringconst','noteq','concat','repeat',
+                                         'integer','xnor','dimensions','length','lconcat','uminus','greatereq','initial','uor',
+                                         'casexstatement','forstatement','localparam','eventstatement','mod','delaystatement',
+                                         'floatconst','task','paramarg']
+        self.global_type2idx_AST = {v:k for k, v in enumerate(self.global_type2idx_AST_list)}
+
+        self.global_type2idx_DFG_list = ['concat','input','unand','unor','uxor','signal','uand','ulnot','uxnor','numeric','partselect',
+                                         'and','unot','branch','or','uor','output','plus','eq','minus','xor','lor','noteq','land',
+                                         'greatereq','greaterthan','sll','lessthan','times','srl','pointer','mod','divide','sra','sla',
+                                         'xnor']
+
+        self.global_type2idx_DFG = {v:k for k, v in enumerate(self.global_type2idx_DFG_list)}
 
     def append_training_graph_data(self, data):
         if 'train' not in self.graphs: 
@@ -247,13 +146,13 @@ class DataProcessor:
                 else:
                     type_of_node = node_name.lower()
 
-                if type_of_node not in global_type2idx_DFG:
+                if type_of_node not in self.global_type2idx_DFG:
                     print("----------"+type_of_node+"-------------")
                     raise Exception("The operation is not in the global_type2idx_DFG table, please report the error to " +   
                                 "https://github.com/louisccc/hw2vec/issues")
                 
-                node[1]['x'] = global_type2idx_DFG[type_of_node]
-            self.num_node_labels = len(global_type2idx_DFG)
+                node[1]['x'] = self.global_type2idx_DFG[type_of_node]
+            self.num_node_labels = len(self.global_type2idx_DFG)
         else: # normalize for AST
             out_degrees = [val for (node, val) in nx_graph.out_degree()]
             for idx, node in enumerate(nx_graph.nodes(data=True)):
@@ -265,13 +164,13 @@ class DataProcessor:
                 else:
                     type_of_node = label.lower()
                 
-                if type_of_node not in global_type2idx_AST:
+                if type_of_node not in self.global_type2idx_AST:
                     print("----------"+type_of_node+"-------------")
                     raise Exception("The operation is not in the global_type2idx_AST table, please report the error to " +   
                                 "https://github.com/louisccc/hw2vec/issues")
                 
-                node[1]['x'] = global_type2idx_AST[type_of_node]
-            self.num_node_labels = len(global_type2idx_AST)
+                node[1]['x'] = self.global_type2idx_AST[type_of_node]
+            self.num_node_labels = len(self.global_type2idx_AST)
 
 
     def read_node_labels(self, key):
