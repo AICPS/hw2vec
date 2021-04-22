@@ -3,11 +3,7 @@
 
 HW2vec contains the tools and source code we used for our previous research projects. In this repo, we collect our previous codebases and standardize the pipeline and use-cases and hope that this tool can be helpful in researchers in hardware security field and drive the research progress in this field. The two previous research projects are 1) Hardware Trojan Detection in RTL/Gate-Level Netlist using Graph Learning (GNN4TJ), 2) IP Piracy Detection in hardware design using graph learning (GNN4IP), published in DATE2021 and DAC2021, respectively. In this repo, we leverage [Pyverilog](https://github.com/PyHDI/Pyverilog) from PyHDI as part of our graph extraction pipeline.
 
-The architecture of hw2vec is as follows:
-- **hw2vec/hw2graph.py**: code for generating graph objects from hardware design.
-- **hw2vec/graph2vec**: code of graph training trainers and models.
-
-General Pipeline Architecture is shown as below:
+The architecture of hw2vec is shown as follows:
 ![](https://github.com/AICPS/hw2vec/blob/master/figures/archi.png?raw=true)
 
 # To Get Started
