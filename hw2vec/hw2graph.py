@@ -236,7 +236,7 @@ class DFGGenerator:
                 label_to_node[label] = node
         
         # deleted = 0
-        print('\nMerging subgraphs... ')
+        # print('\nMerging subgraphs... ')
         num_nodes = len(dfg_graph_generator.graph.nodes())
         for num, node in enumerate(dfg_graph_generator.graph.nodes(), start=1):
             label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
