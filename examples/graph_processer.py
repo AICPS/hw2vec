@@ -23,7 +23,7 @@ def process_graphs(cfg):
     for verilog_path in glob("%s/**/topModule.v" % str(cfg.raw_dataset_path), recursive=True):
         print("Reading ", verilog_path)
         hw2graph = HW2GRAPH(cfg, verilog_path)
-        
+
         if cfg.graph_type == "DFG":
             graph_json = hw2graph.process()
             hardware_graph = data_proc.get_graph(graph_json)
@@ -41,9 +41,6 @@ def process_graphs(cfg):
 
         elif cfg.graph_type == "CFG":
             hw2graph.process()
-            hw2graph.generate_dot_file()
-            hw2graph.export_cfg_graph(output='graph')
-            hw2graph.cleanup_files()
 
     for hw_graph, verilog_path in nx_graphs:
         data_proc.normalize(hw_graph, normalize=cfg.NORMALIZATION, graph_format=cfg.graph_type)
