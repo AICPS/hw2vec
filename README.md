@@ -38,10 +38,7 @@ $ python -m pip install torch-geometric==1.6.1
 ```
 This set of commands assumes you to have cuda10.1 in your local and you are using linux. Please refer to the installation guides of [torch](https://pytorch.org/) and [pytorch_geometric](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html) if you have different cuda settings. If installing pygraphviz in windows, please refer this [issue](https://github.com/pygraphviz/pygraphviz/issues/58) for more information.
 
-# Example Use Cases (only contains training part for now)
-- Use case examples are stored in examples folder:
-  - **examples/gnn4ip.py**: gnn4ip script running on Netlist dataset.
-  - **examples/gnn4tj.py**: gnn4tj script running on dataset which has not been splitted into training and testing dataset.
+# Use Cases Examples
 
 ## Use Case 1: Create Your Own Graph Dataset From hardware code
 To be filled. (DFG, CFG, AST)
