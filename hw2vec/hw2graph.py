@@ -418,6 +418,7 @@ class HW2GRAPH:
 
     #helper fcn to __init__, create a graph object used to generate json
     def process(self):
+        return_obj = None
         if self.cfg.graph_type == "CFG":
             fsm_vars = tuple(['fsm', 'state', 'count', 'cnt', 'step', 'mode'])
             dataflow_analyzer = PyDataflowAnalyzer(self.verilog_file, "top")
@@ -432,6 +433,58 @@ class HW2GRAPH:
             constlist = dataflow_optimizer.getConstlist()
             self.cfg_graph_generator = PyControlflowAnalyzer("top", terms, binddict,
                                         resolved_terms, resolved_binddict, constlist, fsm_vars)
+            fsms = self.cfg_graph_generator.getFiniteStateMachines()
+
+            print("VIEWING FSM's")
+            print("LENGTH OF FSM: ", len(fsms))
+            for signame, fsm in fsms.items():
+                print('# SIGNAL NAME: %s' % signame)
+                print('# DELAY CNT: %d' % fsm.delaycnt)
+                fsm.view()
+                fsm.tograph(filename=util.toFlatname(signame) + '.png', nolabel=False)
+
+            graph = pydot.graph_from_dot_file("./file.dot")[0]
+
+            nodes = [node.get_name() for node in graph.get_node_list()]
+            root_nodes = [node.get_name() for node in graph.get_node_list() if node.obj_dict['parent_graph'] == None]
+            edges = [[edge.get_source(),edge.get_destination(),edge.obj_dict['attributes']['label']] for edge in graph.get_edge_list()]
+            topModule = defaultdict([]) 
+
+            for edge in edges:
+                if edge[2] == 'None':
+                    topModule[edge[0]].append("")
+                else:
+                    topModule[edge[0]].append(edge[2])
+            
+            if (output=='roots'):
+                print(f'Saving all {len(root_nodes)} nodes as json')
+                with open('./root_nodes.json', 'w') as f:
+                    f.write(dumps(root_nodes, indent=4))
+                print('List of root nodes saved in root_nodes.json.\n')
+                f.close()
+            
+            elif (output=='nodes'):
+                print(f'Saving all {len(nodes)} nodes as json')
+                with open('./all_nodes.json', 'w') as f:
+                    f.write(dumps(nodes, indent=4))
+                print('List of nodes saved in all_nodes.json.\n')
+                f.close()
+                
+            elif (output=='edges'):
+                print(f'Saving all {len(edges)} edges as json')
+                with open('./all_edges.json', 'w') as f:
+                    f.write(dumps(edges, indent=4))
+                print('List of edges saved in all_edges.json.\n')
+                f.close()
+                
+            elif (output=='graph'):
+                print(f'Saving cfg graph dictionary as a json')
+                with open('./topModule.json', 'w') as f:
+                    f.write(dumps(topModule, indent=4))
+                print('Saving cfg graph dictionary as a json.\n')
+                f.close()
+                print('The graph is saved as topModule.json.\n')
+
         
         elif self.cfg.graph_type == "AST":
             #when generating AST, determines which substructure (dictionary/array) to generate
@@ -450,7 +503,7 @@ class HW2GRAPH:
             self.ast, _ = parse([self.verilog_file])
             ast_dict = self._generate_ast_dict(self.ast)
             self.cleanup_files()
-            return ast_dict
+            return_obj = ast_dict
 
 
         elif self.cfg.graph_type == "DFG":
@@ -464,18 +517,65 @@ class HW2GRAPH:
             resolved_terms = dataflow_optimizer.getResolvedTerms()
             resolved_binddict = dataflow_optimizer.getResolvedBinddict()
             constlist = dataflow_optimizer.getConstlist()
-            self.dfg_graph_generator = PyGraphGenerator("top", terms, binddict, resolved_terms, 
+            dfg_graph_generator = PyGraphGenerator("top", terms, binddict, resolved_terms, 
                                 resolved_binddict, constlist, 
                                 './seperate_modules.pdf')
-            self.graph_separate_modules()
-            self.merge_graphs()
+            # self.graph_separate_modules()
+            #generate separate graph separate modules 
+            # binddict with string keys
+            signals = [str(bind) for bind in dfg_graph_generator.binddict]
+
+            for num, signal in enumerate(sorted(signals, key=str.casefold), start=1):
+                dfg_graph_generator.generate(signal, walk=False)
+                print(f'\rProgress : {num} / {len(signals)}', end='', flush=True)
+
+            label_to_node = dict()
+            for node in dfg_graph_generator.graph.nodes():
+                if dfg_graph_generator.graph.in_degree(node) == 0:
+                    label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
+                    label_to_node[label] = node
+            
+            deleted = 0
+            print('Merging subgraphs... ')
+            num_nodes = len(dfg_graph_generator.graph.nodes())
+            for num, node in enumerate(dfg_graph_generator.graph.nodes(), start=1):
+                label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
+                if '_' in label and label.replace('_', '.') in label_to_node:
+                    parents = dfg_graph_generator.graph.predecessors(node)
+                    dfg_graph_generator.graph.delete_node(node)
+                    deleted += 1
+                    for parent in parents:
+                        # if not self._isChild(self.dfg_graph_generator.graph, label_to_node[label.replace('_', '.')], parent):
+                        dfg_graph_generator.graph.add_edge(parent, label_to_node[label.replace('_', '.')])
+                print(f'\rProgress : {num} - {deleted} = {num - deleted} / {num_nodes}', end='', flush=True)
+            print('\nThe signals subgraphs are merged.\n')
+            
             graph_json = {}
-            graph_json['root_nodes'] = self.get_root_nodes()
-            graph_json['nodes'] = self.get_nodes()
-            graph_json['edges'] = self.get_edges()
-            graph_json['edge_index'] = self.get_edge_list()
+            graph_json['root_nodes'] = [node for node in dfg_graph_generator.graph.nodes() if dfg_graph_generator.graph.in_degree(node) == 0]
+            graph_json['nodes'] = dfg_graph_generator.graph.nodes()
+            all_edges = list()
+            for edge in dfg_graph_generator.graph.edges():
+                all_edges.append((edge[0], edge[1], edge.attr['label']))
+            graph_json['edges'] = all_edges
+
+            jsondict = {}
+            for node in dfg_graph_generator.graph.nodes():
+                jsondict[str(node)] = list()
+                for child in dfg_graph_generator.graph.successors(node):
+                    edgeLabel = dfg_graph_generator.graph.get_edge(node, child).attr['label']
+                    jsondict[str(node)].append((edgeLabel, str(child)))
+            
+            graph_json['edge_index'] = jsondict
             self.cleanup_files()
-            return graph_json
+            return_obj = graph_json
+
+        for file in ['file.dot','parser.out','parsetab.py','top_state.png']:
+            try:
+                os.remove(file)
+            except FileNotFoundError:
+                pass
+
+        return return_obj
     
     #generates nested dictionary for conversion to json (AST helper)
     def _generate_ast_dict(self, ast_node):
@@ -495,67 +595,7 @@ class HW2GRAPH:
         else:
             raise Exception(f"Error. Token name {class_name} is invalid or has not yet been supported")
         return structure
-
-    #generates dot file (CFG helper)
-    def generate_dot_file(self, graph_format='png',no_label=False):
-        assert self.cfg_graph_generator != None, "Error: Generate dot file only if you are generating CFG's "
-
-        fsms = self.cfg_graph_generator.getFiniteStateMachines()
-
-        print("VIEWING FSM's")
-        print("LENGTH OF FSM: ", len(fsms))
-        for signame, fsm in fsms.items():
-            print('# SIGNAL NAME: %s' % signame)
-            print('# DELAY CNT: %d' % fsm.delaycnt)
-            fsm.view()
-            fsm.tograph(filename=util.toFlatname(signame) + '.' + graph_format, nolabel=no_label)
-        
-    #generate CFG from dot file
-    def export_cfg_graph(self, output='graph'):
-        def default_val():
-            return []
-        graph = pydot.graph_from_dot_file("./file.dot")[0]
-
-        nodes = [node.get_name() for node in graph.get_node_list()]
-        root_nodes = [node.get_name() for node in graph.get_node_list() if node.obj_dict['parent_graph'] == None]
-        edges = [[edge.get_source(),edge.get_destination(),edge.obj_dict['attributes']['label']] for edge in graph.get_edge_list()]
-        topModule = defaultdict(default_val) #key: node, val: list of out going edges
-
-        for edge in edges:
-            if edge[2] == 'None':
-                topModule[edge[0]].append("")
-            else:
-                topModule[edge[0]].append(edge[2])
-        
-        if (output=='roots'):
-            print(f'Saving all {len(root_nodes)} nodes as json')
-            with open(f'{self.output_directory}root_nodes.json', 'w') as f:
-                f.write(dumps(root_nodes, indent=4))
-            print('List of root nodes saved in root_nodes.json.\n')
-            f.close()
-        
-        elif (output=='nodes'):
-            print(f'Saving all {len(nodes)} nodes as json')
-            with open(f'{self.output_directory}all_nodes.json', 'w') as f:
-                f.write(dumps(nodes, indent=4))
-            print('List of nodes saved in all_nodes.json.\n')
-            f.close()
-            
-        elif (output=='edges'):
-            print(f'Saving all {len(edges)} edges as json')
-            with open(f'{self.output_directory}all_edges.json', 'w') as f:
-                f.write(dumps(edges, indent=4))
-            print('List of edges saved in all_edges.json.\n')
-            f.close()
-            
-        elif (output=='graph'):
-            print(f'Saving cfg graph dictionary as a json')
-            with open(f'{self.output_directory}topModule.json', 'w') as f:
-                f.write(dumps(topModule, indent=4))
-            print('Saving cfg graph dictionary as a json.\n')
-            f.close()
-            print('The graph is saved as topModule.json.\n')
-    
+          
     # This function returns True, if the child is a child of checkParent
     def _isChild(self, graph, checkParent, child):
         # This function recursively returns a list of all the parents of a node up to the root
@@ -576,113 +616,6 @@ class HW2GRAPH:
                 return retlist
         allParents = getAllParents(child)
         return checkParent in allParents
-
-    #generate separate graph separate modules 
-    def graph_separate_modules(self, draw_graph=False):
-        # binddict with string keys
-        signals = [str(bind) for bind in self.dfg_graph_generator.binddict]
-
-        print(f'{len(signals)} signals to generate seprate subgraphs...')
-        for num, signal in enumerate(sorted(signals, key=str.casefold), start=1):
-            self.dfg_graph_generator.generate(signal, walk=False)
-            print(f'\rProgress : {num} / {len(signals)}', end='', flush=True)
-        print('\nThe subgraphs are generated.\n')
-
-    #merge the graphs
-    def merge_graphs(self, draw_graph=False):
-        label_to_node = dict()
-        for node in self.dfg_graph_generator.graph.nodes():
-            if self.dfg_graph_generator.graph.in_degree(node) == 0:
-                label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
-                label_to_node[label] = node
-        
-        deleted = 0
-        print('Merging subgraphs... ')
-        num_nodes = len(self.dfg_graph_generator.graph.nodes())
-        for num, node in enumerate(self.dfg_graph_generator.graph.nodes(), start=1):
-            label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
-            if '_' in label and label.replace('_', '.') in label_to_node:
-                parents = self.dfg_graph_generator.graph.predecessors(node)
-                self.dfg_graph_generator.graph.delete_node(node)
-                deleted += 1
-                for parent in parents:
-                    # if not self._isChild(self.dfg_graph_generator.graph, label_to_node[label.replace('_', '.')], parent):
-                    self.dfg_graph_generator.graph.add_edge(parent, label_to_node[label.replace('_', '.')])
-            print(f'\rProgress : {num} - {deleted} = {num - deleted} / {num_nodes}', end='', flush=True)
-        print('\nThe signals subgraphs are merged.\n')
-
-        if draw_graph:
-            print(f'Saving merged graph with {len(self.dfg_graph_generator.graph.nodes())} nodes as a pdf...')
-            self.dfg_graph_generator.draw(f'{self.output_directory}merged_graph.pdf')
-            print('The graphs are saved.\n')
-
-    def get_root_nodes(self):
-        if self.dfg_graph_generator:
-            return [node for node in self.dfg_graph_generator.graph.nodes() if self.dfg_graph_generator.graph.in_degree(node) == 0]
-
-    def get_nodes(self):
-        if self.dfg_graph_generator:
-            return self.dfg_graph_generator.graph.nodes()
-    
-    def get_edges(self):
-        if self.dfg_graph_generator:
-            all_edges = list()
-            for edge in self.dfg_graph_generator.graph.edges():
-                all_edges.append((edge[0], edge[1], edge.attr['label']))
-            return all_edges
-    
-    def get_edge_list(self):
-        if self.dfg_graph_generator:
-            jsondict = {}
-            for node in self.dfg_graph_generator.graph.nodes():
-                jsondict[str(node)] = list()
-                for child in self.dfg_graph_generator.graph.successors(node):
-                    edgeLabel = self.dfg_graph_generator.graph.get_edge(node, child).attr['label']
-                    jsondict[str(node)].append((edgeLabel, str(child)))
-            return jsondict
-
-    #to be refactored
-    def graph_input_dependencies(self,draw_graph=False):
-        labeltoNames = dict()
-        for node in self.dfg_graph_generator.graph.nodes():
-            label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
-            if label not in labeltoNames: 
-                labeltoNames[label] = list()
-            labeltoNames[label].append(str(node))
-
-        inputs = [self.dfg_graph_generator.graph.get_node(*labeltoNames[str(term).replace('.', '_')]) for x, term in zip(self.dfg_graph_generator.terms, self.dfg_graph_generator.terms.values()) if len(x.get_module_list()) == 1 and 'Input' in term.termtype]
-
-        print('Locating nodes not connected to inputs...')
-        to_delete = list()
-        for num, node in enumerate(self.dfg_graph_generator.graph.nodes(), start=1):
-            label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
-            if label not in inputs:
-                x = True
-                for input_ in inputs:
-                    if self._isChild(self.dfg_graph_generator.graph, node, input_):
-                        x = False
-                if x == True:
-                    to_delete.append(node)
-            print(f'\rProgress : {num} / {len(self.dfg_graph_generator.graph.nodes())}', end='', flush=True)
-        print('\nRemoving nodes not connected to inputs...')
-        for num, node in enumerate(to_delete, start=1):
-            self.dfg_graph_generator.graph.delete_node(node)
-            print(f'\rProgress : {num} / {len(to_delete)}', end='', flush=True)
-        print('\nRemoval is complete.\n')
-        
-        if draw_graph:   
-            print(f'Saving graph with {len(self.dfg_graph_generator.graph.nodes())} nodes as a pdf...')
-            self.dfg_graph_generator.draw(f'{self.output_directory}input_dependencies.pdf')
-            print('Graph saved.\n')
-
-        #cleanup dot file and other residual files generated earlier
-    
-    def cleanup_files(self):
-        for file in ['file.dot','parser.out','parsetab.py','top_state.png']:
-            try:
-                os.remove(file)
-            except FileNotFoundError:
-                pass
 
     def add_node(self, graph, parent, child, cur_dict):
         index = self.count
@@ -729,7 +662,6 @@ class PreprocessVerilog:
         file_in.close()
         file_out.close()
         
-        
     def rename_topModule(input_path, target_path):
         # read the file into a list of lines
         with open(input_path,'r') as file_in:
@@ -770,8 +702,6 @@ class PreprocessVerilog:
             file_out.write(line.replace(top_module, 'top')+'\n')
         file_in.close()
         file_out.close()
-
-            
             
     def flatten(input_path, target_path):
         with open(target_path+"/topModule.v", "wt") as outfile:
@@ -779,7 +709,6 @@ class PreprocessVerilog:
             for verilog_file in glob(fr'{input_path}/*.v'):
                 with open(verilog_file, "rt") as infile:
                     outfile.write(infile.read())       
-                    
                     
     def remove_underscores(self, input_file):
         f = open(input_file, 'r')
