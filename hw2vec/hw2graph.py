@@ -397,10 +397,8 @@ class HW2GRAPH:
     ''' 
 
     #holds a GRAPH_GENERATOR INSTANCE
-    def __init__(self, verilog_file, output_directory, top_module, generate_cfg=False, generate_ast=False):
-        if not os.path.exists(verilog_file):
-            raise IOError("File Not Found:  ")
-        self.output_directory = output_directory
+    def __init__(self, cfg, verilog_file):
+        self.cfg = cfg
         self.verilog_file = verilog_file
 
         self.dfg_graph_generator = None
@@ -409,14 +407,13 @@ class HW2GRAPH:
         self.ARRAY_GEN = None
         self.CONST_DICTIONARY_GEN = None
         self.DICTIONARY_GEN = None 
-        self.process(verilog_file, top_module, generate_cfg, generate_ast)
         self.count = 0
 
     #helper fcn to __init__, create a graph object used to generate json
-    def process(self, verilog_file, top_module, generate_cfg, generate_ast):
-        if generate_cfg: 
+    def process(self):
+        if self.cfg.graph_type == "CFG":
             fsm_vars = tuple(['fsm', 'state', 'count', 'cnt', 'step', 'mode'])
-            dataflow_analyzer = PyDataflowAnalyzer(verilog_file, top_module)
+            dataflow_analyzer = PyDataflowAnalyzer(self.verilog_file, "top")
             dataflow_analyzer.generate()
             binddict = dataflow_analyzer.getBinddict()
             terms = dataflow_analyzer.getTerms()
@@ -428,7 +425,7 @@ class HW2GRAPH:
             constlist = dataflow_optimizer.getConstlist()
             self.cfg_graph_generator = PyControlflowAnalyzer("top", terms, binddict,
                                         resolved_terms, resolved_binddict, constlist, fsm_vars)
-        elif generate_ast:
+        elif self.cfg.graph_type == "AST":
             #when generating AST, determines which substructure (dictionary/array) to generate
             #before converting the json-like structure into actual json
             self.DICTIONARY_GEN = ["Source","Description","Ioport","Decl","Lvalue"]
@@ -439,10 +436,14 @@ class HW2GRAPH:
             "SensList","Sens","Substitution","BlockingSubstitution","NonblockingSubstitution","IfStatement","Block",
             "Initial","Plus","Output","Partselect","Port","InstanceList","Instance","PortArg","Pointer","Concat", "Parameter", "Parameter",  "SystemCall", "CaseStatement", "Case", "Function", "CasezStatement", "FunctionCall", "Dimensions", "Length", "LConcat", "Concat", "SingleStatement", "Repeat", "Integer"]
             self.CONST_DICTIONARY_GEN = ["IntConst","FloatConst","StringConst","Identifier"]
-            self.ast, _ = parse([verilog_file])
+            self.ast, _ = parse([self.verilog_file])
+            ast_dict = self._generate_ast_dict(self.ast)
+            self.cleanup_files()
+            return ast_dict
 
-        else: #generate dfg
-            dataflow_analyzer = PyDataflowAnalyzer(verilog_file, top_module)
+
+        elif self.cfg.graph_type == "DFG": #generate dfg
+            dataflow_analyzer = PyDataflowAnalyzer(self.verilog_file, "top")
             dataflow_analyzer.generate()
             binddict = dataflow_analyzer.getBinddict()
             terms = dataflow_analyzer.getTerms()
@@ -452,9 +453,18 @@ class HW2GRAPH:
             resolved_terms = dataflow_optimizer.getResolvedTerms()
             resolved_binddict = dataflow_optimizer.getResolvedBinddict()
             constlist = dataflow_optimizer.getConstlist()
-            self.dfg_graph_generator = PyGraphGenerator(top_module, terms, binddict, resolved_terms, 
+            self.dfg_graph_generator = PyGraphGenerator("top", terms, binddict, resolved_terms, 
                                 resolved_binddict, constlist, 
-                                f'{self.output_directory}seperate_modules.pdf')
+                                './seperate_modules.pdf')
+            self.graph_separate_modules()
+            self.merge_graphs()
+            graph_json = {}
+            graph_json['root_nodes'] = self.get_root_nodes()
+            graph_json['nodes'] = self.get_nodes()
+            graph_json['edges'] = self.get_edges()
+            graph_json['edge_index'] = self.get_edge_list()
+            self.cleanup_files()
+            return graph_json
     
     #generates nested dictionary for conversion to json (AST helper)
     def _generate_ast_dict(self, ast_node):

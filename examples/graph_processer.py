@@ -25,23 +25,15 @@ def process_graphs(cfg):
         
         if cfg.graph_type == "DFG":
             print("Reading ", verilog_path)
-            hw2graph = HW2GRAPH(verilog_path, "./", "top", generate_cfg=False)
-            hw2graph.graph_separate_modules()
-            hw2graph.merge_graphs()
-            graph_json = {}
-            graph_json['root_nodes'] = hw2graph.get_root_nodes()
-            graph_json['nodes'] = hw2graph.get_nodes()
-            graph_json['edges'] = hw2graph.get_edges()
-            graph_json['edge_index'] = hw2graph.get_edge_list()
-            hw2graph.cleanup_files()
+            hw2graph = HW2GRAPH(cfg, verilog_path)
+            graph_json = hw2graph.process()
             hardware_graph = data_proc.get_graph(graph_json)
             nx_graphs.append((hardware_graph, verilog_path))
 
         elif cfg.graph_type == "AST":
             print("Reading ", verilog_path)
-            hw2graph = HW2GRAPH(verilog_path, "./", "top", generate_ast=True)
-            ast_dict = hw2graph._generate_ast_dict(hw2graph.ast)
-            hw2graph.cleanup_files()
+            hw2graph = HW2GRAPH(cfg, verilog_path)
+            ast_dict = hw2graph.process()
             ast_nx_graph = nx.DiGraph()
             for key in ast_dict.keys():
                 hw2graph.add_node(ast_nx_graph, 'None', key, ast_dict[key])
@@ -51,7 +43,8 @@ def process_graphs(cfg):
             data_proc.append_graph_data(data)
 
         elif cfg.graph_type == "CFG":
-            hw2graph = HW2GRAPH(verilog_path, "./", "top",  generate_cfg=True)
+            hw2graph = HW2GRAPH(cfg, verilog_path)
+            hw2graph.process()
             hw2graph.generate_dot_file()
             hw2graph.export_cfg_graph(output='graph')
             hw2graph.cleanup_files()
