@@ -398,202 +398,71 @@ class DataProcessor:
 
         return hardware_graph
 
-class HW2GRAPH:
-    '''
-        the main class of hw2graph.
-    ''' 
+class DFGGenerator:
+    def __init__(self):
+        pass
 
-    #holds a GRAPH_GENERATOR INSTANCE
-    def __init__(self, cfg, verilog_file):
-        self.cfg = cfg
-        self.verilog_file = verilog_file
-
-        self.dfg_graph_generator = None
-        self.cfg_graph_generator = None
-        self.ast = None
-        self.ARRAY_GEN = None
-        self.CONST_DICTIONARY_GEN = None
-        self.DICTIONARY_GEN = None 
-        self.count = 0
-
-    #helper fcn to __init__, create a graph object used to generate json
-    def process(self):
-        return_obj = None
-        if self.cfg.graph_type == "CFG":
-            fsm_vars = tuple(['fsm', 'state', 'count', 'cnt', 'step', 'mode'])
-            dataflow_analyzer = PyDataflowAnalyzer(self.verilog_file, "top")
-            dataflow_analyzer.generate()
-            binddict = dataflow_analyzer.getBinddict()
-            terms = dataflow_analyzer.getTerms()
-            
-            dataflow_optimizer = PyDataflowOptimizer(terms, binddict)
-            dataflow_optimizer.resolveConstant()
-            resolved_terms = dataflow_optimizer.getResolvedTerms()
-            resolved_binddict = dataflow_optimizer.getResolvedBinddict()
-            constlist = dataflow_optimizer.getConstlist()
-            cfg_graph_generator = PyControlflowAnalyzer("top", terms, binddict,
-                                        resolved_terms, resolved_binddict, constlist, fsm_vars)
-            fsms = cfg_graph_generator.getFiniteStateMachines()
-
-            print("VIEWING FSM's")
-            print("LENGTH OF FSM: ", len(fsms))
-            for signame, fsm in fsms.items():
-                print('# SIGNAL NAME: %s' % signame)
-                print('# DELAY CNT: %d' % fsm.delaycnt)
-                fsm.view()
-                fsm.tograph(filename=util.toFlatname(signame) + '.png', nolabel=False)
-
-            graph = pydot.graph_from_dot_file("./file.dot")[0]
-
-            nodes = [node.get_name() for node in graph.get_node_list()]
-            root_nodes = [node.get_name() for node in graph.get_node_list() if node.obj_dict['parent_graph'] == None]
-            edges = [[edge.get_source(),edge.get_destination(),edge.obj_dict['attributes']['label']] for edge in graph.get_edge_list()]
-            topModule = defaultdict([]) 
-
-            for edge in edges:
-                if edge[2] == 'None':
-                    topModule[edge[0]].append("")
-                else:
-                    topModule[edge[0]].append(edge[2])
-            
-            if (output=='roots'):
-                print(f'Saving all {len(root_nodes)} nodes as json')
-                with open('./root_nodes.json', 'w') as f:
-                    f.write(dumps(root_nodes, indent=4))
-                print('List of root nodes saved in root_nodes.json.\n')
-                f.close()
-            
-            elif (output=='nodes'):
-                print(f'Saving all {len(nodes)} nodes as json')
-                with open('./all_nodes.json', 'w') as f:
-                    f.write(dumps(nodes, indent=4))
-                print('List of nodes saved in all_nodes.json.\n')
-                f.close()
-                
-            elif (output=='edges'):
-                print(f'Saving all {len(edges)} edges as json')
-                with open('./all_edges.json', 'w') as f:
-                    f.write(dumps(edges, indent=4))
-                print('List of edges saved in all_edges.json.\n')
-                f.close()
-                
-            elif (output=='graph'):
-                print(f'Saving cfg graph dictionary as a json')
-                with open('./topModule.json', 'w') as f:
-                    f.write(dumps(topModule, indent=4))
-                print('Saving cfg graph dictionary as a json.\n')
-                f.close()
-                print('The graph is saved as topModule.json.\n')
-
+    def process(self, verilog_file):
+        dataflow_analyzer = PyDataflowAnalyzer(verilog_file, "top")
+        dataflow_analyzer.generate()
+        binddict = dataflow_analyzer.getBinddict()
+        terms = dataflow_analyzer.getTerms()
         
-        elif self.cfg.graph_type == "AST":
-            #when generating AST, determines which substructure (dictionary/array) to generate
-            #before converting the json-like structure into actual json
-            self.DICTIONARY_GEN = ["Source","Description","Ioport","Decl","Lvalue"]
-            self.ARRAY_GEN = ["ModuleDef","Paramlist","Portlist","Input","Width","Reg","Wire","Rvalue","ParseSelect",
-            "Uplus","Uminus","Ulnot","Unot","Uand","Unand","Uor","Unor","Uxnor","Power","Times","Divide","Mod","Plus",
-            "Minus","Sll","Srl","Sla","Sra","LessThan","GreaterThan","LessEq","GreaterEq","Eq","Eql","NotEq","Eql","NotEql",
-            "And","Xor","Xnor","Or","Land","Lor","Cond","Assign","Always","AlwaysFF","AlwaysComb","AlwaysLatch",
-            "SensList","Sens","Substitution","BlockingSubstitution","NonblockingSubstitution","IfStatement","Block",
-            "Initial","Plus","Output","Partselect","Port","InstanceList","Instance","PortArg","Pointer","Concat", "Parameter", 
-            "SystemCall", "CaseStatement", "Case", "Function", "CasezStatement", "FunctionCall", "Dimensions", "Length", 
-            "LConcat", "Concat", "SingleStatement", "Repeat", "Integer", "CasexStatement", "ForStatement", "Localparam",
-            "EventStatement", "DelayStatement"]
-            self.CONST_DICTIONARY_GEN = ["IntConst","FloatConst","StringConst","Identifier"]
-            self.ast, _ = parse([self.verilog_file])
-            ast_dict = self._generate_ast_dict(self.ast)
-            return_obj = ast_dict
+        dataflow_optimizer = PyDataflowOptimizer(terms, binddict)
+        dataflow_optimizer.resolveConstant()
+        resolved_terms = dataflow_optimizer.getResolvedTerms()
+        resolved_binddict = dataflow_optimizer.getResolvedBinddict()
+        constlist = dataflow_optimizer.getConstlist()
+        dfg_graph_generator = PyGraphGenerator("top", terms, binddict, resolved_terms, 
+                            resolved_binddict, constlist, 
+                            './seperate_modules.pdf')
+        # binddict with string keys
+        signals = [str(bind) for bind in dfg_graph_generator.binddict]
 
+        for num, signal in enumerate(sorted(signals, key=str.casefold), start=1):
+            dfg_graph_generator.generate(signal, walk=False)
+            print(f'\rProgress : {num} / {len(signals)}', end='', flush=True)
 
-        elif self.cfg.graph_type == "DFG":
-            dataflow_analyzer = PyDataflowAnalyzer(self.verilog_file, "top")
-            dataflow_analyzer.generate()
-            binddict = dataflow_analyzer.getBinddict()
-            terms = dataflow_analyzer.getTerms()
-            
-            dataflow_optimizer = PyDataflowOptimizer(terms, binddict)
-            dataflow_optimizer.resolveConstant()
-            resolved_terms = dataflow_optimizer.getResolvedTerms()
-            resolved_binddict = dataflow_optimizer.getResolvedBinddict()
-            constlist = dataflow_optimizer.getConstlist()
-            dfg_graph_generator = PyGraphGenerator("top", terms, binddict, resolved_terms, 
-                                resolved_binddict, constlist, 
-                                './seperate_modules.pdf')
-            # self.graph_separate_modules()
-            #generate separate graph separate modules 
-            # binddict with string keys
-            signals = [str(bind) for bind in dfg_graph_generator.binddict]
-
-            for num, signal in enumerate(sorted(signals, key=str.casefold), start=1):
-                dfg_graph_generator.generate(signal, walk=False)
-                print(f'\rProgress : {num} / {len(signals)}', end='', flush=True)
-
-            label_to_node = dict()
-            for node in dfg_graph_generator.graph.nodes():
-                if dfg_graph_generator.graph.in_degree(node) == 0:
-                    label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
-                    label_to_node[label] = node
-            
-            deleted = 0
-            print('Merging subgraphs... ')
-            num_nodes = len(dfg_graph_generator.graph.nodes())
-            for num, node in enumerate(dfg_graph_generator.graph.nodes(), start=1):
+        label_to_node = dict()
+        for node in dfg_graph_generator.graph.nodes():
+            if dfg_graph_generator.graph.in_degree(node) == 0:
                 label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
-                if '_' in label and label.replace('_', '.') in label_to_node:
-                    parents = dfg_graph_generator.graph.predecessors(node)
-                    dfg_graph_generator.graph.delete_node(node)
-                    deleted += 1
-                    for parent in parents:
-                        # if not self._isChild(self.dfg_graph_generator.graph, label_to_node[label.replace('_', '.')], parent):
-                        dfg_graph_generator.graph.add_edge(parent, label_to_node[label.replace('_', '.')])
-                print(f'\rProgress : {num} - {deleted} = {num - deleted} / {num_nodes}', end='', flush=True)
-            print('\nThe signals subgraphs are merged.\n')
-            
-            graph_json = {}
-            graph_json['root_nodes'] = [node for node in dfg_graph_generator.graph.nodes() if dfg_graph_generator.graph.in_degree(node) == 0]
-            graph_json['nodes'] = dfg_graph_generator.graph.nodes()
-            all_edges = list()
-            for edge in dfg_graph_generator.graph.edges():
-                all_edges.append((edge[0], edge[1], edge.attr['label']))
-            graph_json['edges'] = all_edges
+                label_to_node[label] = node
+        
+        deleted = 0
+        print('Merging subgraphs... ')
+        num_nodes = len(dfg_graph_generator.graph.nodes())
+        for num, node in enumerate(dfg_graph_generator.graph.nodes(), start=1):
+            label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
+            if '_' in label and label.replace('_', '.') in label_to_node:
+                parents = dfg_graph_generator.graph.predecessors(node)
+                dfg_graph_generator.graph.delete_node(node)
+                deleted += 1
+                for parent in parents:
+                    # if not self._isChild(self.dfg_graph_generator.graph, label_to_node[label.replace('_', '.')], parent):
+                    dfg_graph_generator.graph.add_edge(parent, label_to_node[label.replace('_', '.')])
+            print(f'\rProgress : {num} - {deleted} = {num - deleted} / {num_nodes}', end='', flush=True)
+        print('\nThe signals subgraphs are merged.')
+        
+        graph_json = {}
+        graph_json['root_nodes'] = [node for node in dfg_graph_generator.graph.nodes() if dfg_graph_generator.graph.in_degree(node) == 0]
+        graph_json['nodes'] = dfg_graph_generator.graph.nodes()
+        all_edges = list()
+        for edge in dfg_graph_generator.graph.edges():
+            all_edges.append((edge[0], edge[1], edge.attr['label']))
+        graph_json['edges'] = all_edges
 
-            jsondict = {}
-            for node in dfg_graph_generator.graph.nodes():
-                jsondict[str(node)] = list()
-                for child in dfg_graph_generator.graph.successors(node):
-                    edgeLabel = dfg_graph_generator.graph.get_edge(node, child).attr['label']
-                    jsondict[str(node)].append((edgeLabel, str(child)))
-            
-            graph_json['edge_index'] = jsondict
-            return_obj = graph_json
-
-        for file in ['file.dot','parser.out','parsetab.py','top_state.png']:
-            try:
-                os.remove(file)
-            except FileNotFoundError:
-                pass
-
+        jsondict = {}
+        for node in dfg_graph_generator.graph.nodes():
+            jsondict[str(node)] = list()
+            for child in dfg_graph_generator.graph.successors(node):
+                edgeLabel = dfg_graph_generator.graph.get_edge(node, child).attr['label']
+                jsondict[str(node)].append((edgeLabel, str(child)))
+        
+        graph_json['edge_index'] = jsondict
+        return_obj = graph_json
         return return_obj
     
-    #generates nested dictionary for conversion to json (AST helper)
-    def _generate_ast_dict(self, ast_node):
-        class_name = ast_node.__class__.__name__
-        structure = {}
-        #based on the token class_name, determine the value type of class_name
-        if class_name in self.ARRAY_GEN:
-            structure[class_name] = [getattr(ast_node, n) for n in ast_node.attr_names] if ast_node.attr_names else []
-            for c in ast_node.children():
-                structure[class_name].append(self._generate_ast_dict(c))
-        elif class_name in self.DICTIONARY_GEN:
-            structure[class_name] = self._generate_ast_dict(ast_node.children()[0])
-        elif class_name in self.CONST_DICTIONARY_GEN:
-            structure = {}
-            structure[class_name] = getattr(ast_node,ast_node.attr_names[0])
-            return structure
-        else:
-            raise Exception(f"Error. Token name {class_name} is invalid or has not yet been supported")
-        return structure
-          
     # This function returns True, if the child is a child of checkParent
     def _isChild(self, graph, checkParent, child):
         # This function recursively returns a list of all the parents of a node up to the root
@@ -614,6 +483,155 @@ class HW2GRAPH:
                 return retlist
         allParents = getAllParents(child)
         return checkParent in allParents
+
+class ASTGenerator:
+    def __init__(self):
+        pass
+
+    def process(self, verilog_file):
+        #when generating AST, determines which substructure (dictionary/array) to generate
+        #before converting the json-like structure into actual json
+        self.DICTIONARY_GEN = ["Source","Description","Ioport","Decl","Lvalue"]
+        self.ARRAY_GEN = ["ModuleDef","Paramlist","Portlist","Input","Width","Reg","Wire","Rvalue","ParseSelect",
+        "Uplus","Uminus","Ulnot","Unot","Uand","Unand","Uor","Unor","Uxnor","Power","Times","Divide","Mod","Plus",
+        "Minus","Sll","Srl","Sla","Sra","LessThan","GreaterThan","LessEq","GreaterEq","Eq","Eql","NotEq","Eql","NotEql",
+        "And","Xor","Xnor","Or","Land","Lor","Cond","Assign","Always","AlwaysFF","AlwaysComb","AlwaysLatch",
+        "SensList","Sens","Substitution","BlockingSubstitution","NonblockingSubstitution","IfStatement","Block",
+        "Initial","Plus","Output","Partselect","Port","InstanceList","Instance","PortArg","Pointer","Concat", "Parameter", 
+        "SystemCall", "CaseStatement", "Case", "Function", "CasezStatement", "FunctionCall", "Dimensions", "Length", 
+        "LConcat", "Concat", "SingleStatement", "Repeat", "Integer", "CasexStatement", "ForStatement", "Localparam",
+        "EventStatement", "DelayStatement"]
+        self.CONST_DICTIONARY_GEN = ["IntConst","FloatConst","StringConst","Identifier"]
+        self.ast, _ = parse([verilog_file])
+        ast_dict = self._generate_ast_dict(self.ast)
+        return ast_dict
+
+    #generates nested dictionary for conversion to json (AST helper)
+    def _generate_ast_dict(self, ast_node):
+        class_name = ast_node.__class__.__name__
+        structure = {}
+        #based on the token class_name, determine the value type of class_name
+        if class_name in self.ARRAY_GEN:
+            structure[class_name] = [getattr(ast_node, n) for n in ast_node.attr_names] if ast_node.attr_names else []
+            for c in ast_node.children():
+                structure[class_name].append(self._generate_ast_dict(c))
+        elif class_name in self.DICTIONARY_GEN:
+            structure[class_name] = self._generate_ast_dict(ast_node.children()[0])
+        elif class_name in self.CONST_DICTIONARY_GEN:
+            structure = {}
+            structure[class_name] = getattr(ast_node,ast_node.attr_names[0])
+            return structure
+        else:
+            raise Exception(f"Error. Token name {class_name} is invalid or has not yet been supported")
+        return structure
+
+class CFGGenerator:
+    def __init__(self):
+        pass
+    def process(self, verilog_file): 
+        fsm_vars = tuple(['fsm', 'state', 'count', 'cnt', 'step', 'mode'])
+        dataflow_analyzer = PyDataflowAnalyzer(self.verilog_file, "top")
+        dataflow_analyzer.generate()
+        binddict = dataflow_analyzer.getBinddict()
+        terms = dataflow_analyzer.getTerms()
+        
+        dataflow_optimizer = PyDataflowOptimizer(terms, binddict)
+        dataflow_optimizer.resolveConstant()
+        resolved_terms = dataflow_optimizer.getResolvedTerms()
+        resolved_binddict = dataflow_optimizer.getResolvedBinddict()
+        constlist = dataflow_optimizer.getConstlist()
+        cfg_graph_generator = PyControlflowAnalyzer("top", terms, binddict,
+                                    resolved_terms, resolved_binddict, constlist, fsm_vars)
+        fsms = cfg_graph_generator.getFiniteStateMachines()
+
+        print("VIEWING FSM's")
+        print("LENGTH OF FSM: ", len(fsms))
+        for signame, fsm in fsms.items():
+            print('# SIGNAL NAME: %s' % signame)
+            print('# DELAY CNT: %d' % fsm.delaycnt)
+            fsm.view()
+            fsm.tograph(filename=util.toFlatname(signame) + '.png', nolabel=False)
+
+        graph = pydot.graph_from_dot_file("./file.dot")[0]
+
+        nodes = [node.get_name() for node in graph.get_node_list()]
+        root_nodes = [node.get_name() for node in graph.get_node_list() if node.obj_dict['parent_graph'] == None]
+        edges = [[edge.get_source(),edge.get_destination(),edge.obj_dict['attributes']['label']] for edge in graph.get_edge_list()]
+        topModule = defaultdict([]) 
+
+        for edge in edges:
+            if edge[2] == 'None':
+                topModule[edge[0]].append("")
+            else:
+                topModule[edge[0]].append(edge[2])
+        
+        if (output=='roots'):
+            print(f'Saving all {len(root_nodes)} nodes as json')
+            with open('./root_nodes.json', 'w') as f:
+                f.write(dumps(root_nodes, indent=4))
+            print('List of root nodes saved in root_nodes.json.\n')
+            f.close()
+        
+        elif (output=='nodes'):
+            print(f'Saving all {len(nodes)} nodes as json')
+            with open('./all_nodes.json', 'w') as f:
+                f.write(dumps(nodes, indent=4))
+            print('List of nodes saved in all_nodes.json.\n')
+            f.close()
+            
+        elif (output=='edges'):
+            print(f'Saving all {len(edges)} edges as json')
+            with open('./all_edges.json', 'w') as f:
+                f.write(dumps(edges, indent=4))
+            print('List of edges saved in all_edges.json.\n')
+            f.close()
+            
+        elif (output=='graph'):
+            print(f'Saving cfg graph dictionary as a json')
+            with open('./topModule.json', 'w') as f:
+                f.write(dumps(topModule, indent=4))
+            print('Saving cfg graph dictionary as a json.\n')
+            f.close()
+            print('The graph is saved as topModule.json.\n')
+        return None
+
+
+class HW2GRAPH:
+    '''
+        the main class of hw2graph.
+    ''' 
+
+    #holds a GRAPH_GENERATOR INSTANCE
+    def __init__(self, cfg, verilog_file):
+        self.cfg = cfg
+        self.verilog_file = verilog_file
+        self.count = 0
+
+    #helper fcn to __init__, create a graph object used to generate json
+    def process(self):
+        return_obj = None
+        if self.cfg.graph_type == "CFG":
+            generator = CFGGenerator()
+            return_obj = generator.process(self.verilog_file)
+        
+        elif self.cfg.graph_type == "AST":
+            generator = DFGGenerator()
+            return_obj = generator.process(self.verilog_file)
+
+        elif self.cfg.graph_type == "DFG":
+            generator = DFGGenerator()
+            return_obj = generator.process(self.verilog_file)
+        
+        else:
+            pass
+            
+        for file in ['file.dot','parser.out','parsetab.py','top_state.png']:
+            try:
+                os.remove(file)
+            except FileNotFoundError:
+                pass
+
+        return return_obj       
 
     def add_node(self, graph, parent, child, cur_dict):
         index = self.count
