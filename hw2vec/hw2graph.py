@@ -21,17 +21,16 @@ from collections import defaultdict
 from pyverilog.dataflow.optimizer import VerilogDataflowOptimizer as PyDataflowOptimizer
 from pyverilog.dataflow.graphgen import VerilogGraphGenerator as PyGraphGenerator
 from pyverilog.controlflow.controlflow_analyzer import VerilogControlflowAnalyzer as PyControlflowAnalyzer
-from pyverilog.vparser.parser import parse
-from sklearn.model_selection import train_test_split
-from glob import glob
-from hw2vec.graph2vec.trainers import *
-from hw2vec.utilities import isInt
-
 from pyverilog.vparser.parser import VerilogCodeParser
 from pyverilog.dataflow.modulevisitor import ModuleVisitor
 from pyverilog.dataflow.signalvisitor import SignalVisitor
 from pyverilog.dataflow.bindvisitor import BindVisitor
+from pyverilog.vparser.parser import parse
 
+from sklearn.model_selection import train_test_split
+from glob import glob
+from hw2vec.graph2vec.trainers import *
+from hw2vec.utilities import isInt
 
 class VerilogDataflowAnalyzer(VerilogCodeParser):
     def __init__(self, filelist, topmodule='TOP', noreorder=False, nobind=False,
@@ -298,7 +297,7 @@ class DFGGenerator:
 
         for num, signal in enumerate(sorted(signals, key=str.casefold), start=1):
             dfg_graph_generator.generate(signal, walk=False)
-            print(f'\rProgress : {num} / {len(signals)}', end='', flush=True)
+            # print(f'\rProgress : {num} / {len(signals)}', end='', flush=True)
 
         label_to_node = dict()
         for node in dfg_graph_generator.graph.nodes():
@@ -307,7 +306,7 @@ class DFGGenerator:
                 label_to_node[label] = node
         
         deleted = 0
-        print('Merging subgraphs... ')
+        # print('Merging subgraphs... ')
         num_nodes = len(dfg_graph_generator.graph.nodes())
         for num, node in enumerate(dfg_graph_generator.graph.nodes(), start=1):
             label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
@@ -318,8 +317,8 @@ class DFGGenerator:
                 for parent in parents:
                     # if not self._isChild(self.dfg_graph_generator.graph, label_to_node[label.replace('_', '.')], parent):
                     dfg_graph_generator.graph.add_edge(parent, label_to_node[label.replace('_', '.')])
-            print(f'\rProgress : {num} - {deleted} = {num - deleted} / {num_nodes}', end='', flush=True)
-        print('\nThe signals subgraphs are merged.')
+            # print(f'\rProgress : {num} - {deleted} = {num - deleted} / {num_nodes}', end='', flush=True)
+        # print('\nThe signals subgraphs are merged.')
         
         graph_json = {}
         graph_json['root_nodes'] = [node for node in dfg_graph_generator.graph.nodes() if dfg_graph_generator.graph.in_degree(node) == 0]
