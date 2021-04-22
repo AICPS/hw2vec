@@ -9,37 +9,25 @@
 #==============================================================================
 from __future__ import absolute_import
 from __future__ import print_function
-from typing import Tuple
-import pyverilog
+
+import pyverilog.utils.util as util
+import networkx as nx
+
+import pyverilog, pydot, json, os, sys
+sys.path.append(os.path.dirname(sys.path[0]))
+
+from json import dumps
+from collections import defaultdict
 from pyverilog.dataflow.dataflow_analyzer import VerilogDataflowAnalyzer as PyDataflowAnalyzer
 from pyverilog.dataflow.optimizer import VerilogDataflowOptimizer as PyDataflowOptimizer
 from pyverilog.dataflow.graphgen import VerilogGraphGenerator as PyGraphGenerator
 from pyverilog.controlflow.controlflow_analyzer import VerilogControlflowAnalyzer as PyControlflowAnalyzer
-from pyverilog.ast_code_generator.codegen import ASTCodeGenerator
 from pyverilog.vparser.parser import parse
-from optparse import OptionParser
-
-import pyverilog.vparser.ast as vast
-import pyverilog.utils.util as util
-import pydot
-
-from json import dumps
-from collections import defaultdict
-
-import os, sys
-sys.path.append(os.path.dirname(sys.path[0]))
-
-import torch
-import torch.nn.functional as F
-
-import json
-import networkx as nx
-
 from sklearn.model_selection import train_test_split
 from glob import glob
-
 from hw2vec.graph2vec.trainers import *
 from hw2vec.utilities import isInt
+
 
 global_type2idx_DFG = {
     'concat':0, 
@@ -324,61 +312,7 @@ class DataProcessor:
                     sim_diff_label.append(-1)
 
         return train_test_split(dataset, train_size = train_size, shuffle = True, stratify=sim_diff_label, random_state=seed)
-
-    # create nx graph.
-    def get_graph(self, graph_json, graph_format='DFG'): 
-        hardware_graph = nx.DiGraph()
-        if graph_format == 'DFG':
-            edge_list_dict = graph_json['edge_index']
-            for src in edge_list_dict:
-                node_name = src
-                if '_graphrename' in src:
-                    node_name = src[:src.index('_graphrename')]
-                if '.' in node_name: 
-                    type_of_node = node_name.split('.')[-1]
-                elif '_' in node_name:
-                    type_of_node = node_name.split('_')[-1]
-                else:
-                    type_of_node = node_name.lower()
-                self.node_labels.add(type_of_node)
-                # hardware_graph.add_node(src, x=self.label2idx[type_of_node], label=type_of_node) 
-                hardware_graph.add_node(src, label=type_of_node) 
-                assert(type(edge_list_dict[src]) == list)
-                for neighbor in edge_list_dict[src]:
-                    edge_label = neighbor[0]
-                    dst = neighbor[1]
-                    hardware_graph.add_edge(src, dst)
-        else:
-            self.count = 0
-            for key in graph_json.keys():
-                self.add_node(hardware_graph, 'None', key, graph_json[key])
-        return hardware_graph
     
-    # helper function for getting networkx graph
-    def add_node(self, graph, parent, child, cur_dict):
-        index = self.count
-        graph.add_nodes_from([(index, {"label": str(child)})])
-        if parent != 'None':
-            graph.add_edge(parent, index)
-        self.count = self.count + 1
-        self.node_labels.add(child)
-        if type(cur_dict) == dict:
-            for key in cur_dict.keys():
-                self.add_node(graph, index, key, cur_dict[key])
-        elif type(cur_dict) == list:
-            for ele in cur_dict:
-                if type(ele) == dict:
-                    self.add_node(graph, index, 'None', ele)
-                elif ele is not None:
-                    graph.add_nodes_from([(self.count, {"label": str(ele)})])
-                    graph.add_edge(index, self.count)
-                    self.count = self.count + 1
-        else:
-            graph.add_nodes_from([(self.count, {"label": str(cur_dict)})])
-            graph.add_edge(index, self.count)
-            self.count = self.count + 1
-            self.node_labels.add(cur_dict)
-
 
 class DFGGenerator:
     def __init__(self):
@@ -546,8 +480,7 @@ class CFGGenerator:
         resolved_terms = dataflow_optimizer.getResolvedTerms()
         resolved_binddict = dataflow_optimizer.getResolvedBinddict()
         constlist = dataflow_optimizer.getConstlist()
-        cfg_graph_generator = PyControlflowAnalyzer("top", terms, binddict,
-                                    resolved_terms, resolved_binddict, constlist, fsm_vars)
+        cfg_graph_generator = PyControlflowAnalyzer("top", terms, binddict, resolved_terms, resolved_binddict, constlist, fsm_vars)
         fsms = cfg_graph_generator.getFiniteStateMachines()
 
         print("VIEWING FSM's")
@@ -601,6 +534,7 @@ class CFGGenerator:
             print('The graph is saved as topModule.json.\n')
         return None
 
+
 class HW2GRAPH:
     '''the main class of hw2graph.''' 
 
@@ -626,7 +560,8 @@ class HW2GRAPH:
 
         elif self.cfg.graph_type == "DFG":
             generator = DFGGenerator()
-            return_obj = generator.process(self.verilog_file)
+            nx_graph = generator.process(self.verilog_file)
+            return_obj = nx_graph
         
         else:
             pass
