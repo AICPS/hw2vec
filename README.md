@@ -5,9 +5,7 @@
 **HW2VEC** provides an automated pipeline in extracting a graph representation from a hardware design in various abstraction levels (RTL or gate-level netlist). 
 Besides, HW2VEC includes graph learning functional components for users to apply graph learning approaches to these hardware designs in non-Euclidean form according to their problem settings.
 In this readme, we will demonstrate how to use **HW2VEC** and provide the use-cases for two hardware security applications: Hardware Trojan Detection at RTL and Intellectual Property Piracy Detection.
-We hope that this tool can be helpful in researchers and practioners in hardware security research community. In this repo, we leverage [Pyverilog](https://github.com/PyHDI/Pyverilog) from PyHDI as part of our graph extraction pipeline.
-
-The architecture of hw2vec is shown as follows:
+We hope that this tool can be helpful in researchers and practioners in hardware security research community. In this repo, we leverage [Pyverilog](https://github.com/PyHDI/Pyverilog) from PyHDI as part of our graph extraction pipeline. The architecture of **HW2VEC** is shown as follows:
 ![](https://github.com/AICPS/hw2vec/blob/master/figures/archi.png?raw=true)
 
 # To Get Started
