@@ -21,8 +21,8 @@ def process_graphs(cfg):
     nx_graphs = []
     for verilog_path in glob("%s/**/topModule.v" % str(cfg.raw_dataset_path), recursive=True):
         print("Reading ", verilog_path)
-        hw2graph = HW2GRAPH(cfg, verilog_path)
-        hardware_graph = hw2graph.process() #TODO: not implemented for CFG.
+        hw2graph = HW2GRAPH(cfg)
+        hardware_graph = hw2graph.process(verilog_path) #TODO: not implemented for CFG.
         nx_graphs.append((hardware_graph, verilog_path)) 
     
     # step2: use data_proc to create the dataset.

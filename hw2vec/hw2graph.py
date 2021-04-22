@@ -436,21 +436,20 @@ class CFGGenerator:
 
 class HW2GRAPH:
     '''the main class of hw2graph.''' 
-    def __init__(self, cfg, verilog_file):
+    def __init__(self, cfg):
         self.cfg = cfg
-        self.verilog_file = verilog_file
         self.count = 0
 
-    def process(self):
+    def process(self, verilog_file):
         return_obj = None
         if self.cfg.graph_type == "CFG":
             generator = CFGGenerator()
-            return_obj = generator.process(self.verilog_file)
+            return_obj = generator.process(verilog_file)
             nx_graph = None
         
         elif self.cfg.graph_type == "AST":
             generator = ASTGenerator()
-            ast_dict = generator.process(self.verilog_file)
+            ast_dict = generator.process(verilog_file)
             ast_nx_graph = nx.DiGraph()
             for key in ast_dict.keys():
                 self.add_node(ast_nx_graph, 'None', key, ast_dict[key])
@@ -458,7 +457,7 @@ class HW2GRAPH:
 
         elif self.cfg.graph_type == "DFG":
             generator = DFGGenerator()
-            nx_graph = generator.process(self.verilog_file)
+            nx_graph = generator.process(verilog_file)
             return_obj = nx_graph
         
         else:
