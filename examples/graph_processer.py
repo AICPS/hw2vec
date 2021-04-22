@@ -49,13 +49,12 @@ def process_graphs(cfg):
             data = from_networkx(ast_nx_graph)
             data.folder_name = verilog_path
             data_proc.append_graph_data(data)
-            
+
         elif cfg.graph_type == "CFG":
             hw2graph = HW2GRAPH(verilog_path, "./", "top",  generate_cfg=True)
             hw2graph.generate_dot_file()
             hw2graph.export_cfg_graph(output='graph')
             hw2graph.cleanup_files()
-
 
     for hw_graph, verilog_path in nx_graphs:
         data_proc.normalize(hw_graph, normalize=cfg.NORMALIZATION, graph_format=cfg.graph_type)

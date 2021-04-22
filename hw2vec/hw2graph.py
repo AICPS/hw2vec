@@ -403,31 +403,29 @@ class HW2GRAPH:
         self.output_directory = output_directory
         self.verilog_file = verilog_file
 
-        #Options
         self.dfg_graph_generator = None
         self.cfg_graph_generator = None
         self.ast = None
         self.ARRAY_GEN = None
         self.CONST_DICTIONARY_GEN = None
         self.DICTIONARY_GEN = None 
-        self._create_graphgen_obj(verilog_file, top_module, generate_cfg, generate_ast)
+        self.process(verilog_file, top_module, generate_cfg, generate_ast)
         self.count = 0
 
     #helper fcn to __init__, create a graph object used to generate json
-    def _create_graphgen_obj(self, verilog_file, top_module, generate_cfg, generate_ast):
-        dataflow_analyzer = PyDataflowAnalyzer(verilog_file, top_module)
-        dataflow_analyzer.generate()
-        binddict = dataflow_analyzer.getBinddict()
-        terms = dataflow_analyzer.getTerms()
-        
-        dataflow_optimizer = PyDataflowOptimizer(terms, binddict)
-        dataflow_optimizer.resolveConstant()
-        resolved_terms = dataflow_optimizer.getResolvedTerms()
-        resolved_binddict = dataflow_optimizer.getResolvedBinddict()
-        constlist = dataflow_optimizer.getConstlist()
-
+    def process(self, verilog_file, top_module, generate_cfg, generate_ast):
         if generate_cfg: 
             fsm_vars = tuple(['fsm', 'state', 'count', 'cnt', 'step', 'mode'])
+            dataflow_analyzer = PyDataflowAnalyzer(verilog_file, top_module)
+            dataflow_analyzer.generate()
+            binddict = dataflow_analyzer.getBinddict()
+            terms = dataflow_analyzer.getTerms()
+            
+            dataflow_optimizer = PyDataflowOptimizer(terms, binddict)
+            dataflow_optimizer.resolveConstant()
+            resolved_terms = dataflow_optimizer.getResolvedTerms()
+            resolved_binddict = dataflow_optimizer.getResolvedBinddict()
+            constlist = dataflow_optimizer.getConstlist()
             self.cfg_graph_generator = PyControlflowAnalyzer("top", terms, binddict,
                                         resolved_terms, resolved_binddict, constlist, fsm_vars)
         elif generate_ast:
@@ -441,10 +439,19 @@ class HW2GRAPH:
             "SensList","Sens","Substitution","BlockingSubstitution","NonblockingSubstitution","IfStatement","Block",
             "Initial","Plus","Output","Partselect","Port","InstanceList","Instance","PortArg","Pointer","Concat", "Parameter", "Parameter",  "SystemCall", "CaseStatement", "Case", "Function", "CasezStatement", "FunctionCall", "Dimensions", "Length", "LConcat", "Concat", "SingleStatement", "Repeat", "Integer"]
             self.CONST_DICTIONARY_GEN = ["IntConst","FloatConst","StringConst","Identifier"]
-
             self.ast, _ = parse([verilog_file])
 
         else: #generate dfg
+            dataflow_analyzer = PyDataflowAnalyzer(verilog_file, top_module)
+            dataflow_analyzer.generate()
+            binddict = dataflow_analyzer.getBinddict()
+            terms = dataflow_analyzer.getTerms()
+            
+            dataflow_optimizer = PyDataflowOptimizer(terms, binddict)
+            dataflow_optimizer.resolveConstant()
+            resolved_terms = dataflow_optimizer.getResolvedTerms()
+            resolved_binddict = dataflow_optimizer.getResolvedBinddict()
+            constlist = dataflow_optimizer.getConstlist()
             self.dfg_graph_generator = PyGraphGenerator(top_module, terms, binddict, resolved_terms, 
                                 resolved_binddict, constlist, 
                                 f'{self.output_directory}seperate_modules.pdf')
