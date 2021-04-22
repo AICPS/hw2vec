@@ -146,7 +146,14 @@ global_type2idx_AST = {
     'length':62,
     'lconcat':63,
     'uminus':64,
-    'greatereq':65
+    'greatereq':65,
+    'initial':66,
+    'uor':67,
+    'casexstatement':68,
+    'forstatement':69,
+    'localparam':70,
+    'eventstatement':71,
+    'mod':72
 }
 
 class JsonGraphParser:
@@ -441,7 +448,10 @@ class VerilogParser:
             "Minus","Sll","Srl","Sla","Sra","LessThan","GreaterThan","LessEq","GreaterEq","Eq","Eql","NotEq","Eql","NotEql",
             "And","Xor","Xnor","Or","Land","Lor","Cond","Assign","Always","AlwaysFF","AlwaysComb","AlwaysLatch",
             "SensList","Sens","Substitution","BlockingSubstitution","NonblockingSubstitution","IfStatement","Block",
-            "Initial","Plus","Output","Partselect","Port","InstanceList","Instance","PortArg","Pointer","Concat", "Parameter", "Parameter",  "SystemCall", "CaseStatement", "Case", "Function", "CasezStatement", "FunctionCall", "Dimensions", "Length", "LConcat", "Concat", "SingleStatement", "Repeat", "Integer"]
+            "Initial","Plus","Output","Partselect","Port","InstanceList","Instance","PortArg","Pointer","Concat", "Parameter", 
+            "SystemCall", "CaseStatement", "Case", "Function", "CasezStatement", "FunctionCall", "Dimensions", "Length", 
+            "LConcat", "Concat", "SingleStatement", "Repeat", "Integer", "CasexStatement", "ForStatement", "Localparam",
+            "EventStatement", "DelayStatement"]
             self.CONST_DICTIONARY_GEN = ["IntConst","FloatConst","StringConst","Identifier"]
 
             self.ast, _ = parse([verilog_file])
