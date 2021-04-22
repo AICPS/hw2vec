@@ -153,7 +153,12 @@ global_type2idx_AST = {
     'forstatement':69,
     'localparam':70,
     'eventstatement':71,
-    'mod':72
+    'mod':72,
+    'delaystatement':73,
+    'floatconst':74,
+    'task':75,
+    'paramarg':76
+
 }
 
 class DataProcessor:
@@ -474,7 +479,7 @@ class ASTGenerator:
              "Initial","Plus","Output","Partselect","Port","InstanceList","Instance","PortArg","Pointer","Concat", "Parameter", 
              "SystemCall", "CaseStatement", "Case", "Function", "CasezStatement", "FunctionCall", "Dimensions", "Length", 
              "LConcat", "Concat", "SingleStatement", "Repeat", "Integer", "CasexStatement", "ForStatement", "Localparam",
-             "EventStatement", "DelayStatement"]
+             "EventStatement", "DelayStatement", "Task", "ParamArg", "Inout"]
         self.CONST_DICTIONARY_GEN = \
             ["IntConst","FloatConst","StringConst","Identifier"]
 
@@ -593,12 +598,12 @@ class HW2GRAPH:
             nx_graph = None
         
         elif self.cfg.graph_type == "AST":
-            generator = DFGGenerator()
+            generator = ASTGenerator()
             ast_dict = generator.process(self.verilog_file)
             ast_nx_graph = nx.DiGraph()
             for key in ast_dict.keys():
                 self.add_node(ast_nx_graph, 'None', key, ast_dict[key])
-            nx_graph = ast_nx_graph
+            return_obj = ast_nx_graph
 
         elif self.cfg.graph_type == "DFG":
             generator = DFGGenerator()
@@ -613,7 +618,7 @@ class HW2GRAPH:
             except FileNotFoundError:
                 pass
 
-        return return_obj       
+        return return_obj
 
     def add_node(self, graph, parent, child, cur_dict):
         index = self.count
