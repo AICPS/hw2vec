@@ -18,7 +18,6 @@ sys.path.append(os.path.dirname(sys.path[0]))
 
 from json import dumps
 from collections import defaultdict
-from pyverilog.dataflow.dataflow_analyzer import VerilogDataflowAnalyzer as PyDataflowAnalyzer
 from pyverilog.dataflow.optimizer import VerilogDataflowOptimizer as PyDataflowOptimizer
 from pyverilog.dataflow.graphgen import VerilogGraphGenerator as PyGraphGenerator
 from pyverilog.controlflow.controlflow_analyzer import VerilogControlflowAnalyzer as PyControlflowAnalyzer
@@ -28,6 +27,78 @@ from glob import glob
 from hw2vec.graph2vec.trainers import *
 from hw2vec.utilities import isInt
 
+from pyverilog.vparser.parser import VerilogCodeParser
+from pyverilog.dataflow.modulevisitor import ModuleVisitor
+from pyverilog.dataflow.signalvisitor import SignalVisitor
+from pyverilog.dataflow.bindvisitor import BindVisitor
+
+
+class VerilogDataflowAnalyzer(VerilogCodeParser):
+    def __init__(self, filelist, topmodule='TOP', noreorder=False, nobind=False,
+                 preprocess_include=None,
+                 preprocess_define=None):
+        self.topmodule = topmodule
+        self.terms = {}
+        self.binddict = {}
+        self.frametable = None
+        files = filelist if isinstance(filelist, tuple) or isinstance(
+            filelist, list) else [filelist]
+        VerilogCodeParser.__init__(self, files,
+                                   preprocess_include=preprocess_include,
+                                   preprocess_define=preprocess_define, debug=False)
+        self.noreorder = noreorder
+        self.nobind = nobind
+
+    def generate(self):
+        ast = self.parse()
+
+        module_visitor = ModuleVisitor()
+        module_visitor.visit(ast)
+        modulenames = module_visitor.get_modulenames()
+        moduleinfotable = module_visitor.get_moduleinfotable()
+
+        signal_visitor = SignalVisitor(moduleinfotable, self.topmodule)
+        signal_visitor.start_visit()
+        frametable = signal_visitor.getFrameTable()
+
+        if self.nobind:
+            self.frametable = frametable
+            return
+
+        bind_visitor = BindVisitor(moduleinfotable, self.topmodule, frametable,
+                                   noreorder=self.noreorder)
+
+        bind_visitor.start_visit()
+        dataflow = bind_visitor.getDataflows()
+
+        self.frametable = bind_visitor.getFrameTable()
+        self.terms = dataflow.getTerms()
+        self.binddict = dataflow.getBinddict()
+
+    def getFrameTable(self):
+        return self.frametable
+
+    # -------------------------------------------------------------------------
+    def getInstances(self):
+        if self.frametable is None:
+            return ()
+        return self.frametable.getAllInstances()
+
+    def getSignals(self):
+        if self.frametable is None:
+            return ()
+        return self.frametable.getAllSignals()
+
+    def getConsts(self):
+        if self.frametable is None:
+            return ()
+        return self.frametable.getAllConsts()
+
+    def getTerms(self):
+        return self.terms
+
+    def getBinddict(self):
+        return self.binddict
 
 class DataProcessor:
     def __init__(self, cfg):
@@ -209,7 +280,7 @@ class DFGGenerator:
         pass
 
     def process(self, verilog_file):
-        dataflow_analyzer = PyDataflowAnalyzer(verilog_file, "top")
+        dataflow_analyzer = VerilogDataflowAnalyzer(verilog_file, "top")
         dataflow_analyzer.generate()
         binddict = dataflow_analyzer.getBinddict()
         terms = dataflow_analyzer.getTerms()
