@@ -436,7 +436,6 @@ class CFGGenerator:
 
 class HW2GRAPH:
     '''the main class of hw2graph.''' 
-
     def __init__(self, cfg, verilog_file):
         self.cfg = cfg
         self.verilog_file = verilog_file
@@ -497,12 +496,9 @@ class HW2GRAPH:
 
 
 class PreprocessVerilog:
-    '''
-        This class comprise the preprocessing functions for Verilog files in RTL (Register Transfer Level) and GLN (Gate-Level Netlist).
-    '''
-    def __init__(self, code_language="verilog"):
-        if code_language == "verilog":
-            pass
+    '''This class comprise the preprocessing functions for Verilog files in RTL (Register Transfer Level) and GLN (Gate-Level Netlist).'''
+    def __init__(self):
+        pass
 
     def remove_comments(input_path, target_path):
         # read the file into a list of lines
