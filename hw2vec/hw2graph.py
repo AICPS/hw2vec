@@ -105,16 +105,6 @@ class DataProcessor:
         self.graph_pairs_train, self.graph_pairs_test = self.split_dataset(ratio=self.cfg.ratio, seed=self.cfg.seed, dataset=graph_pairs)
         return self.graph_pairs_train, self.graph_pairs_test
 
-    def do_pickle_dataset(self):
-        with open(self.cfg.pkl_path, 'wb') as f:
-            if self.cfg.debug and len(self.graph_pairs) is 0:
-                if 'train' in self.graphs and 'test' in self.graphs:
-                    self.graphs['train'] = self.graphs['train'][:100]
-                    self.graphs['test'] = self.graphs['test'][:100] 
-                elif 'all' in self.graphs:
-                    self.graphs['all'] = self.graphs['all'][:200]   
-            pkl.dump(self, f)
-
     def normalize(self, nx_graph, graph_format="DFG", normalize="keep_variable"):
         ''' 
             Normalization is a step to replace the label of a node to a value.
@@ -153,6 +143,7 @@ class DataProcessor:
                 
                 node[1]['x'] = self.global_type2idx_DFG[type_of_node]
             self.num_node_labels = len(self.global_type2idx_DFG)
+        
         else: # normalize for AST
             out_degrees = [val for (node, val) in nx_graph.out_degree()]
             for idx, node in enumerate(nx_graph.nodes(data=True)):
@@ -340,7 +331,7 @@ class ASTGenerator:
         #when generating AST, determines which substructure (dictionary/array) to generate
         #before converting the json-like structure into actual json
         
-        self.ast, _ = parse([verilog_file])
+        self.ast, _ = parse([verilog_file], debug=False)
         ast_dict = self._generate_ast_dict(self.ast)
         return ast_dict
 
