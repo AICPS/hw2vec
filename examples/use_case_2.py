@@ -10,9 +10,8 @@ TROJAN = 1
 NON_TROJAN = 0
 
 if __name__ == "__main__":
-    cfg = Config("./example_gnn4tj.yaml")
+    cfg = Config(sys.argv[1:])
     app = GNN4TJ(cfg)
-    # dataset = app.parse_from_json()
 
     dataParser = DataProcessor(cfg)
 
@@ -28,4 +27,4 @@ if __name__ == "__main__":
     app.init_trainer(dataParser)
     app.train()
     app.evaluate()
-    # app.visualize_embeddings("./")
+    app.visualize_embeddings("./")

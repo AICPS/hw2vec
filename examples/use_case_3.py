@@ -11,10 +11,8 @@ SIMILAR = 1
 DISSIMILAR = -1
 
 if __name__ == "__main__":
-    #cfg = Config("./example_gnn4ip.yaml")
     cfg = Config(sys.argv[1:])
     app = GNN4IP(cfg)
-    # dataset = app.parse_from_json()
 
 
     with open(cfg.data_pkl_path, 'rb') as f:
@@ -22,8 +20,6 @@ if __name__ == "__main__":
 
     for data in dataParser.graphs['all']:
         folder_name = data.folder_name
-        #class_name = folder_name[folder_name.index('/Verilog_temp/')+14:]
-        #class_name = class_name[:class_name.index('/')]
         class_name = folder_name.split("/")[-3]
         data.class_name = class_name
     
@@ -32,12 +28,9 @@ if __name__ == "__main__":
             dataParser.append_graph_pair((idx_graph_a, idx_graph_b, SIMILAR))
         else:
             dataParser.append_graph_pair((idx_graph_a, idx_graph_b, DISSIMILAR))
-        # if len(dataParser.graph_pairs) == 2:
-        #     break
  
     app.init_trainer(dataParser)
     model_path = "./AST_IP_RTL_model/"
-    #model_path = "./AST_IP_NetList_model/"
     if Path(model_path+"model").exists():
         app.trainer.load_saved_model(model_path+"model")
     else:

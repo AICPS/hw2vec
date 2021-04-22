@@ -391,6 +391,7 @@ class HW2GRAPH:
         self.cfg = cfg
         self.count = 0
 
+    @profilegraph
     def process(self, verilog_file):
         if self.cfg.graph_type == "CFG":
             generator = CFGGenerator()
@@ -417,6 +418,8 @@ class HW2GRAPH:
             except FileNotFoundError:
                 pass
 
+        if nx_graph != None:
+            nx_graph.name = verilog_file.split("/")[-2]
         return nx_graph
 
     def add_node(self, graph, parent, child, cur_dict):
