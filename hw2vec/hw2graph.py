@@ -432,6 +432,7 @@ class HW2GRAPH:
             constlist = dataflow_optimizer.getConstlist()
             self.cfg_graph_generator = PyControlflowAnalyzer("top", terms, binddict,
                                         resolved_terms, resolved_binddict, constlist, fsm_vars)
+        
         elif self.cfg.graph_type == "AST":
             #when generating AST, determines which substructure (dictionary/array) to generate
             #before converting the json-like structure into actual json
@@ -452,7 +453,7 @@ class HW2GRAPH:
             return ast_dict
 
 
-        elif self.cfg.graph_type == "DFG": #generate dfg
+        elif self.cfg.graph_type == "DFG":
             dataflow_analyzer = PyDataflowAnalyzer(self.verilog_file, "top")
             dataflow_analyzer.generate()
             binddict = dataflow_analyzer.getBinddict()
@@ -494,15 +495,6 @@ class HW2GRAPH:
         else:
             raise Exception(f"Error. Token name {class_name} is invalid or has not yet been supported")
         return structure
-
-    #generates abstract syntax tree for conversion (AST helper)
-    def export_ast(self, nested_dictionary):
-        print(f'Saving abstract syntax tree as json')
-        #print(f'{self.output_directory}/ast.json')
-        with open(f'{self.output_directory}/ast.json', 'w') as f:
-            f.write(dumps(nested_dictionary, indent=2))
-        print('List of root nodes saved in ast.json.\n')
-        f.close()
 
     #generates dot file (CFG helper)
     def generate_dot_file(self, graph_format='png',no_label=False):
@@ -596,11 +588,6 @@ class HW2GRAPH:
             print(f'\rProgress : {num} / {len(signals)}', end='', flush=True)
         print('\nThe subgraphs are generated.\n')
 
-        if draw_graph:
-            print(f'Saving subgraphs with {len(self.dfg_graph_generator.graph.nodes())} nodes as a pdf...')
-            self.dfg_graph_generator.draw()
-            print('The subgraphs are saved.\n')
-
     #merge the graphs
     def merge_graphs(self, draw_graph=False):
         label_to_node = dict()
@@ -653,48 +640,6 @@ class HW2GRAPH:
                     edgeLabel = self.dfg_graph_generator.graph.get_edge(node, child).attr['label']
                     jsondict[str(node)].append((edgeLabel, str(child)))
             return jsondict
-                    
-    #export the dfg graphs
-    def export_dfg_graph(self, output='graph'):
-        if (output=='roots'):
-            root_nodes = [node for node in self.dfg_graph_generator.graph.nodes() if self.dfg_graph_generator.graph.in_degree(node) == 0]
-            print(f'Saving {len(root_nodes)} root nodes as a json...')
-            with open(f'{self.output_directory}root_nodes.json', 'w') as f:
-                f.write(dumps(root_nodes, indent=4))
-            print('List of root nodes saved in root_nodes.json.\n')
-            f.close()
-            
-        elif (output=='nodes'):
-            all_nodes = (self.dfg_graph_generator.graph.nodes())
-            print(f'Saving all {len(all_nodes)} nodes as a json...')
-            with open(f'{self.output_directory}all_nodes.json', 'w') as f:
-                f.write(dumps(all_nodes, indent=4))
-            print('List of nodes saved in all_nodes.json.\n')
-            f.close()
-            
-        elif (output=='edges'):
-            all_edges = list()
-            for edge in self.dfg_graph_generator.graph.edges():
-                all_edges.append((edge[0], edge[1], edge.attr['label']))
-            print(f'Saving all {len(all_edges)} edges as a json...')
-            with open(f'{self.output_directory}all_edges.json', 'w') as f:
-                f.write(dumps(all_edges, indent=4))
-            print('List of edges is saved in all_edges.json.\n')
-            f.close()
-            
-        elif (output=='graph'):
-            jsondict = {}
-            for node in self.dfg_graph_generator.graph.nodes():
-                jsondict[str(node)] = list()
-                for child in self.dfg_graph_generator.graph.successors(node):
-                    edgeLabel = self.dfg_graph_generator.graph.get_edge(node, child).attr['label']
-                    jsondict[str(node)].append((edgeLabel, str(child)))
-            print(f'Saving graph dictionary as a json...')
-            f = open(f'{self.output_directory}topModule.json', 'w')
-            jsonstr = dumps(jsondict, indent=4)
-            f.write(jsonstr)
-            f.close()
-            print('The graph is saved as topModule.json.\n')
 
     #to be refactored
     def graph_input_dependencies(self,draw_graph=False):

@@ -21,18 +21,15 @@ def process_graphs(cfg):
 
     nx_graphs = []
     for verilog_path in glob("%s/**/topModule.v" % str(cfg.raw_dataset_path), recursive=True):
-        print(verilog_path)
+        print("Reading ", verilog_path)
+        hw2graph = HW2GRAPH(cfg, verilog_path)
         
         if cfg.graph_type == "DFG":
-            print("Reading ", verilog_path)
-            hw2graph = HW2GRAPH(cfg, verilog_path)
             graph_json = hw2graph.process()
             hardware_graph = data_proc.get_graph(graph_json)
             nx_graphs.append((hardware_graph, verilog_path))
 
         elif cfg.graph_type == "AST":
-            print("Reading ", verilog_path)
-            hw2graph = HW2GRAPH(cfg, verilog_path)
             ast_dict = hw2graph.process()
             ast_nx_graph = nx.DiGraph()
             for key in ast_dict.keys():
@@ -43,7 +40,6 @@ def process_graphs(cfg):
             data_proc.append_graph_data(data)
 
         elif cfg.graph_type == "CFG":
-            hw2graph = HW2GRAPH(cfg, verilog_path)
             hw2graph.process()
             hw2graph.generate_dot_file()
             hw2graph.export_cfg_graph(output='graph')
