@@ -30,11 +30,8 @@ def process_graphs(cfg):
             nx_graphs.append((hardware_graph, verilog_path))
 
         elif cfg.graph_type == "AST":
-            nx_graph = hw2graph.process()
-            data_proc.normalize(nx_graph, normalize=cfg.NORMALIZATION, graph_format=cfg.graph_type)
-            data = from_networkx(nx_graph)
-            data.folder_name = verilog_path
-            data_proc.append_graph_data(data)
+            hardware_graph = hw2graph.process()
+            nx_graphs.append((hardware_graph, verilog_path))
 
         elif cfg.graph_type == "CFG":
             hw2graph.process()
