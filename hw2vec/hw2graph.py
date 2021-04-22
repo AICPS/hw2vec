@@ -392,7 +392,6 @@ class HW2GRAPH:
         self.count = 0
 
     def process(self, verilog_file):
-        return_obj = None
         if self.cfg.graph_type == "CFG":
             generator = CFGGenerator()
             return_obj = generator.process(verilog_file)
@@ -401,15 +400,13 @@ class HW2GRAPH:
         elif self.cfg.graph_type == "AST":
             generator = ASTGenerator()
             ast_dict = generator.process(verilog_file)
-            ast_nx_graph = nx.DiGraph()
+            nx_graph = nx.DiGraph()
             for key in ast_dict.keys():
-                self.add_node(ast_nx_graph, 'None', key, ast_dict[key])
-            return_obj = ast_nx_graph
+                self.add_node(nx_graph, 'None', key, ast_dict[key])
 
         elif self.cfg.graph_type == "DFG":
             generator = DFGGenerator()
             nx_graph = generator.process(verilog_file)
-            return_obj = nx_graph
         
         else:
             pass
@@ -420,7 +417,7 @@ class HW2GRAPH:
             except FileNotFoundError:
                 pass
 
-        return return_obj
+        return nx_graph
 
     def add_node(self, graph, parent, child, cur_dict):
         index = self.count
