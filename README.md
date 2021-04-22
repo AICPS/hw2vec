@@ -40,7 +40,7 @@ This set of commands assumes you to have cuda10.1 in your local and you are usin
 
 # Use Cases Examples
 
-## Use Case 1: Transforming a hardwaer design to a graph then to a graph embedding
+## Use Case 1: Transforming a hardware design to a graph then to a graph embedding
 To be filled.
 
 ## Use Case 2: Hardware Trojan Detection
