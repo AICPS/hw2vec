@@ -431,9 +431,9 @@ class HW2GRAPH:
             resolved_terms = dataflow_optimizer.getResolvedTerms()
             resolved_binddict = dataflow_optimizer.getResolvedBinddict()
             constlist = dataflow_optimizer.getConstlist()
-            self.cfg_graph_generator = PyControlflowAnalyzer("top", terms, binddict,
+            cfg_graph_generator = PyControlflowAnalyzer("top", terms, binddict,
                                         resolved_terms, resolved_binddict, constlist, fsm_vars)
-            fsms = self.cfg_graph_generator.getFiniteStateMachines()
+            fsms = cfg_graph_generator.getFiniteStateMachines()
 
             print("VIEWING FSM's")
             print("LENGTH OF FSM: ", len(fsms))
@@ -502,7 +502,6 @@ class HW2GRAPH:
             self.CONST_DICTIONARY_GEN = ["IntConst","FloatConst","StringConst","Identifier"]
             self.ast, _ = parse([self.verilog_file])
             ast_dict = self._generate_ast_dict(self.ast)
-            self.cleanup_files()
             return_obj = ast_dict
 
 
@@ -566,7 +565,6 @@ class HW2GRAPH:
                     jsondict[str(node)].append((edgeLabel, str(child)))
             
             graph_json['edge_index'] = jsondict
-            self.cleanup_files()
             return_obj = graph_json
 
         for file in ['file.dot','parser.out','parsetab.py','top_state.png']:
