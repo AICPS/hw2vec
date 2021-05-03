@@ -57,8 +57,7 @@ class BaseTrainer:
         else:
             raise ValueError("Model load path not exist %s" % model_path)
 
-    def save_model(self, path):
-        saved_path = Path(path)
+    def save_model(self, saved_path):
         saved_path.mkdir(parents=True, exist_ok=True)
         torch.save(self.model.state_dict(), str(saved_path / "model"))
         save_path_config = saved_path / "model config.txt"
@@ -85,6 +84,20 @@ class BaseTrainer:
 
                     vectors_file.write("\t".join([str(x) for x in embed_x.detach().cpu().numpy()[0]]) + "\n")
                     metadata_file.write(hardware_name+"\n")
+
+    #TODO; for use case 1, not completed. must adjust app.py
+    def get_embedding(self, data_loader):
+        with torch.no_grad():
+            self.model.eval()
+
+            data = next(iter(data_loader))
+            data.to(self.config.device)
+            embed_x, _ = self.model.forward(data.x, data.edge_index, data.batch)
+
+            if self.task == "TJ":
+                embed_x = F.log_softmax(embed_x, dim=1)
+
+        return embed_x
 
     def metric_calc(self, loss, labels, preds, header):
         acc = accuracy_score(labels, preds)
@@ -194,7 +207,7 @@ class PairwiseGraphTrainer(BaseTrainer):
         self.metric_calc(test_loss,  test_labels,  test_preds,  header="test ")
 
         if self.min_test_loss >= test_loss:
-            self.save_model("./IP Best result")
+            self.save_model(self.config.model_path)
 
         # on final evaluate call
         if(epoch_idx==self.config.epochs):
@@ -295,7 +308,7 @@ class GraphTrainer(BaseTrainer):
         self.metric_calc(test_loss,  test_labels,  test_preds,  header="test ")
 
         if self.min_test_loss >= test_loss:
-            self.save_model("./TJ Best result")
+            self.save_model(self.config.model_path)
             #TODO: store the attn_weights right here. 
 
         # on final evaluate call

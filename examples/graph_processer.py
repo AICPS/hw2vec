@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import pickle
 from time import time
 
+#TODO; move to utilities
 def process_graphs(cfg):
     # step1: process graph with hw2graph     
     nx_graphs = []

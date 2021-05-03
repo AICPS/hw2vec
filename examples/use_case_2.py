@@ -9,6 +9,9 @@ import torch
 TROJAN = 1
 NON_TROJAN = 0
 
+def use_case_2():
+    pass
+
 if __name__ == "__main__":
     cfg = Config(sys.argv[1:])
     app = GNN4TJ(cfg)

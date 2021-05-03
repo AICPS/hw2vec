@@ -71,7 +71,7 @@ class DataProcessor:
         self.global_type2idx_DFG_list = ['concat','input','unand','unor','uxor','signal','uand','ulnot','uxnor','numeric','partselect',
                                          'and','unot','branch','or','uor','output','plus','eq','minus','xor','lor','noteq','land',
                                          'greatereq','greaterthan','sll','lessthan','times','srl','pointer','mod','divide','sra','sla',
-                                         'xnor']
+                                         'xnor', 'lesseq']
 
         self.global_type2idx_DFG = {v:k for k, v in enumerate(self.global_type2idx_DFG_list)}
 
@@ -228,7 +228,6 @@ class DFGGenerator:
             dfg_graph_generator.generate(signal, walk=False)
             # print(f'\rProgress : {num} / {len(signals)}', end='', flush=True)
 
-        # import pdb; pdb.set_trace()
         label_to_node = dict()
         for node in dfg_graph_generator.graph.nodes():
             if dfg_graph_generator.graph.in_degree(node) == 0:
@@ -447,50 +446,73 @@ class HW2GRAPH:
 
 class PreprocessVerilog:
     '''This class comprise the preprocessing functions for Verilog files in RTL (Register Transfer Level) and GLN (Gate-Level Netlist).'''
-    def __init__(self):
-        pass
+    def __init__(self, input_path, target_path):
+        self.input_path = input_path
+        self.target_path = target_path
 
-    def remove_comments(input_path, target_path):
+    def flatten(self):
+        with open(self.target_path, "w") as outfile:
+            print(self.input_path, glob(fr'{self.input_path}/*.v'))
+            for verilog_file in glob(fr'{self.input_path}/*.v'):
+                if verilog_file.find("topModule.v") != -1:
+                    continue
+                with open(verilog_file, "r") as infile:
+                    outfile.write(infile.read())       
+
+    def remove_comments(self):
         # read the file into a list of lines
-        with open(input_path,'r') as file_in:
+        with open(self.target_path,'r') as file_in:
             lines = file_in.read().split("\n")
     
-        file_out = open(target_path, 'w')
-        modules_dic={}
-        for i,line in enumerate(lines):
-            idx = line.find('/')
-            file_out.write(line[0:idx]+'\n')
-                    
-        file_in.close()
-        file_out.close()
+        with open(self.target_path, "w") as file_out:
+            for line in lines:
+                idx = line.find('//')
+                if idx == 0:
+                    continue
+                elif idx == -1:
+                    file_out.write(line+'\n')
+                else:
+                    file_out.write(line[:idx]+'\n')
         
-    def rename_topModule(input_path, target_path):
+    def remove_underscores(self):
+        with open(self.target_path, 'r') as file_in:
+            lines = file_in.read().replace('_', '')
+
+        with open(self.target_path, "w") as file_out:
+            file_out.write(lines)
+
+    def rename_topModule(self):
         # read the file into a list of lines
-        with open(input_path,'r') as file_in:
+        with open(self.target_path,'r') as file_in:
             lines = file_in.read().split("\n")
     
         modules_dic={}
         # iterate over lines, and list the module names.
-        for i,line in enumerate(lines):
+        for line in lines:
             words = line.split()
-            for j,word in enumerate(words):
+            for word_idx, word in enumerate(words):
                 if word == 'module':
-                    module_name = words[j+1]
+                    module_name = words[word_idx+1]
+
+                    # if no space before '('
                     if '(' in module_name:
                         idx = module_name.find('(')
                         module_name = module_name[:idx]
                         modules_dic[module_name]= 1
+
+                    # if space before '('
                     else:
                         modules_dic[module_name]= 0
                     
         # iterate over file and count the occurance of each module name.                       
-        for i,line in enumerate(lines):
+        for line in lines:
             words = line.split()
-            for j,word in enumerate(words):
-                for m in modules_dic:
-                    if word == m:
-                        modules_dic[m] = modules_dic[m] + 1
-        print("a dictionary of module names and the number of their occurance: ", modules_dic)
+            for word in words:
+                if word in modules_dic.keys():
+                    modules_dic[word] += 1
+
+        import pprint
+        pprint.pprint(modules_dic)
         
         # find the name of top module
         for m in modules_dic:
@@ -499,30 +521,6 @@ class PreprocessVerilog:
                 break   
         
         # rename the top module to 'top'
-        file_out = open(target_path, 'w')
-        for line in lines:
-            file_out.write(line.replace(top_module, 'top')+'\n')
-        file_in.close()
-        file_out.close()
-            
-    def flatten(input_path, target_path):
-        with open(target_path+"/topModule.v", "wt") as outfile:
-            print(input_path, glob(fr'{input_path}/*.v'))
-            for verilog_file in glob(fr'{input_path}/*.v'):
-                with open(verilog_file, "rt") as infile:
-                    outfile.write(infile.read())       
-                    
-    def remove_underscores(self, input_file):
-        f = open(input_file, 'r')
-        s = f.read().replace('_', '')
-        f.close()
-        f = open(filename, 'w')
-        f.write(s)
-        f.close()
-
-    def flatten(self, input_path, output_path, top_module):
-        output_path = os.path.dirname(os.path.abspath(__file__))
-        with open(output_path+"/topModule.v", "wt") as outfile:
-            for verilog_file in glob(fr'{input_path}/*.v'):
-                with open(verilog_file, "rt") as infile:
-                    outfile.write(infile.read().replace(top_module, 'top'))
+        with open(self.target_path, "w") as file_out:
+            for line in lines:
+                file_out.write(line.replace(top_module, 'top')+'\n')        
