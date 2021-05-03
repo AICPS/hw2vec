@@ -2,20 +2,20 @@
 [![Build Status](https://travis-ci.com/louisccc/hw2vec.svg?branch=master)](https://travis-ci.com/github/louisccc/hw2vec) [![GitHub license](https://img.shields.io/github/license/Sujit-O/pykg2vec.svg)](https://github.com/Sujit-O/pykg2vec/blob/master/LICENSE) ![PyPI version](https://badge.fury.io/py/hw2vec.svg)
 
 **HW2VEC** is an open-source graph learning tool for hardware security applications.
-**HW2VEC** provides an automated pipeline in extracting a graph representation from a hardware design in various abstraction levels (RTL or gate-level netlist).
+**HW2VEC** provides an automated pipeline to extract a graph representation (abstract syntax tree or data flow graph) from a hardware design in various abstraction levels (RTL or gate-level netlist).
 Besides, **HW2VEC** includes graph learning functional components for users to apply graph learning approaches to these hardware designs in non-Euclidean form according to their problem settings.
-In this readme, we demonstrate how to use **HW2VEC** and provide the use-cases for two hardware security applications: Hardware Trojan Detection and IP Piracy Detection.
-We hope that **HW2VEC** can be helpful in researchers and practioners in hardware security research community. In this repo, we integrate [Pyverilog](https://github.com/PyHDI/Pyverilog) as part of our graph extraction pipeline (**HW2GRAPH**) and [Pytorch-Geometric](https://github.com/rusty1s/pytorch_geometric) into our graph learning pipeline (**GRAPH2VEC**). The architecture of **HW2VEC** is shown as follows:
+In this readme, we demonstrate how to use **HW2VEC** and provide its use-cases for two hardware security applications: Hardware Trojan Detection and IP Piracy Detection.
+We hope that **HW2VEC** can be helpful for researchers and practitioners in hardware security research community. In this repo, we integrate [Pyverilog](https://github.com/PyHDI/Pyverilog) as part of our graph extraction pipeline (**HW2GRAPH**) and [Pytorch-Geometric](https://github.com/rusty1s/pytorch_geometric) into our graph learning pipeline (**GRAPH2VEC**). The architecture of **HW2VEC** is shown as follows:
 ![](https://github.com/AICPS/hw2vec/blob/master/figures/archi.png?raw=true)
 
 # To Get Started
-We recommend our potential users to use [Anaconda](https://www.anaconda.com/) as the virtual environment. The requirments for hw2vec is as follows,
+We recommend our users to use [Anaconda](https://www.anaconda.com/) as the virtual environment. The environment requirments for hw2vec is as follows,
 - python >= 3.6 
 - torch == 1.6.0
 - torch_teometric == 1.6.1
 - pygraphviz
 
-You can install hw2vec from pypi or cloning our repo. Here we provide one recommended command sequence, 
+You can either install hw2vec from pypi or clone our repo. Here we provide one recommended command sequence, 
 ```sh
 $ conda create --name hw2vec python=3.6
 $ conda activate hw2vec
@@ -41,15 +41,23 @@ This set of commands assumes you to have cuda10.1 in your local and you are usin
 # Use Cases Examples
 
 ## Use Case 1: Transforming a hardware design to a graph then to a graph embedding
-To be filled.
+In this use case, we demonstrate how to use HW2VEC to transform a hardware design into a graph and then into an embedding. In the sample script examples/use_case_1.py, first HW2GRAPH uses preprocessing, graph generation and post-processing modules to convert each hardware design _p_ into the corresponding graph _g_. Then _g_ is fed to GRAPH2VEC with the uses of Data Processing to generate _X_ and _A_. _X_ and _A_ are processed through Graph Convolution layers, Graph Pooling layers, and Graph Readout operations to generate the graph embedding _h<sub>g</sub>_. This  resulting _h<sub>g</sub>_ can be further inspected with the utilities of Evaluator.
 
-## Use Case 2: Hardware Trojan Detection
-The sample code for this use case is examples/gnn4tj.py. The related research paper is [Graph Neural Networks for Hardware Trojan Detection at Register Transfer Level](https://drive.google.com/file/d/1XFgWWO4v2oA-lmkwleG0h03znAvmJV5i/view). The dataset used in this paper is obtained from a famous trojan [benchmark](https://www.trust-hub.org/benchmarks/trojan). The converted hardware DFG dataset can be downloaded from [here](http://ieee-dataport.org/3640).
-
-To run this use case, use the script examples/gnn4tj.py and the downloaded dataset (data/TJ-dataset). To train a model on a dataset, we provide the following command sequence.
+To run this use case, use the following commands:
 ```sh
 $ cd examples
-$ python gnn4tj.py
+$ python use_case_1.py
+```
+
+## Use Case 2: Hardware Trojan Detection
+In this use case, we demonstrate how to use HW2VEC to detect hardware trojans (HT), which are intentional, malicious modifications of circuits by attackers. The related research paper is [Graph Neural Networks for Hardware Trojan Detection at Register Transfer Level](https://drive.google.com/file/d/1XFgWWO4v2oA-lmkwleG0h03znAvmJV5i/view). It proposes a GNN-based approach to model the circuit's behavior and identify the presence of HTs. The dataset used in this paper is obtained from a famous trojan [benchmark](https://www.trust-hub.org/benchmarks/trojan). The converted hardware DFG dataset can be downloaded from [here](http://ieee-dataport.org/3640).
+
+To realize the model proposed in the paper with HW2VEC, we first use HW2GRAPH to convert each hardware design _p_ into a graph _g_. Then, we transform each _g_ to a graph embedding _h<sub>g</sub>_. Lastly, _h<sub>g</sub>_ is used to make a prediction with an MLP layer. To train the model, the cross-entropy loss _L_ is calculated collectively for all the graphs in the training set. 
+
+To run this use case, use the script examples/use_case_3.py and the downloaded dataset (data/TJ-dataset). To train the model on a dataset, we provide the following command sequence.
+```sh
+$ cd examples
+$ python use_case_3.py --yaml_path ./example_gnn4tj.yaml
 ```
 You can try to adjust the configuration (example_gnn4tj.yaml) to play with the model's hyperparameter.
 ```python
@@ -79,12 +87,14 @@ debug: False # Debug mode.
 ```
 
 ## Use Case 3: IP Piracy Detection
-The sample code for this use case is examples/gnn4ip.py and examples/gnn4ip_RTL.py. The related research paper is [GNN4IP: Graph Neural Network for HardwareIntellectual Property Piracy Detection]() (still under review). The dataset used in this paper is obtained from a famous trojan [benchmark](https://www.trust-hub.org/benchmarks/trojan). The converted hardware DFG dataset can be downloaded from [here](http://ieee-dataport.org/3640). In this use case, we demonstrate how to use hw2vec to develop a model that detects IP piracy in RTL and Netlist levels. In other word, we want to develop a model to check similarity between two Verilog code and determine if they are for the same hardware design or not. In order to do that, we need to create two batch of samples; clone pair, and non-clone pair. 
+This use case demonstrates how to use HW2VEC to confront IP piracy - determining whether one of the two hardware designs is stolen from the other. The related research paper is [GNN4IP: Graph Neural Network for HardwareIntellectual Property Piracy Detection]() (still under review). It proposes to address IP piracy by assessing the similarities between hardware designs with a GNN-based approach. The dataset used in this paper is obtained from a famous trojan [benchmark](https://www.trust-hub.org/benchmarks/trojan). The converted hardware DFG dataset can be downloaded from [here](http://ieee-dataport.org/3640). 
 
-To run this use case, use the script examples/gnn4ip.py and the downloaded dataset (data/IP-dataset). To train a model on a dataset, we provide the following command sequence.
+To implement the approach proposed, the GNN model has to be trained with a graph-pair classification trainer in GRAPH2VEC. The first step is to convert a pair of circuit designs _p<sub>1</sub>_, _p<sub>2</sub>_ to a pair of graphs _g<sub>1</sub>_, _g<sub>2</sub>_. Then, GRAPH2VEC transofrms them into graph embeddings _h<sub>g1</sub>_, _h<sub>g2</sub>_. To train his GNN model for assessing the similarity of _h<sub>g1</sub>_ and _h<sub>g2</sub>_, a cosine similarity is computed as the final prediction of piracy. The loss between a prediction and a ground-truth label is calculated in a loss function. 
+
+To run this use case, use the script examples/gnn4ip.py and the downloaded dataset (data/IP-dataset). To train the model, we provide the following command sequence.
 ```sh
 $ cd examples
-$ python gnn4ip.py
+$ python se_case_4.py --yaml_path ./example_gnn4ip.yaml
 ```
 You can try to adjust the configuration (example_gnn4ip.yaml) to play with the model's hyperparameter.
 ```python
