@@ -138,11 +138,11 @@ class PairwiseGraphTrainer(BaseTrainer):
         for epoch_idx in tqdm_bar:
             self.model.train()
             acc_loss_train = 0
-
-            for data in train_loader:
+            
+            for data in tqdm(train_loader):
                 self.optimizer.zero_grad()
                 graph1, graph2, labels = data[0].to(self.config.device), data[1].to(self.config.device), data[2].to(self.config.device)
-                
+
                 loss_train = self.train_epoch_ip(graph1, graph2, labels)
                 loss_train.backward()
                 self.optimizer.step()
@@ -314,3 +314,9 @@ class GraphTrainer(BaseTrainer):
         # on final evaluate call
         if(epoch_idx==self.config.epochs):
             self.metric_print(self.min_test_loss, **self.metrics, header="best ")
+
+
+class Evaluator(BaseTrainer):
+    def __init__(self, cfg, task):
+        super().__init__(cfg)
+        self.task = task

@@ -27,7 +27,7 @@ class GNN4TJ:
     def __init__(self, cfg):
         self.cfg = cfg
 
-    def init_trainer(self, dataset):
+    def init_trainer(self, dataset, model_path=None):
         all_graphs = dataset.graphs['all'] 
         train_graphs, test_graphs = dataset.get_graphs()
         training_labels = [data.label for data in train_graphs]
@@ -48,6 +48,17 @@ class GNN4TJ:
 
         self.trainer = GraphTrainer(self.cfg, class_weights=class_weights)
         self.trainer.build()
+        if model_path is not None:
+            self.trainer.load_saved_model(model_path)
+
+    def init_evaluator(self, pretrained_model_path=None):
+        self.evaluator = Evaluator(self.cfg, "TJ")
+        self.evaluator.build()
+        if pretrained_model_path is not None:
+            self.evaluator.load_saved_model(pretrained_model_path)
+
+    def get_embedding(self):
+        self.evaluator.get_embedding(self.vis_loader)
 
     def train(self):
         self.trainer.train(self.train_loader, self.test_loader)
@@ -80,6 +91,7 @@ class GNN4IP:
 
         self.trainer = PairwiseGraphTrainer(self.cfg)
         self.trainer.build()
+        
 
     def train(self):
         self.trainer.train(self.train_loader, self.test_loader)
