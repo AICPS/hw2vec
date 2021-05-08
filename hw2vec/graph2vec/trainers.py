@@ -154,7 +154,7 @@ class PairwiseGraphTrainer(BaseTrainer):
             if epoch_idx % self.config.test_step == 0:
                 self.evaluate(epoch_idx, train_loader, test_loader)
     
-    @profileit
+    # @profileit
     def train_epoch_ip(self, graph1, graph2, labels):
         g_emb_1, _ = self.model.forward(graph1.x, graph1.edge_index, batch=graph1.batch)
         g_emb_2, _ = self.model.forward(graph2.x, graph2.edge_index, batch=graph2.batch)
@@ -162,7 +162,7 @@ class PairwiseGraphTrainer(BaseTrainer):
         loss_train = self.cos_loss(g_emb_1, g_emb_2, labels)
         return loss_train
 
-    @profileit
+    # @profileit
     def inference_epoch_ip(self, graph1, graph2):
         g_emb_1, _ = self.model(graph1.x, graph1.edge_index, batch=graph1.batch)
         g_emb_2, _ = self.model(graph2.x, graph2.edge_index, batch=graph2.batch)
@@ -244,7 +244,7 @@ class GraphTrainer(BaseTrainer):
             if epoch_idx % self.config.test_step == 0:
                 self.evaluate(epoch_idx, data_loader, valid_data_loader)
 
-    @profileit
+    # @profileit
     def train_epoch_tj(self, data):
         output, _ = self.model.forward(data.x, data.edge_index, data.batch)
         output = F.log_softmax(output, dim=1)
@@ -252,7 +252,7 @@ class GraphTrainer(BaseTrainer):
         loss_train = self.loss_func(output, data.label)
         return loss_train
 
-    @profileit
+    # @profileit
     def inference_epoch_tj(self, data):
         output, attn = self.model.forward(data.x, data.edge_index, data.batch)
         output = F.log_softmax(output, dim=1)
