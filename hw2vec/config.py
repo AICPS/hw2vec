@@ -7,18 +7,18 @@
 #notes           :
 #python_version  :3.6
 #==============================================================================
-import yaml
-import os, sys
+import yaml, os, sys
 sys.path.append(os.path.dirname(sys.path[0]))
-import random
 from pathlib import Path
 from argparse import ArgumentParser
 
 
 class Config:
     def __init__(self, args):
-        ap = ArgumentParser(description='The parameters for use-case 2.')
-        ap.add_argument('--yaml_path', type=str, default="./IP-NetList.yaml", help="The path of yaml config file.")
+        ap = ArgumentParser(description='The parameters for general arugments.')
+        ap.add_argument('--yaml_path', type=str, default="../hw2vec/configs/AST-IP-RTL.yaml", help="The path of yaml config file.")
+        ap.add_argument('--debug',     type=bool, default=False, help="The flag for enabling debug mode.")
+        ap.add_argument('--device',    type=str, default="cpu", help="The device for training/evaluating, default is cpu.")
         args_parsed = ap.parse_args(args)
         for arg_name in vars(args_parsed):
             self.__dict__[arg_name] = getattr(args_parsed, arg_name)
@@ -30,5 +30,5 @@ class Config:
             self.__dict__[arg_name] = arg_value
 
         self.raw_dataset_path = Path(self.raw_dataset_path).resolve() 
-        self.pkl_path = Path(self.pkl_path).resolve()
         self.data_pkl_path = Path(self.data_pkl_path).resolve()
+        self.model_path = Path(self.model_path).resolve()

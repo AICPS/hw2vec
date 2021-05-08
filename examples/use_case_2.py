@@ -1,50 +1,33 @@
 import os, sys
 sys.path.append(os.path.dirname(sys.path[0]))
-
-from hw2vec.hw2graph import *
-from hw2vec.graph2vec.config import Config
-
-from optparse import OptionParser
-import shutil 
-from glob import glob
-from pathlib import Path
-from pprint import pprint
-import networkx as nx
-from torch_geometric.utils.convert import from_networkx
-from matplotlib import pylab
-import matplotlib.pyplot as plt
+from hw2vec.config import Config
+from hw2vec.app import GNN4TJ
+from hw2vec.hw2graph import DataProcessor
 import pickle
+import torch
 
+TROJAN = 1
+NON_TROJAN = 0
 
-def use_case_2(cfg):
+def use_case_2():
     pass
 
-
-if __name__ == '__main__': 
+if __name__ == "__main__":
     cfg = Config(sys.argv[1:])
-    parser = JsonGraphParser(cfg)
+    app = GNN4TJ(cfg)
 
-    nx_graphs = []
-    for verilog_path in glob("%s/**/topModule.v" % str(cfg.raw_dataset_path), recursive=True):
-        if cfg.graph_type == "DFG":
-            graph_generator = DFGgenerator(verilog_path, './')
-            graph_generator.process()
-            graph_json = graph_generator.get_graph_json()
-            hardware_graph = parser.get_graph(graph_json)
-            nx_graphs.append((hardware_graph, verilog_path))
-        elif cfg.graph_type == "AST":
-            graph_generator = ASTgenerator(verilog_path, './')
-            graph_generator.generate_ast_json()
-        break
+    dataParser = DataProcessor(cfg)
 
-    # import pdb; pdb.set_trace()
+    with open(cfg.data_pkl_path, 'rb') as f:
+        dataParser = pickle.load(f)
 
-    # # graph_data = []
-    # for hw_graph, verilog_path in nx_graphs:
-    #     parser.normalize(hw_graph, normalize=cfg.NORMALIZATION)
-    #     data = from_networkx(hw_graph)
-    #     data.folder_name = verilog_path
-    #     parser.append_graph_data(data)
+    for data in dataParser.graphs['all']:
+        if "TjFree" in data.folder_name:
+            data.label = NON_TROJAN
+        else:
+            data.label = TROJAN
 
-    # with open(cfg.data_pkl_path, 'wb+') as f:
-    #     pickle.dump(parser, f)
+    app.init_trainer(dataParser)
+    app.train()
+    app.evaluate()
+    app.visualize_embeddings("./")
