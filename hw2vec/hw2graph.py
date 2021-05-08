@@ -234,20 +234,15 @@ class DFGGenerator:
                 label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
                 label_to_node[label] = node
         
-        # deleted = 0
-        # print('\nMerging subgraphs... ')
         num_nodes = len(dfg_graph_generator.graph.nodes())
         for num, node in enumerate(dfg_graph_generator.graph.nodes(), start=1):
             label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
             if '_' in label and label.replace('_', '.') in label_to_node:
                 parents = dfg_graph_generator.graph.predecessors(node)
                 dfg_graph_generator.graph.delete_node(node)
-                # deleted += 1
                 for parent in parents:
-                    # if not self._isChild(self.dfg_graph_generator.graph, label_to_node[label.replace('_', '.')], parent):
                     dfg_graph_generator.graph.add_edge(parent, label_to_node[label.replace('_', '.')])
-            # print(f'\rProgress : {num} - {deleted} = {num - deleted} / {num_nodes}', end='', flush=True)
-        # print('\nThe signals subgraphs are merged.')
+
         
         nx_graph = nx.DiGraph()
         
@@ -385,7 +380,9 @@ class CFGGenerator:
 
 
 class HW2GRAPH:
+    
     '''the main class of hw2graph.''' 
+
     def __init__(self, cfg):
         self.cfg = cfg
         self.count = 0
