@@ -5,40 +5,25 @@ from hw2vec.hw2graph import *
 from hw2vec.config import Config
 from hw2vec.app import *
 
-from torch_geometric.utils.convert import from_networkx
+def use_case_1(cfg):
+    hw2graph = HW2GRAPH(cfg)
 
-def hw2graph(verilog_path):
-    preprocessor = PreprocessVerilog(input_path=verilog_path, target_path=verilog_path / "topModule.v")
-    preprocessor.flatten()
-    preprocessor.remove_comments()
-    preprocessor.remove_underscores()
-    preprocessor.rename_topModule()
+    hw_design_dir_path = cfg.raw_dataset_path
+    hw_design_path = hw2graph.preprocess(hw_design_dir_path)
+    hardware_nxgraph = hw2graph.process(hw_design_path)
 
-    graph_generator = HW2GRAPH(cfg)
-    hardware_graph = graph_generator.process(verilog_file=str(verilog_path) + '/topModule.v') #TODO: not implemented for CFG
-
-    return hardware_graph
-
-def graph2vec(cfg, graph, verilog_path):
     data_proc = DataProcessor(cfg)
-    data_proc.normalize(nx_graph=graph, normalize=cfg.NORMALIZATION, graph_format=cfg.graph_type)
-    data = from_networkx(graph)
-    data.folder_name = verilog_path
-    # data_proc.append_graph_data(data)
+    data = data_proc.process(hardware_nxgraph)
+    data_proc.append_graph_data(data)
+    
+    # app = GNN4TJ(cfg)
+    # app.init_evaluator(pretrained_model_path=cfg.model_path / "model")
+    # embedding = app.get_embedding(vis_loader)
 
-    #TODO; this needs to be tunable, app needs to be adjusted for getting embedding of one hardware design, this section still needs work.
-    app = GNN4TJ(cfg)
-    app.init_evaluator(pretrained_model_path=cfg.model_path / "model")
-    embedding = app.get_embedding(vis_loader)
-
-    return embedding
 
 if __name__ == '__main__': 
-    cfg = Config(sys.argv[1:])
-
-    hw_code_path = "" #TODO: use this as the path.
-
-    hw_graph  = hw2graph(verilog_path=cfg.raw_dataset_path)
-    embedding = graph2vec(cfg, graph=hw_graph, verilog_path=cfg.raw_dataset_path / "topModule.v")
-
-    # Embedding is a vector of features, do any inpsection on embedding for your own usage.
+    
+    graph_emb = use_case_1(Config(sys.argv[1:]))
+    
+    print(graph_emb)
+    # NOTE: Embedding is a vector of features, do any inspection on embedding for your own usage.

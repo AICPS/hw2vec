@@ -139,7 +139,7 @@ class PairwiseGraphTrainer(BaseTrainer):
             self.model.train()
             acc_loss_train = 0
             
-            for data in tqdm(train_loader):
+            for data in train_loader:
                 self.optimizer.zero_grad()
                 graph1, graph2, labels = data[0].to(self.config.device), data[1].to(self.config.device), data[2].to(self.config.device)
 

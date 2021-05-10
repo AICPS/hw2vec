@@ -26,6 +26,7 @@ from sklearn.model_selection import train_test_split
 from glob import glob
 from hw2vec.graph2vec.trainers import *
 from hw2vec.utilities import *
+from torch_geometric.utils.convert import from_networkx
 
 
 class DataProcessor:
@@ -202,6 +203,14 @@ class DataProcessor:
 
         return train_test_split(dataset, train_size = train_size, shuffle = True, stratify=sim_diff_label, random_state=seed)
     
+    def process(self, graph):
+
+        self.normalize(nx_graph=graph, normalize=self.cfg.NORMALIZATION, graph_format=self.cfg.graph_type)
+        data = from_networkx(graph)
+        data.hw_name = graph.name
+        data.hw_type = graph.type
+
+        return data
 
 class DFGGenerator:
     def __init__(self):
@@ -381,29 +390,116 @@ class CFGGenerator:
 
 class HW2GRAPH:
     
-    '''the main class of hw2graph.''' 
+    '''
+        The main class of hw2graph consists of two components:
+        1. preprocess (flatten, remove comment, ...)
+        2. processs (call backend graph geenration and acquire the nx graph instances.)
+
+        Currently HW2GRAPH can process Verilog files in RTL (Register Transfer Level) and GLN (Gate-Level Netlist).
+    ''' 
 
     def __init__(self, cfg):
         self.cfg = cfg
         self.count = 0
+        self.input_path = None
+        self.flattened_hw_path = None
 
-    @profilegraph
-    def process(self, verilog_file):
+    def flatten(self, input_path, flattened_hw_path):
+        flatten_content = ""
+        all_containing_files = [Path(x).name for x in glob(fr'{input_path}/*.v', recursive=True)]
+        if "topModule.v" in all_containing_files:
+            return
+        for verilog_file in glob(fr'{input_path}/*.v'):
+            with open(verilog_file, "r") as infile:
+                flatten_content += infile.read()     
+        with open(flattened_hw_path, "w") as outfile:
+            outfile.write(flatten_content)       
+
+    def remove_comments(self, hw_path):
+        with open(hw_path,'r') as file_in:
+            lines = file_in.read().split("\n")
+    
+        #TODO; right now this part is a rule-based method, we will consider using AST to remove comments in the future.
+        with open(hw_path, "w") as file_out:
+            for line in lines:
+                idx = line.find('//')
+                if idx == 0:
+                    continue
+                elif idx == -1:
+                    file_out.write(line+'\n')
+                else:
+                    file_out.write(line[:idx]+'\n')
+        
+    def remove_underscores(self, hw_path):
+        with open(hw_path, 'r') as file_in:
+            lines = file_in.read().replace('_', '')
+
+        with open(hw_path, "w") as file_out:
+            file_out.write(lines)
+
+    
+    def rename_topModule(self, hw_path):
+        #TODO; right now this part is a rule-based method, we will consider using AST to parse the flattened code in the future.
+
+        with open(hw_path,'r') as file_in:
+            lines = file_in.read().split("\n")
+    
+        modules_dic={}
+        for line in lines:
+            words = line.split()
+            for word_idx, word in enumerate(words):
+                if word == 'module':
+                    module_name = words[word_idx+1]
+                    if '(' in module_name:
+                        idx = module_name.find('(')
+                        module_name = module_name[:idx]
+                        modules_dic[module_name]= 1
+
+                    else:
+                        modules_dic[module_name]= 0
+                    
+        for line in lines:
+            words = line.split()
+            for word in words:
+                if word in modules_dic.keys():
+                    modules_dic[word] += 1
+    
+        for m in modules_dic:
+            if modules_dic[m] == 1:
+                top_module = m
+                break
+
+        with open(hw_path, "w") as file_out:
+            for line in lines:
+                file_out.write(line.replace(top_module, 'top')+'\n')        
+
+    def preprocess(self, verilog_dir):
+        flattened_hw_path = verilog_dir / "topModule.v"
+        
+        self.flatten(verilog_dir, flattened_hw_path)
+        self.remove_comments(flattened_hw_path)
+        self.remove_underscores(flattened_hw_path)
+        self.rename_topModule(flattened_hw_path)
+
+        return flattened_hw_path
+
+    # @profilegraph
+    def process(self, hw_path):
         if self.cfg.graph_type == "CFG":
             generator = CFGGenerator()
-            return_obj = generator.process(verilog_file)
+            return_obj = generator.process(hw_path)
             nx_graph = None
         
         elif self.cfg.graph_type == "AST":
             generator = ASTGenerator()
-            ast_dict = generator.process(verilog_file)
+            ast_dict = generator.process(hw_path)
             nx_graph = nx.DiGraph()
             for key in ast_dict.keys():
                 self.add_node(nx_graph, 'None', key, ast_dict[key])
 
         elif self.cfg.graph_type == "DFG":
             generator = DFGGenerator()
-            nx_graph = generator.process(verilog_file)
+            nx_graph = generator.process(hw_path)
         
         else:
             pass
@@ -415,7 +511,10 @@ class HW2GRAPH:
                 pass
 
         if nx_graph != None:
-            nx_graph.name = verilog_file.split("/")[-2]
+            # NOTE: this is creating a limitation of how users should form their dataset. (TODO: we have to provide a tutorial in readme.)
+            nx_graph.name = str(hw_path).split("/")[-2]
+            nx_graph.type = str(hw_path).split("/")[-3]
+            
         return nx_graph
 
     def add_node(self, graph, parent, child, cur_dict):
