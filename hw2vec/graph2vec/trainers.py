@@ -77,7 +77,7 @@ class BaseTrainer:
                 for data in data_loader:
                     data.to(self.config.device)
                     embed_x, _ = self.model.forward(data.x, data.edge_index, data.batch)
-                    hardware_name = data.folder_name[0].split("/")[-2]
+                    hardware_name = data.hw_name[0]
 
                     if self.task == "TJ":
                         embed_x = F.log_softmax(embed_x, dim=1)
@@ -286,7 +286,6 @@ class GraphTrainer(BaseTrainer):
                     node_attns.append(node_attn)
 
                 labels += np.split(data.label.cpu().numpy(), len(data.label.cpu().numpy()))
-                folder_names += data.folder_name
 
             outputs = torch.cat(outputs).reshape(-1,2).detach()
             avg_loss = total_loss / (len(data_loader))
@@ -295,11 +294,11 @@ class GraphTrainer(BaseTrainer):
             outputs_tensor = torch.FloatTensor(outputs).detach()
             preds = outputs_tensor.max(1)[1].type_as(labels_tensor).detach()
 
-        return avg_loss, labels_tensor, outputs_tensor, preds, node_attns, folder_names
+        return avg_loss, labels_tensor, outputs_tensor, preds, node_attns
 
     def evaluate(self, epoch_idx, data_loader, valid_data_loader):
-        train_loss, train_labels, _, train_preds, train_node_attns, _ = self.inference(data_loader)
-        test_loss, test_labels, _, test_preds, test_node_attns, _ = self.inference(valid_data_loader)
+        train_loss, train_labels, _, train_preds, train_node_attns = self.inference(data_loader)
+        test_loss, test_labels, _, test_preds, test_node_attns = self.inference(valid_data_loader)
 
         print("")
         print("Mini Test for Epochs %d:"%epoch_idx)

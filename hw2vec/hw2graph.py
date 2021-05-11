@@ -105,6 +105,7 @@ class DataProcessor:
                 
                 node[1]['x'] = self.global_type2idx_DFG[type_of_node]
             self.num_node_labels = len(self.global_type2idx_DFG)
+            self.cfg.num_feature_dim = self.num_node_labels
         
         elif self.cfg.graph_type == "AST": # normalize for AST
             out_degrees = [val for (node, val) in nx_graph.out_degree()]
@@ -124,6 +125,7 @@ class DataProcessor:
                 
                 node[1]['x'] = self.global_type2idx_AST[type_of_node]
             self.num_node_labels = len(self.global_type2idx_AST)
+            self.cfg.num_feature_dim = self.num_node_labels
 
     def append_training_graph_data(self, data):
         if 'train' not in self.graphs: 
@@ -144,10 +146,7 @@ class DataProcessor:
         self.graph_pairs.append(pair)
 
     def get_graphs(self):
-        if 'train' in self.graphs and 'test' in self.graphs:
-            return self.graphs['train'], self.graphs['test']
-        elif 'all' in self.graphs:
-            return self.split_dataset(ratio=self.cfg.ratio, seed=self.cfg.seed, dataset=self.graphs['all'])
+        return self.split_dataset(ratio=self.cfg.ratio, seed=self.cfg.seed, dataset=self.graph_data)
 
     def get_pairs(self):
         graph_pairs = self.graph_pairs
@@ -173,6 +172,21 @@ class DataProcessor:
 
         return train_test_split(dataset, train_size = train_size, shuffle = True, stratify=sim_diff_label, random_state=seed)
 
+    def get_class_weights(self, train_graphs):
+        training_labels = [data.label for data in train_graphs]
+        class_weights = torch.from_numpy(compute_class_weight('balanced', np.unique(training_labels), training_labels))
+
+        return class_weights
+
+    def find_projects(self):        
+        projects = set()
+
+        for verilog_path in glob("%s/**/*.v" % str(self.cfg.raw_dataset_path), recursive=True):
+            folder_name = Path(verilog_path).parent
+            projects.add(folder_name)
+
+        return list(projects)
+
     def cache_graph_data(self, data_pkl_path):
         with open(data_pkl_path, 'wb+') as f:
             pickle.dump(self.graph_data, f)
@@ -181,6 +195,12 @@ class DataProcessor:
         with open(data_pkl_path, 'rb') as f:
             self.graph_data = pickle.load(f)
 
+        if self.cfg.graph_type == 'DFG':
+            self.num_node_labels = len(self.global_type2idx_DFG)
+            self.cfg.num_feature_dim = self.num_node_labels
+        elif self.cfg.graph_type == 'AST':
+            self.num_node_labels = len(self.global_type2idx_AST)
+            self.cfg.num_feature_dim = self.num_node_labels
         #TODO: creating pairs or blah blah blah.
 
 
