@@ -68,34 +68,14 @@ class DataProcessor:
 
         self.global_type2idx_DFG = {v:k for k, v in enumerate(self.global_type2idx_DFG_list)}
 
-    def append_training_graph_data(self, data):
-        if 'train' not in self.graphs: 
-            self.graphs['train'] = []
-        self.graphs['train'].append(data)
+    def process(self, nx_graph):
 
-    def append_testing_graph_data(self, data):
-        if 'test' not in self.graphs: 
-            self.graphs['test'] = []
-        self.graphs['test'].append(data)
-    
-    def append_graph_data(self, data):
-        if 'all' not in self.graphs: 
-            self.graphs['all'] = []
-        self.graphs['all'].append(data)
+        self.normalize(nx_graph)
+        data = from_networkx(nx_graph)
+        data.hw_name = nx_graph.name
+        data.hw_type = nx_graph.type
 
-    def append_graph_pair(self, pair):
-        self.graph_pairs.append(pair)
-
-    def get_graphs(self):
-        if 'train' in self.graphs and 'test' in self.graphs:
-            return self.graphs['train'], self.graphs['test']
-        elif 'all' in self.graphs:
-            return self.split_dataset(ratio=self.cfg.ratio, seed=self.cfg.seed, dataset=self.graphs['all'])
-
-    def get_pairs(self):
-        graph_pairs = self.graph_pairs
-        self.graph_pairs_train, self.graph_pairs_test = self.split_dataset(ratio=self.cfg.ratio, seed=self.cfg.seed, dataset=graph_pairs)
-        return self.graph_pairs_train, self.graph_pairs_test
+        return data
 
     def normalize(self, nx_graph):
         ''' 
@@ -146,6 +126,34 @@ class DataProcessor:
                 node[1]['x'] = self.global_type2idx_AST[type_of_node]
             self.num_node_labels = len(self.global_type2idx_AST)
 
+    def append_training_graph_data(self, data):
+        if 'train' not in self.graphs: 
+            self.graphs['train'] = []
+        self.graphs['train'].append(data)
+
+    def append_testing_graph_data(self, data):
+        if 'test' not in self.graphs: 
+            self.graphs['test'] = []
+        self.graphs['test'].append(data)
+    
+    def append_graph_data(self, data):
+        if 'all' not in self.graphs: 
+            self.graphs['all'] = []
+        self.graphs['all'].append(data)
+
+    def append_graph_pair(self, pair):
+        self.graph_pairs.append(pair)
+
+    def get_graphs(self):
+        if 'train' in self.graphs and 'test' in self.graphs:
+            return self.graphs['train'], self.graphs['test']
+        elif 'all' in self.graphs:
+            return self.split_dataset(ratio=self.cfg.ratio, seed=self.cfg.seed, dataset=self.graphs['all'])
+
+    def get_pairs(self):
+        graph_pairs = self.graph_pairs
+        self.graph_pairs_train, self.graph_pairs_test = self.split_dataset(ratio=self.cfg.ratio, seed=self.cfg.seed, dataset=graph_pairs)
+        return self.graph_pairs_train, self.graph_pairs_test
 
     def split_dataset(self, ratio, seed, dataset):
         train_size = int(len(dataset) * ratio)
@@ -165,15 +173,7 @@ class DataProcessor:
                     sim_diff_label.append(-1)
 
         return train_test_split(dataset, train_size = train_size, shuffle = True, stratify=sim_diff_label, random_state=seed)
-    
-    def process(self, graph):
 
-        self.normalize(nx_graph=graph)
-        data = from_networkx(graph)
-        data.hw_name = graph.name
-        data.hw_type = graph.type
-
-        return data
 
 class DFGGenerator:
     def __init__(self):
@@ -234,7 +234,7 @@ class DFGGenerator:
                 nx_graph.add_edge(node.name, child.name)
 
         return nx_graph
-    
+
 
 class ASTGenerator:
     def __init__(self):
@@ -279,6 +279,7 @@ class ASTGenerator:
         else:
             raise Exception(f"Error. Token name {class_name} is invalid or has not yet been supported")
         return structure
+
 
 class CFGGenerator:
     def __init__(self):
