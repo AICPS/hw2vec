@@ -37,9 +37,10 @@ for data in all_graphs:
     else:
         data.label = TROJAN
 
-train_graphs, test_graphs = data_proc.get_graphs()
+train_graphs, test_graphs = data_proc.get_datasets()
 train_loader = DataLoader(train_graphs, shuffle=True, batch_size=cfg.batch_size)
 valid_loader = DataLoader(test_graphs, shuffle=True, batch_size=1)
+
 
 ''' training '''
 class_weights = data_proc.get_class_weights(train_graphs)
@@ -51,5 +52,5 @@ trainer.train(train_loader, valid_loader)
 
 ''' evaluating and inspecting '''
 trainer.evaluate(cfg.epochs, train_loader, valid_loader)
-vis_loader = DataLoader(all_graphs, batch_size=1)
+vis_loader = DataLoader(all_graphs, shuffle=False, batch_size=1)
 trainer.visualize_embeddings(vis_loader, "./")

@@ -27,7 +27,7 @@ from glob import glob
 from hw2vec.graph2vec.trainers import *
 from hw2vec.utilities import *
 from torch_geometric.utils.convert import from_networkx
-
+from time import time
 
 class DataProcessor:
     def __init__(self, cfg):
@@ -127,25 +127,10 @@ class DataProcessor:
             self.num_node_labels = len(self.global_type2idx_AST)
             self.cfg.num_feature_dim = self.num_node_labels
 
-    def append_training_graph_data(self, data):
-        if 'train' not in self.graphs: 
-            self.graphs['train'] = []
-        self.graphs['train'].append(data)
-
-    def append_testing_graph_data(self, data):
-        if 'test' not in self.graphs: 
-            self.graphs['test'] = []
-        self.graphs['test'].append(data)
-    
-    def append_graph_data(self, data):
-        if 'all' not in self.graphs: 
-            self.graphs['all'] = []
-        self.graphs['all'].append(data)
-
     def append_graph_pair(self, pair):
         self.graph_pairs.append(pair)
 
-    def get_graphs(self):
+    def get_datasets(self):
         return self.split_dataset(ratio=self.cfg.ratio, seed=self.cfg.seed, dataset=self.graph_data)
 
     def get_pairs(self):
@@ -154,8 +139,6 @@ class DataProcessor:
         return self.graph_pairs_train, self.graph_pairs_test
 
     def split_dataset(self, ratio, seed, dataset):
-        train_size = int(len(dataset) * ratio)
-
         sim_diff_label = []
 
         for data in dataset:
@@ -170,22 +153,13 @@ class DataProcessor:
                 else:
                     sim_diff_label.append(-1)
 
-        return train_test_split(dataset, train_size = train_size, shuffle = True, stratify=sim_diff_label, random_state=seed)
+        return train_test_split(dataset, train_size = int(len(dataset) * ratio), shuffle = True, stratify=sim_diff_label, random_state=seed)
 
     def get_class_weights(self, train_graphs):
         training_labels = [data.label for data in train_graphs]
         class_weights = torch.from_numpy(compute_class_weight('balanced', np.unique(training_labels), training_labels))
 
         return class_weights
-
-    def find_projects(self):        
-        projects = set()
-
-        for verilog_path in glob("%s/**/*.v" % str(self.cfg.raw_dataset_path), recursive=True):
-            folder_name = Path(verilog_path).parent
-            projects.add(folder_name)
-
-        return list(projects)
 
     def cache_graph_data(self, data_pkl_path):
         with open(data_pkl_path, 'wb+') as f:
@@ -281,6 +255,7 @@ class ASTGenerator:
              "EventStatement", "DelayStatement", "Task", "ParamArg", "Inout"]
         self.CONST_DICTIONARY_GEN = \
             ["IntConst","FloatConst","StringConst","Identifier"]
+        self.count = 0
 
     def process(self, verilog_file):
         #when generating AST, determines which substructure (dictionary/array) to generate
@@ -288,7 +263,12 @@ class ASTGenerator:
         
         self.ast, _ = parse([verilog_file], debug=False)
         ast_dict = self._generate_ast_dict(self.ast)
-        return ast_dict
+
+        nx_graph = nx.DiGraph()
+        for key in ast_dict.keys():
+            self._add_node(nx_graph, 'None', key, ast_dict[key])
+
+        return nx_graph
 
     #generates nested dictionary for conversion to json (AST helper)
     def _generate_ast_dict(self, ast_node):
@@ -308,7 +288,28 @@ class ASTGenerator:
         else:
             raise Exception(f"Error. Token name {class_name} is invalid or has not yet been supported")
         return structure
-
+    
+    def _add_node(self, graph, parent, child, cur_dict):
+        index = self.count
+        graph.add_nodes_from([(index, {"label": str(child)})])
+        if parent != 'None':
+            graph.add_edge(parent, index)
+        self.count = self.count + 1
+        if type(cur_dict) == dict:
+            for key in cur_dict.keys():
+                self._add_node(graph, index, key, cur_dict[key])
+        elif type(cur_dict) == list:
+            for ele in cur_dict:
+                if type(ele) == dict:
+                    self._add_node(graph, index, 'None', ele)
+                elif ele is not None:
+                    graph.add_nodes_from([(self.count, {"label": str(ele)})])
+                    graph.add_edge(index, self.count)
+                    self.count = self.count + 1
+        else:
+            graph.add_nodes_from([(self.count, {"label": str(cur_dict)})])
+            graph.add_edge(index, self.count)
+            self.count = self.count + 1
 
 class CFGGenerator:
     def __init__(self):
@@ -393,7 +394,15 @@ class HW2GRAPH:
 
     def __init__(self, cfg):
         self.cfg = cfg
-        self.count = 0
+
+    def find_hw_project_folders(self):        
+        projects = set()
+
+        for verilog_path in glob("%s/**/*.v" % str(self.cfg.raw_dataset_path), recursive=True):
+            folder_name = Path(verilog_path).parent
+            projects.add(folder_name)
+
+        return list(projects)
 
     def flatten(self, input_path, flattened_hw_path):
         flatten_content = ""
@@ -464,15 +473,29 @@ class HW2GRAPH:
             for line in lines:
                 file_out.write(line.replace(top_module, 'top')+'\n')        
 
+    def code2graph(self, verilog_dir, profile=True):
+        if profile:
+            start = time()
+
+        code_path = self.preprocess(verilog_dir)
+        hw_graph = self.process(str(code_path))
+        
+        if profile:
+            end = time()
+            print(str(code_path), ",", len(hw_graph.nodes), ",", len(hw_graph.edges), ",", end-start)
+        return hw_graph
+        
     def preprocess(self, verilog_dir):
         flattened_hw_path = verilog_dir / "topModule.v"
-        
-        self.flatten(verilog_dir, flattened_hw_path)
-        self.remove_comments(flattened_hw_path)
-        self.remove_underscores(flattened_hw_path)
-        self.rename_topModule(flattened_hw_path)
+        all_verilog_files = [Path(x).name for x in glob("%s/*.v"%str(verilog_dir))]
 
-        return flattened_hw_path
+        if "topModule.v" not in all_verilog_files:
+            self.flatten(verilog_dir, flattened_hw_path)
+            self.remove_comments(flattened_hw_path)
+            self.remove_underscores(flattened_hw_path)
+            self.rename_topModule(flattened_hw_path)
+
+        return flattened_hw_path    
 
     # @profilegraph
     def process(self, hw_path):
@@ -483,10 +506,7 @@ class HW2GRAPH:
         
         elif self.cfg.graph_type == "AST":
             generator = ASTGenerator()
-            ast_dict = generator.process(hw_path)
-            nx_graph = nx.DiGraph()
-            for key in ast_dict.keys():
-                self.add_node(nx_graph, 'None', key, ast_dict[key])
+            nx_graph = generator.process(hw_path)
 
         elif self.cfg.graph_type == "DFG":
             generator = DFGGenerator()
@@ -507,25 +527,3 @@ class HW2GRAPH:
             nx_graph.type = str(hw_path).split("/")[-3]
             
         return nx_graph
-
-    def add_node(self, graph, parent, child, cur_dict):
-        index = self.count
-        graph.add_nodes_from([(index, {"label": str(child)})])
-        if parent != 'None':
-            graph.add_edge(parent, index)
-        self.count = self.count + 1
-        if type(cur_dict) == dict:
-            for key in cur_dict.keys():
-                self.add_node(graph, index, key, cur_dict[key])
-        elif type(cur_dict) == list:
-            for ele in cur_dict:
-                if type(ele) == dict:
-                    self.add_node(graph, index, 'None', ele)
-                elif ele is not None:
-                    graph.add_nodes_from([(self.count, {"label": str(ele)})])
-                    graph.add_edge(index, self.count)
-                    self.count = self.count + 1
-        else:
-            graph.add_nodes_from([(self.count, {"label": str(cur_dict)})])
-            graph.add_edge(index, self.count)
-            self.count = self.count + 1
