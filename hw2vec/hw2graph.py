@@ -13,7 +13,7 @@ from __future__ import print_function
 import pyverilog.utils.util as util
 import networkx as nx
 
-import pyverilog, pydot, json, os, sys
+import pyverilog, pydot, json, os, sys, pickle
 sys.path.append(os.path.dirname(sys.path[0]))
 
 from json import dumps
@@ -172,6 +172,16 @@ class DataProcessor:
                     sim_diff_label.append(-1)
 
         return train_test_split(dataset, train_size = train_size, shuffle = True, stratify=sim_diff_label, random_state=seed)
+
+    def cache_graph_data(self, data_pkl_path):
+        with open(data_pkl_path, 'wb+') as f:
+            pickle.dump(self.graph_data, f)
+        
+    def read_graph_data_from_cache(self, data_pkl_path):
+        with open(data_pkl_path, 'rb') as f:
+            self.graph_data = pickle.load(f)
+
+        #TODO: creating pairs or blah blah blah.
 
 
 class DFGGenerator:

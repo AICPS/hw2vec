@@ -13,7 +13,8 @@ def process_graph(cfg, code_path, profile=True):
     if profile:
         start = time()
 
-    hw_graph = hw2graph.process(code_path) #TODO: not implemented for CFG.
+    #TODO: bring preprocess here.
+    hw_graph = hw2graph.process(code_path)
     
     if profile:
         end = time()
@@ -28,9 +29,7 @@ def process_graphs(cfg):
         hw_graph = process_graph(cfg, verilog_path)
         data_proc.process(hw_graph)
     
-    with open(cfg.data_pkl_path, 'wb+') as f:
-        pickle.dump(data_proc, f)
-
+    data_proc.cache_graph_data(cfg.data_pkl_path)
 
 if __name__ == '__main__': 
     process_graphs(Config(sys.argv[1:]))
