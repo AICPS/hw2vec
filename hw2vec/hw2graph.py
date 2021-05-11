@@ -38,6 +38,7 @@ class DataProcessor:
             'all': means it is a collection of all graph datasets.
             'train' and 'test': store the collection of graph instances according to a prespliting result.
         '''
+        self.graph_data = []
         self.graphs = {}
         
         ''' self.graph_pairs/_train/_test stores the graph-pairing info. e.g. (0, 1, -1) means graph 0 and graph 1 is dissimilar. '''
@@ -69,13 +70,11 @@ class DataProcessor:
         self.global_type2idx_DFG = {v:k for k, v in enumerate(self.global_type2idx_DFG_list)}
 
     def process(self, nx_graph):
-
         self.normalize(nx_graph)
         data = from_networkx(nx_graph)
         data.hw_name = nx_graph.name
         data.hw_type = nx_graph.type
-
-        return data
+        self.graph_data.append(data)
 
     def normalize(self, nx_graph):
         ''' 
