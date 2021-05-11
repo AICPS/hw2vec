@@ -39,24 +39,16 @@ class DataProcessor:
             'train' and 'test': store the collection of graph instances according to a prespliting result.
         '''
         self.graphs = {}
-
-        self.node_labels = set()
         
-        ''' for GNN4IP '''
         ''' self.graph_pairs/_train/_test stores the graph-pairing info. e.g. (0, 1, -1) means graph 0 and graph 1 is dissimilar. '''
         self.graph_pairs       = []
         self.graph_pairs_train = [] 
         self.graph_pairs_test  = []
-        
-        # self.trunk stores the hardware category information about each hardware design. e.g. in [0, 1, 1, 2, 3], hw #1 belongs to category 1.
-        self.trunk = []
 
         # list to store names of graphs in each set
         self.training_graph_count = 0
         self.testing_graph_count = 0
         
-        self.label2idx = None
-
         self.global_type2idx_AST_list = ['names','always','none','senslist','sens','identifier','nonblockingsubstitution',
                                          'lvalue','rvalue','intconst','pointer','ifstatement','pure numeric','assign','cond',
                                          'unot','plus','land','reg','partselect','eq','lessthan','greaterthan','decl','wire',
@@ -105,20 +97,11 @@ class DataProcessor:
         self.graph_pairs_train, self.graph_pairs_test = self.split_dataset(ratio=self.cfg.ratio, seed=self.cfg.seed, dataset=graph_pairs)
         return self.graph_pairs_train, self.graph_pairs_test
 
-    def normalize(self, nx_graph, graph_format="DFG", normalize="keep_variable"):
+    def normalize(self, nx_graph):
         ''' 
-            Normalization is a step to replace the label of a node to a value.
-            We have two options in hw2vec: 
-            1. keep the variable name/numeric value.
-            2. replace all the variable name and numeric values with a high-level type.
+            Normalization is a step to replace the label of a node to a value -> replace all the variable name and numeric values with a high-level type.
         '''
-        if normalize == "keep_variable":
-            if self.label2idx == None:
-                self.label2idx = {v:k for k, v in enumerate(list(self.node_labels))}
-            for node in nx_graph.nodes(data=True):
-                node[1]['x'] = self.label2idx[node[1]['label']]
-            self.num_node_labels = len(self.label2idx)
-        elif graph_format == 'DFG': # normalize for DFG
+        if self.cfg.graph_type == 'DFG': # normalize for DFG
             in_degrees = [val for (node, val) in nx_graph.in_degree()]
             out_degrees = [val for (node, val) in nx_graph.out_degree()]
             for idx, node in enumerate(nx_graph.nodes(data=True)):
@@ -144,7 +127,7 @@ class DataProcessor:
                 node[1]['x'] = self.global_type2idx_DFG[type_of_node]
             self.num_node_labels = len(self.global_type2idx_DFG)
         
-        else: # normalize for AST
+        elif self.cfg.graph_type == "AST": # normalize for AST
             out_degrees = [val for (node, val) in nx_graph.out_degree()]
             for idx, node in enumerate(nx_graph.nodes(data=True)):
                 label = node[1]['label']
@@ -163,26 +146,6 @@ class DataProcessor:
                 node[1]['x'] = self.global_type2idx_AST[type_of_node]
             self.num_node_labels = len(self.global_type2idx_AST)
 
-
-    def read_node_labels(self, key):
-        # read thru all the node labels in a dataset. 
-        for json_path in glob("%s/**/**/topModule.json" % str(self.root_path/key), recursive=True):
-            with open(str(json_path), 'r') as json_file:
-                edge_list_dict = json.loads(json_file.read())
-                for src in edge_list_dict:
-                    node_name = src
-                    if '_graphrename' in src:
-                        node_name = src[:src.index('_graphrename')]
-                    if '.' in node_name: 
-                        type_of_node = node_name.split('.')[-1]
-                    elif '_' in node_name:
-                        type_of_node = node_name.split('_')[-1]
-                    else:
-                        type_of_node = node_name.lower()
-                    self.node_labels.add(type_of_node)
-
-        self.label2idx = {v:k for k, v in enumerate(list(self.node_labels))}
-        self.idx2label = {v:k for k, v in self.label2idx.items()}
 
     def split_dataset(self, ratio, seed, dataset):
         train_size = int(len(dataset) * ratio)
@@ -205,7 +168,7 @@ class DataProcessor:
     
     def process(self, graph):
 
-        self.normalize(nx_graph=graph, normalize=self.cfg.NORMALIZATION, graph_format=self.cfg.graph_type)
+        self.normalize(nx_graph=graph)
         data = from_networkx(graph)
         data.hw_name = graph.name
         data.hw_type = graph.type
