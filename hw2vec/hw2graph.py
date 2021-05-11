@@ -364,8 +364,6 @@ class HW2GRAPH:
     def __init__(self, cfg):
         self.cfg = cfg
         self.count = 0
-        self.input_path = None
-        self.flattened_hw_path = None
 
     def flatten(self, input_path, flattened_hw_path):
         flatten_content = ""
