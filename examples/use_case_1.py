@@ -16,10 +16,14 @@ def use_case_1(cfg):
     data = data_proc.process(hardware_nxgraph)
     data_proc.append_graph_data(data)
     
-    # app = GNN4TJ(cfg)
-    # app.init_evaluator(pretrained_model_path=cfg.model_path / "model")
-    # embedding = app.get_embedding(vis_loader)
-
+    # evaluator = Evaluator(cfg, "TJ")
+    # evaluator.build()
+    # if Path(cfg.model_path)/"model" is not None:
+    #     evaluator.load_saved_model(Path(cfg.model_path)/"model")
+    # all_graphs = data_proc.graph_data
+    # vis_loader   = DataLoader(all_graphs, batch_size=1)
+    # embed = evaluator.get_embedding(vis_loader)
+    # return embed
 
 if __name__ == '__main__': 
     
