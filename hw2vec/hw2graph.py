@@ -134,9 +134,10 @@ class DataProcessor:
         return self.split_dataset(ratio=self.cfg.ratio, seed=self.cfg.seed, dataset=self.graph_data)
 
     def get_pairs(self):
-        graph_pairs = self.graph_pairs
-        self.graph_pairs_train, self.graph_pairs_test = self.split_dataset(ratio=self.cfg.ratio, seed=self.cfg.seed, dataset=graph_pairs)
-        return self.graph_pairs_train, self.graph_pairs_test
+        self.graph_pairs_train, self.graph_pairs_test = self.split_dataset(ratio=self.cfg.ratio, seed=self.cfg.seed, dataset=self.graph_pairs)
+        train_pairs = [(self.graph_data[pairs[0]], self.graph_data[pairs[1]], pairs[2]) for pairs in self.graph_pairs_train]
+        test_pairs = [(self.graph_data[pairs[0]], self.graph_data[pairs[1]], pairs[2]) for pairs in self.graph_pairs_test] 
+        return train_pairs, test_pairs
 
     def split_dataset(self, ratio, seed, dataset):
         sim_diff_label = []
