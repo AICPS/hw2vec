@@ -37,7 +37,7 @@ for data in all_graphs:
     else:
         data.label = TROJAN
 
-train_graphs, test_graphs = data_proc.get_datasets()
+train_graphs, test_graphs = data_proc.split_dataset(ratio=cfg.ratio, seed=cfg.seed, dataset=all_graphs)
 train_loader = DataLoader(train_graphs, shuffle=True, batch_size=cfg.batch_size)
 valid_loader = DataLoader(test_graphs, shuffle=True, batch_size=1)
 

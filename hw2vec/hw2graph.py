@@ -12,7 +12,7 @@ from __future__ import print_function
 
 import pyverilog.utils.util as util
 import networkx as nx
-
+import itertools
 import pyverilog, pydot, json, os, sys, pickle
 sys.path.append(os.path.dirname(sys.path[0]))
 
@@ -32,24 +32,9 @@ from time import time
 class DataProcessor:
     def __init__(self, cfg):
         self.cfg = cfg
-        self.root_path = self.cfg.raw_dataset_path.resolve()
-
-        ''' self.graphs is a dict that stores all the hardware graphs that can be parsed from the raw datatset folder. 
-            'all': means it is a collection of all graph datasets.
-            'train' and 'test': store the collection of graph instances according to a prespliting result.
-        '''
         self.graph_data = []
-        self.graphs = {}
-        
-        ''' self.graph_pairs/_train/_test stores the graph-pairing info. e.g. (0, 1, -1) means graph 0 and graph 1 is dissimilar. '''
-        self.graph_pairs       = []
-        self.graph_pairs_train = [] 
-        self.graph_pairs_test  = []
+        self.graph_pair_data = []
 
-        # list to store names of graphs in each set
-        self.training_graph_count = 0
-        self.testing_graph_count = 0
-        
         self.global_type2idx_AST_list = ['names','always','none','senslist','sens','identifier','nonblockingsubstitution',
                                          'lvalue','rvalue','intconst','pointer','ifstatement','pure numeric','assign','cond',
                                          'unot','plus','land','reg','partselect','eq','lessthan','greaterthan','decl','wire',
@@ -127,20 +112,19 @@ class DataProcessor:
             self.num_node_labels = len(self.global_type2idx_AST)
             self.cfg.num_feature_dim = self.num_node_labels
 
-    def append_graph_pair(self, pair):
-        self.graph_pairs.append(pair)
-
+    def generate_pairs(self):
+        self.graph_pair_data = []
+        for idx_graph_a, idx_graph_b in itertools.combinations(range(len(self.graph_data)), 2):
+            self.graph_pair_data.append((self.graph_data[idx_graph_a], self.graph_data[idx_graph_b]))
+        #TODO: different sampling technique?
+    
     def get_graphs(self):
         return self.graph_data
-        
-    def get_datasets(self):
-        return self.split_dataset(ratio=self.cfg.ratio, seed=self.cfg.seed, dataset=self.graph_data)
-
+    
     def get_pairs(self):
-        self.graph_pairs_train, self.graph_pairs_test = self.split_dataset(ratio=self.cfg.ratio, seed=self.cfg.seed, dataset=self.graph_pairs)
-        train_pairs = [(self.graph_data[pairs[0]], self.graph_data[pairs[1]], pairs[2]) for pairs in self.graph_pairs_train]
-        test_pairs = [(self.graph_data[pairs[0]], self.graph_data[pairs[1]], pairs[2]) for pairs in self.graph_pairs_test] 
-        return train_pairs, test_pairs
+        if len(self.graph_pair_data) == 0:
+            raise Exception("you have to genearte pairs first!")
+        return self.graph_pair_data
 
     def split_dataset(self, ratio, seed, dataset):
         sim_diff_label = []

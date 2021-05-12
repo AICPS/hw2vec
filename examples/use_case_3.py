@@ -30,14 +30,16 @@ else:
 SIMILAR = 1
 DISSIMILAR = -1
 
-all_graphs = data_proc.graph_data
-for idx_graph_a, idx_graph_b in itertools.combinations(range(len(all_graphs)), 2):
-    if all_graphs[idx_graph_a].hw_type == all_graphs[idx_graph_b].hw_type:
-        data_proc.append_graph_pair((idx_graph_a, idx_graph_b, SIMILAR))
+data_proc.generate_pairs()
+all_pairs = data_proc.get_pairs()
+for pair_idx, pair in enumerate(all_pairs):
+    graph_a, graph_b = pair
+    if graph_a.hw_type == graph_b.hw_type:
+        all_pairs[pair_idx] += (SIMILAR,)
     else:
-        data_proc.append_graph_pair((idx_graph_a, idx_graph_b, DISSIMILAR))
+        all_pairs[pair_idx] += (DISSIMILAR,)
 
-train_pairs, test_pairs = data_proc.get_pairs()
+train_pairs, test_pairs = data_proc.split_dataset(cfg.ratio, cfg.seed, all_pairs)
 train_loader = DataLoader(train_pairs, shuffle=True, batch_size=cfg.batch_size)
 test_loader  = DataLoader(test_pairs, shuffle=True, batch_size=cfg.batch_size)
 
@@ -50,5 +52,5 @@ trainer.train(train_loader, test_loader)
 
 ''' evaluating and inspecting '''
 trainer.evaluate(cfg.epochs, train_loader, test_loader)
-vis_loader   = DataLoader(all_graphs, shuffle=False, batch_size=1)
+vis_loader   = DataLoader(data_proc.get_graphs(), shuffle=False, batch_size=1)
 trainer.visualize_embeddings(vis_loader, "./")
