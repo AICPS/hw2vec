@@ -30,7 +30,7 @@ else:
 TROJAN = 1
 NON_TROJAN = 0
 
-all_graphs = data_proc.graph_data
+all_graphs = data_proc.get_graphs()
 for data in all_graphs:
     if "TjFree" == data.hw_type:
         data.label = NON_TROJAN

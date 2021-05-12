@@ -130,6 +130,9 @@ class DataProcessor:
     def append_graph_pair(self, pair):
         self.graph_pairs.append(pair)
 
+    def get_graphs(self):
+        return self.graph_data
+        
     def get_datasets(self):
         return self.split_dataset(ratio=self.cfg.ratio, seed=self.cfg.seed, dataset=self.graph_data)
 
