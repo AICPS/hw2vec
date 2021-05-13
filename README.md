@@ -79,12 +79,8 @@ pooling_type: "topk" # Graph pooling type.
 readout_type: "max" # Readout type.
 ratio: 0.8 # Dataset splitting ratio
 poolratio: 0.8 # Ratio for graph pooling.
-raw_dataset_path: "/home/louisccc/NAS/louisccc/hw2vec/datasets/TJ-RTL/" # Path to raw dataset for parsing if no precache.
 embed_dim: 2 # The dimension of graph embeddings.
-data_pkl_path: "./DFG-TJ-RTL.pkl" # Path to the pickle file storing the graph dataset
 graph_type: "DFG" # Graph type to create.
-NORMALIZATION: "type_only" # or "keep_variable"
-model_path: "./best_result" # Path to store best performing model weights.
 ```
 
 ## Use Case 3: IP Piracy Detection
@@ -115,10 +111,6 @@ pooling_type: "topk" # Graph pooling type.
 readout_type: "max" # Readout type.
 ratio: 0.8 # Dataset splitting ratio
 poolratio: 0.5 # Ratio for graph pooling.
-raw_dataset_path: "/home/louisccc/NAS/louisccc/hw2vec/datasets/IP-RTL/" # Path to raw dataset for parsing if no precache.
 embed_dim: 2 # The dimension of graph embeddings.
-data_pkl_path: "./DFG-IP-RTL.pkl" # Path to the pickle file storing the graph dataset
 graph_type: "DFG" # Graph type to create.
-NORMALIZATION: "type_only" # or "keep_variable"
-model_path: "./best_result" # Path to store best performing model weights.
 ```
