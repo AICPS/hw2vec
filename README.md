@@ -170,6 +170,6 @@ model.set_output_layer(output)
 Some of the performance metrics that we can provide are as follows:
 | Graph Type |  Dataset  |  Accuracy  |  F1 Score  |
 |    :---:   |    :---:  |   :---:    |    :---:   |
-|    DFG     |    RTL    |   0.8571   |   0.8889   |
-|    DFG     |  Netlist  |     x      |      x     |
-|    AST     |    RTL    |    x       |      x     |
+|    DFG     |    RTL    |   0.9438   |   0.9277   |
+|    DFG     |  Netlist  |   0.9882   |   0.9652   |
+|    AST     |    RTL    |   0.9358   |   0.9183   |
