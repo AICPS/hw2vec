@@ -4,7 +4,7 @@ seed: 0 # Random seed.
 epochs: 200 # Number of epochs to train.
 weight_decay: 5e-4 # Weight decay (L2 loss on parameters).
 hidden: 200 # Number of hidden units.
-dropout: 0.5 # Dropout rate (1 - keep probability).
+dropout: 0.1 # Dropout rate (1 - keep probability).
 batch_size: 4 # Number of graphs in a batch.
 model: "gcn" # Model to be used.
 num_layer: 2 # Number of layers in the neural network.
@@ -14,9 +14,6 @@ pooling_type: "topk" # Graph pooling type.
 readout_type: "max" # Readout type.
 ratio: 0.8 # Dataset splitting ratio
 poolratio: 0.8 # Ratio for graph pooling.
-raw_dataset_path: "/home/louisccc/NAS/louisccc/hw2vec/datasets/TJ-RTL/" # Path to raw dataset for parsing if no precache.
 embed_dim: 2 # The dimension of graph embeddings.
-data_pkl_path: "./AST-TJ-RTL.pkl" # Path to the pickle file storing the graph dataset
 graph_type: "AST" # Graph type to create.
 NORMALIZATION: "type_only" # or "keep_variable"
-model_path: "./best_result" # Path to store best performing model weights.

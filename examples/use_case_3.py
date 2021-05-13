@@ -43,11 +43,35 @@ train_pairs, test_pairs = data_proc.split_dataset(cfg.ratio, cfg.seed, all_pairs
 train_loader = DataLoader(train_pairs, shuffle=True, batch_size=cfg.batch_size)
 test_loader  = DataLoader(test_pairs, shuffle=True, batch_size=cfg.batch_size)
 
+'''model configuration'''
+model = GRAPH2VEC(cfg)
+if cfg.model_path != "":
+    model_path = Path(cfg.model_path)
+    if model_path.exists():
+        model.load_model(str(model_path/"model.cfg"), str(model_path/"model.pth"))
+else:
+    from torch_geometric.nn import GCNConv
+    from torch_geometric.nn import SAGPooling
+    from torch_geometric.nn import global_max_pool
+    convs = [
+        GCNConv(data_proc.num_node_labels, cfg.hidden),
+        GCNConv(cfg.hidden, cfg.hidden)
+    ]
+    model.set_graph_conv(convs)
+
+    pool = SAGPooling(cfg.hidden, ratio=cfg.poolratio)
+    model.set_graph_pool(pool)
+
+    readout = global_max_pool
+    model.set_graph_readout(readout)
+
+    output = nn.Linear(cfg.hidden, cfg.embed_dim)
+    model.set_output_layer(output)
+
 ''' training '''
+model.to(cfg.device)
 trainer = PairwiseGraphTrainer(cfg)
-trainer.build()
-# if model_path is not None:
-#     trainer.load_saved_model(model_path)
+trainer.build(model)
 trainer.train(train_loader, test_loader)
 
 ''' evaluating and inspecting '''
