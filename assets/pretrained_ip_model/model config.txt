@@ -1,1 +1,0 @@
-use_case_3.py --yaml_path ../hw2vec/configs/DFG-IP-NetList.yaml --device cuda
