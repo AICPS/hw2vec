@@ -48,7 +48,13 @@ To run this use case, use the following commands:
 $ cd examples
 $ python use_case_1.py
 ```
-The paths to the hardware design code and pre-trained model weights and config can be configured in the script.
+Users can refer to the following code piece in use_case_1.py to configure the hardware design code path and pre-trained model weights and config paths.
+```python
+hw_design_dir_path = Path("../assets/TJ-RTL-toy/TjFree/det_1011/") # Change this path to other hardware design folder path.
+pretrained_model_weight_path = "../assets/pretrained_AST_IP_RTL/model.pth" # Change this path to your desired pretrained model weight path.
+pretrained_model_cfg_path = "../assets/pretrained_AST_IP_RTL/model.cfg" # Change this path to your desired pretrained model config path.
+cfg.graph_type = "AST" # each pretrained model is bundled with one graph type so you will need to change this to fit the used pretrained model.
+```
 The expected embedding _h<sub>g</sub>_ is: 
 
 ## Use Case 2: Hardware Trojan Detection
@@ -56,11 +62,12 @@ In this use case, we demonstrate how to use HW2VEC to detect hardware trojans (H
 
 To realize the model with HW2VEC, we first use HW2GRAPH to convert each hardware design _p_ into a graph _g_. Then, we transform each _g_ to a graph embedding _h<sub>g</sub>_. Lastly, _h<sub>g</sub>_ is used to make a prediction with an MLP layer. To train the model, the cross-entropy loss _L_ is calculated collectively for all the graphs in the training set. 
 
-To run this use case, use the script examples/use_case_2.py and the downloaded toy dataset (assets/data/TJ-RTL-toy). To train the model on the dataset, we provide the following command sequences.
+To run this use case, use the script examples/use_case_2.py and the downloaded toy dataset (assets/TJ-RTL-toy). To train the model on the dataset, we provide the following command sequences.
 ```sh
 $ cd examples
 # for running HT detection on our toy RTL dataset using DFG graph type
 $ python use_case_2.py --yaml_path ./example_gnn4tj.yaml --raw_dataset_path ../assets/TJ-RTL-toy --data_pkl_path dfg_tj_rtl.pkl --graph_type DFG (--device cuda)
+
 # for running HT detection on our toy RTL dataset using AST graph type
 $ python use_case_2.py --yaml_path ./example_gnn4tj.yaml --raw_dataset_path ../assets/TJ-RTL-toy --data_pkl_path ast_tj_rtl.pkl --graph_type AST (--device cuda)
 ```
@@ -82,21 +89,18 @@ poolratio: 0.8 # Ratio for graph pooling.
 embed_dim: 2 # The dimension of graph embeddings.
 ```
 
-Users can refer to the following code piece for model configuration in use_case_2.py and modify it directly.
+Users can refer to the following code piece in use_case_2.py for model configuration and modify it directly.
 ```python
-from torch_geometric.nn import GCNConv
-from torch_geometric.nn import SAGPooling
-from torch_geometric.nn import global_max_pool
 convs = [
-    GCNConv(data_proc.num_node_labels, cfg.hidden),
-    GCNConv(cfg.hidden, cfg.hidden)
+    GRAPH_CONV("gcn", data_proc.num_node_labels, cfg.hidden),
+    GRAPH_CONV("gcn", cfg.hidden, cfg.hidden)
 ]
 model.set_graph_conv(convs)
 
-pool = SAGPooling(cfg.hidden, ratio=cfg.poolratio)
+pool = GRAPH_POOL("sagpool", cfg.hidden, cfg.poolratio)
 model.set_graph_pool(pool)
 
-readout = global_max_pool
+readout = GRAPH_READOUT("MAX")
 model.set_graph_readout(readout)
 
 output = nn.Linear(cfg.hidden, cfg.embed_dim)
@@ -104,6 +108,10 @@ model.set_output_layer(output)
 ```
 
 Some of the performance metrics that we can provide are as follows:
+| Graph Type |  Precision  |   Recall   |  F1 Score  |
+|    :---:   |    :---:    |    :---:   |    :---:   |
+|    DFG     |    0.9231   |   0.8571   |   0.8889   |
+|    AST     |    0.8667   |   0.9286   |   0.8966   |
 
 
 ## Use Case 3: IP Piracy Detection
@@ -143,19 +151,16 @@ embed_dim: 16 # The dimension of graph embeddings.
 
 Users can refer to the following code piece for model configuration in use_case_3.py and modify it directly.
 ```python
-from torch_geometric.nn import GCNConv
-from torch_geometric.nn import SAGPooling
-from torch_geometric.nn import global_max_pool
 convs = [
-    GCNConv(data_proc.num_node_labels, cfg.hidden),
-    GCNConv(cfg.hidden, cfg.hidden)
+    GRAPH_CONV("gcn", data_proc.num_node_labels, cfg.hidden),
+    GRAPH_CONV("gcn", cfg.hidden, cfg.hidden)
 ]
 model.set_graph_conv(convs)
 
-pool = SAGPooling(cfg.hidden, ratio=cfg.poolratio)
+pool = GRAPH_POOL("sagpool", cfg.hidden, cfg.poolratio)
 model.set_graph_pool(pool)
 
-readout = global_max_pool
+readout = GRAPH_READOUT("MAX")
 model.set_graph_readout(readout)
 
 output = nn.Linear(cfg.hidden, cfg.embed_dim)
@@ -163,3 +168,8 @@ model.set_output_layer(output)
 ```
 
 Some of the performance metrics that we can provide are as follows:
+| Graph Type |  Dataset  |  Accuracy  |  F1 Score  |
+|    :---:   |    :---:  |   :---:    |    :---:   |
+|    DFG     |    RTL    |   0.8571   |   0.8889   |
+|    DFG     |  Netlist  |     x      |      x     |
+|    AST     |    RTL    |    x       |      x     |
