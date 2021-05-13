@@ -2,7 +2,7 @@ import os, sys
 sys.path.append(os.path.dirname(sys.path[0]))
 from hw2vec.config import Config
 from hw2vec.hw2graph import *
-
+from hw2vec.graph2vec.models import *
 
 cfg = Config(sys.argv[1:])
 
@@ -49,19 +49,16 @@ if cfg.model_path != "":
     if model_path.exists():
         model.load_model(str(model_path/"model.cfg"), str(model_path/"model.pth"))
 else:
-    from torch_geometric.nn import GCNConv
-    from torch_geometric.nn import SAGPooling
-    from torch_geometric.nn import global_max_pool
     convs = [
-        GCNConv(data_proc.num_node_labels, cfg.hidden),
-        GCNConv(cfg.hidden, cfg.hidden)
+        GRAPH_CONV("gcn", data_proc.num_node_labels, cfg.hidden),
+        GRAPH_CONV("gcn", cfg.hidden, cfg.hidden)
     ]
     model.set_graph_conv(convs)
 
-    pool = SAGPooling(cfg.hidden, ratio=cfg.poolratio)
+    pool = GRAPH_POOL("sagpool", cfg.hidden, cfg.poolratio)
     model.set_graph_pool(pool)
 
-    readout = global_max_pool
+    readout = GRAPH_READOUT("MAX")
     model.set_graph_readout(readout)
 
     output = nn.Linear(cfg.hidden, cfg.embed_dim)

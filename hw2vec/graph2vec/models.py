@@ -17,6 +17,46 @@ from torch.nn import Linear, ReLU
 from torch_geometric.nn import GCNConv, GINConv, SAGPooling, TopKPooling
 from torch_geometric.nn import global_add_pool, global_mean_pool, global_max_pool
 
+class GRAPH_CONV(nn.Module):
+    def __init__(self, type, in_channels, out_channels):
+        super(GRAPH_CONV, self).__init__()
+        self.type = type
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        if type == "gcn":
+            self.graph_conv = GCNConv(in_channels, out_channels)
+
+    def forward(self, x, edge_index):
+        return self.graph_conv(x, edge_index)
+
+class GRAPH_POOL(nn.Module):
+    def __init__(self, type, in_channels, poolratio):
+        super(GRAPH_POOL, self).__init__()
+        self.type = type
+        self.in_channels = in_channels
+        self.poolratio = poolratio
+        if self.type == "sagpool":
+            self.graph_pool = SAGPooling(in_channels, ratio=poolratio)
+        elif self.type == "topkpool":
+            self.graph_pool = TopKPooling(in_channels, ratio=poolratio)
+    
+    def forward(self, x, edge_index, batch):
+        return self.graph_pool(x, edge_index, batch=batch)
+
+class GRAPH_READOUT(nn.Module):
+    def __init__(self, type):
+        super(GRAPH_READOUT, self).__init__()
+        self.type = type
+    
+    def forward(self, x, batch):
+        if self.type == "MAX":
+            return global_max_pool(x, batch)
+        elif self.type == "MEAN":
+            return global_mean_pool(x, batch)
+        elif self.type == "ADD":
+            return global_add_pool(x, batch)
+
+
 class GRAPH2VEC(nn.Module):
     
     ''' 
@@ -35,11 +75,11 @@ class GRAPH2VEC(nn.Module):
 
         convs = [] 
         for layer in self.layers:
-            convs.append((layer.__class__.__name__, layer.in_channels, layer.out_channels))
+            convs.append((layer.type, layer.in_channels, layer.out_channels))
         model_configurations['convs'] = convs
 
-        model_configurations['pool'] = (self.pool1.__class__.__name__, self.pool1.in_channels, self.pool1.ratio)
-        model_configurations['readout'] = self.graph_readout.__name__
+        model_configurations['pool'] = (self.pool1.type, self.pool1.in_channels, self.pool1.poolratio)
+        model_configurations['readout'] = self.graph_readout.type
         model_configurations['fc'] = (self.fc.in_features, self.fc.out_features)
         with open(model_config_path, 'w') as f:
             json.dump(model_configurations, f)
@@ -51,24 +91,14 @@ class GRAPH2VEC(nn.Module):
         
         convs = [] 
         for setting in model_configuration['convs']:
-            graph_conv_type, in_channel, out_channel = setting
-            if graph_conv_type == "GCNConv":
-                convs.append(GCNConv(in_channel, out_channel))
+            graph_conv_type, in_channels, out_channels = setting
+            convs.append(GRAPH_CONV(graph_conv_type, int(in_channels), int(out_channels)))
         self.set_graph_conv(convs)
 
-        pool_type, pool_in_channel, pool_ratio = model_configuration['pool']
-        if pool_type == "SAGPooling":
-            self.set_graph_pool(SAGPooling(pool_in_channel, ratio=pool_ratio))
-        elif pool_type == "TopKPooling":
-            self.set_graph_pool(TopKPooling(pool_in_channel, ratio=pool_ratio))
+        pool_type, pool_in_channels, pool_ratio = model_configuration['pool']
+        self.set_graph_pool(GRAPH_POOL(pool_type, pool_in_channels, pool_ratio))
 
-        if model_configuration['readout'] == "global_max_pool":
-            self.set_graph_readout(global_max_pool)
-        elif model_configuration['readout'] == "global_add_pool":
-            self.set_graph_readout(global_add_pool)
-        elif model_configuration['readout'] == "global_mean_pool":
-            self.set_graph_readout(global_mean_pool)
-
+        self.set_graph_readout(GRAPH_READOUT(model_configuration['readout']))
         fc_in_channel, fc_out_channel = model_configuration['fc']
         self.set_output_layer(nn.Linear(fc_in_channel, fc_out_channel))
 

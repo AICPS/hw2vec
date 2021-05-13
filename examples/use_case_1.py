@@ -17,7 +17,7 @@ def use_case_1(cfg, hw_design_dir_path, pretrained_model_weight_path, pretrained
     model = GRAPH2VEC(cfg)
     model.load_model(pretrained_model_cfg_path, pretrained_model_weight_path)
     model.to(cfg.device)
-    graph_data = next(iter(vis_loader))
+    graph_data = next(iter(vis_loader)).to(cfg.device)
     graph_embed, _ = model.embed_graph(graph_data.x, graph_data.edge_index, graph_data.batch)
     return graph_embed
 
@@ -25,7 +25,7 @@ def use_case_1(cfg, hw_design_dir_path, pretrained_model_weight_path, pretrained
 if __name__ == '__main__': 
     cfg = Config(sys.argv[1:])
     
-    hw_design_dir_path = Path("../assets/data/TJ-RTL-toy/TjFree/det_1011/") # Change this path to other hardware design folder path.
+    hw_design_dir_path = Path("../assets/TJ-RTL-toy/TjFree/det_1011/") # Change this path to other hardware design folder path.
     pretrained_model_weight_path = "../assets/pretrained_AST_IP_RTL/model.pth" # Change this path to your desired pretrained model weight path.
     pretrained_model_cfg_path = "../assets/pretrained_AST_IP_RTL/model.cfg" # Change this path to your desired pretrained model config path.
     cfg.graph_type = "AST" # each pretrained model is bundled with one graph type so you will need to change this to fit the used pretrained model.
