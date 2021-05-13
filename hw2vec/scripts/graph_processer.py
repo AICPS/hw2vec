@@ -7,8 +7,7 @@ from glob import glob
 import pickle
 from time import time
 
-def process_graph(cfg, folder_path, profile=True):
-    hw2graph = HW2GRAPH(cfg)
+def process_graph(cfg, folder_path, hw2graph, profile=True):
     
     if profile:
         start = time()
@@ -27,10 +26,11 @@ def process_graph(cfg, folder_path, profile=True):
     return hw_graph
 
 def process_graphs(cfg):
+    hw2graph = HW2GRAPH(cfg)
     data_proc = DataProcessor(cfg)
     
-    for project in data_proc.find_projects():
-        hw_graph = process_graph(cfg, project)
+    for project in hw2graph.find_hw_project_folders():
+        hw_graph = process_graph(cfg, project, hw2graph)
         data_proc.process(hw_graph)
     
     data_proc.cache_graph_data(cfg.data_pkl_path)
