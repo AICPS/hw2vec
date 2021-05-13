@@ -49,11 +49,11 @@ class GRAPH_READOUT(nn.Module):
         self.type = type
     
     def forward(self, x, batch):
-        if self.type == "MAX":
+        if self.type == "max":
             return global_max_pool(x, batch)
-        elif self.type == "MEAN":
+        elif self.type == "mean":
             return global_mean_pool(x, batch)
-        elif self.type == "ADD":
+        elif self.type == "add":
             return global_add_pool(x, batch)
 
 

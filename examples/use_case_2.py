@@ -58,7 +58,7 @@ else:
     pool = GRAPH_POOL("sagpool", cfg.hidden, cfg.poolratio)
     model.set_graph_pool(pool)
 
-    readout = GRAPH_READOUT("MAX")
+    readout = GRAPH_READOUT("max")
     model.set_graph_readout(readout)
 
     output = nn.Linear(cfg.hidden, cfg.embed_dim)
