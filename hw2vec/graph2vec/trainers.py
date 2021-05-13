@@ -40,64 +40,41 @@ class BaseTrainer:
         np.random.seed(self.config.seed)
         torch.manual_seed(self.config.seed)
 
-    def build(self):
-        if self.config.model == "gcn":
-            self.model = GCN(self.config).to(self.config.device)
-
-        elif self.config.model == "gin":
-            self.model = GIN(self.config).to(self.config.device)
-    
-        self.optimizer = optim.Adam(self.model.parameters(), lr=self.config.learning_rate, weight_decay=float(self.config.weight_decay))    
-
-    def load_saved_model(self, path):
-        model_path = Path(path)
-        if model_path.exists():
-            self.model.load_state_dict(torch.load(str(model_path)))
-            self.model.to(self.config.device)
-        else:
-            raise ValueError("Model load path not exist %s" % model_path)
-
-    def save_model(self, saved_path):
-        saved_path.mkdir(parents=True, exist_ok=True)
-        torch.save(self.model.state_dict(), str(saved_path / "model"))
-        save_path_config = saved_path / "model config.txt"
-        save_path_file = open(save_path_config, "w") 
-        save_path_file.write(" ".join(sys.argv))
-        save_path_file.close()
+    def build(self, model, path=None):
+        self.model = model
+        self.optimizer = optim.Adam(model.parameters(), lr=self.config.learning_rate, weight_decay=float(self.config.weight_decay))
 
     def visualize_embeddings(self, data_loader, path=None):
         save_path = "./visualize_embeddings/" if path is None else Path(path)
         save_path.mkdir(parents=True, exist_ok=True)
+
+        embeddings, hw_names = self.get_embeddings(data_loader)
+
         with open(str(save_path / "vectors.tsv"), "w") as vectors_file, \
              open(str(save_path / "metadata.tsv"), "w") as metadata_file:
 
-            with torch.no_grad():
-                self.model.eval()
+            for embed, name in zip(embeddings, hw_names):
+                vectors_file.write("\t".join([str(x) for x in embed.detach().cpu().numpy()[0]]) + "\n")
+                metadata_file.write(name+"\n")
 
-                for data in data_loader:
-                    data.to(self.config.device)
-                    embed_x, _ = self.model.forward(data.x, data.edge_index, data.batch)
-                    hardware_name = data.hw_name[0]
+    def get_embeddings(self, data_loader):
+        embeds = []
+        hw_names = []
 
-                    if self.task == "TJ":
-                        embed_x = F.log_softmax(embed_x, dim=1)
-
-                    vectors_file.write("\t".join([str(x) for x in embed_x.detach().cpu().numpy()[0]]) + "\n")
-                    metadata_file.write(hardware_name+"\n")
-
-    #TODO; for use case 1, not completed. must adjust app.py
-    def get_embedding(self, data_loader):
         with torch.no_grad():
             self.model.eval()
 
-            data = next(iter(data_loader))
-            data.to(self.config.device)
-            embed_x, _ = self.model.forward(data.x, data.edge_index, data.batch)
+            for data in data_loader:
+                data.to(self.config.device)
+                embed_x, _ = self.model.embed_graph(data.x, data.edge_index, data.batch)
 
-            if self.task == "TJ":
-                embed_x = F.log_softmax(embed_x, dim=1)
+                if self.task == "TJ":
+                    embed_x = F.log_softmax(embed_x, dim=1)
 
-        return embed_x
+                embeds.append(embed_x)
+                hw_names += data.hw_name
+
+        return embeds, hw_names
 
     def metric_calc(self, loss, labels, preds, header):
         acc = accuracy_score(labels, preds)
@@ -156,16 +133,16 @@ class PairwiseGraphTrainer(BaseTrainer):
     
     # @profileit
     def train_epoch_ip(self, graph1, graph2, labels):
-        g_emb_1, _ = self.model.forward(graph1.x, graph1.edge_index, batch=graph1.batch)
-        g_emb_2, _ = self.model.forward(graph2.x, graph2.edge_index, batch=graph2.batch)
+        g_emb_1, _ = self.model.embed_graph(graph1.x, graph1.edge_index, batch=graph1.batch)
+        g_emb_2, _ = self.model.embed_graph(graph2.x, graph2.edge_index, batch=graph2.batch)
 
         loss_train = self.cos_loss(g_emb_1, g_emb_2, labels)
         return loss_train
 
     # @profileit
     def inference_epoch_ip(self, graph1, graph2):
-        g_emb_1, _ = self.model(graph1.x, graph1.edge_index, batch=graph1.batch)
-        g_emb_2, _ = self.model(graph2.x, graph2.edge_index, batch=graph2.batch)
+        g_emb_1, _ = self.model.embed_graph(graph1.x, graph1.edge_index, batch=graph1.batch)
+        g_emb_2, _ = self.model.embed_graph(graph2.x, graph2.edge_index, batch=graph2.batch)
 
         similarity = self.cos_sim(g_emb_1, g_emb_2)
         return g_emb_1, g_emb_2, similarity
@@ -207,7 +184,7 @@ class PairwiseGraphTrainer(BaseTrainer):
         self.metric_calc(test_loss,  test_labels,  test_preds,  header="test ")
 
         if self.min_test_loss >= test_loss:
-            self.save_model(self.config.model_path)
+            self.model.save_model(str(self.config.model_path_obj/"model.cfg"), str(self.config.model_path_obj/"model.pth"))
 
         # on final evaluate call
         if(epoch_idx==self.config.epochs):
@@ -246,7 +223,7 @@ class GraphTrainer(BaseTrainer):
 
     # @profileit
     def train_epoch_tj(self, data):
-        output, _ = self.model.forward(data.x, data.edge_index, data.batch)
+        output, _ = self.model.embed_graph(data.x, data.edge_index, data.batch)
         output = F.log_softmax(output, dim=1)
 
         loss_train = self.loss_func(output, data.label)
@@ -254,7 +231,7 @@ class GraphTrainer(BaseTrainer):
 
     # @profileit
     def inference_epoch_tj(self, data):
-        output, attn = self.model.forward(data.x, data.edge_index, data.batch)
+        output, attn = self.model.embed_graph(data.x, data.edge_index, data.batch)
         output = F.log_softmax(output, dim=1)
 
         loss = self.loss_func(output, data.label)
@@ -307,7 +284,8 @@ class GraphTrainer(BaseTrainer):
         self.metric_calc(test_loss,  test_labels,  test_preds,  header="test ")
 
         if self.min_test_loss >= test_loss:
-            self.save_model(self.config.model_path)
+            self.model.save_model(str(self.config.model_path_obj/"model.cfg"), str(self.config.model_path_obj/"model.pth"))
+
             #TODO: store the attn_weights right here. 
 
         # on final evaluate call
