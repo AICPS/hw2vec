@@ -42,7 +42,7 @@ class BaseTrainer:
 
     def build(self, model, path=None):
         self.model = model
-        self.optimizer = optim.Adam(model.parameters(), lr=self.config.learning_rate, weight_decay=float(self.config.weight_decay))
+        self.optimizer = optim.Adam(model.parameters(), lr=self.config.learning_rate, weight_decay=5e-4)
 
     def visualize_embeddings(self, data_loader, path=None):
         save_path = "./visualize_embeddings/" if path is None else Path(path)
