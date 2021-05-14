@@ -131,12 +131,13 @@ class GRAPH2VEC(nn.Module):
         x = self.graph_readout(x, batch)
 
         attn_weights['batch'] = batch
-        x = self.fc(x)
         return x, attn_weights
 
     def embed_node(self, x, edge_index):
         x = F.one_hot(x, num_classes=self.config.num_feature_dim).float()
         for layer in self.layers:
             x = F.dropout(F.relu(layer(x, edge_index)), p=self.config.dropout, training=self.training)
-        x = self.fc(x)
         return x
+
+    def mlp(self, x):
+        return self.fc(x)

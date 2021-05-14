@@ -67,10 +67,6 @@ class BaseTrainer:
             for data in data_loader:
                 data.to(self.config.device)
                 embed_x, _ = self.model.embed_graph(data.x, data.edge_index, data.batch)
-
-                if self.task == "TJ":
-                    embed_x = F.log_softmax(embed_x, dim=1)
-
                 embeds.append(embed_x)
                 hw_names += data.hw_name
 
@@ -135,6 +131,9 @@ class PairwiseGraphTrainer(BaseTrainer):
     def train_epoch_ip(self, graph1, graph2, labels):
         g_emb_1, _ = self.model.embed_graph(graph1.x, graph1.edge_index, batch=graph1.batch)
         g_emb_2, _ = self.model.embed_graph(graph2.x, graph2.edge_index, batch=graph2.batch)
+        
+        g_emb_1 = self.model.mlp(g_emb_1)
+        g_emb_2 = self.model.mlp(g_emb_2)
 
         loss_train = self.cos_loss(g_emb_1, g_emb_2, labels)
         return loss_train
@@ -143,6 +142,9 @@ class PairwiseGraphTrainer(BaseTrainer):
     def inference_epoch_ip(self, graph1, graph2):
         g_emb_1, _ = self.model.embed_graph(graph1.x, graph1.edge_index, batch=graph1.batch)
         g_emb_2, _ = self.model.embed_graph(graph2.x, graph2.edge_index, batch=graph2.batch)
+
+        g_emb_1 = self.model.mlp(g_emb_1)
+        g_emb_2 = self.model.mlp(g_emb_2)
 
         similarity = self.cos_sim(g_emb_1, g_emb_2)
         return g_emb_1, g_emb_2, similarity
@@ -224,6 +226,7 @@ class GraphTrainer(BaseTrainer):
     # @profileit
     def train_epoch_tj(self, data):
         output, _ = self.model.embed_graph(data.x, data.edge_index, data.batch)
+        output = self.model.mlp(output)
         output = F.log_softmax(output, dim=1)
 
         loss_train = self.loss_func(output, data.label)
@@ -232,6 +235,7 @@ class GraphTrainer(BaseTrainer):
     # @profileit
     def inference_epoch_tj(self, data):
         output, attn = self.model.embed_graph(data.x, data.edge_index, data.batch)
+        output = self.model.mlp(output)
         output = F.log_softmax(output, dim=1)
 
         loss = self.loss_func(output, data.label)

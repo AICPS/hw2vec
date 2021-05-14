@@ -305,7 +305,7 @@ class CFGGenerator:
 
     def process(self, verilog_file): 
         fsm_vars = tuple(['fsm', 'state', 'count', 'cnt', 'step', 'mode'])
-        dataflow_analyzer = PyDataflowAnalyzer(self.verilog_file, "top")
+        dataflow_analyzer = VerilogDataflowAnalyzer(self.verilog_file, "top")
         dataflow_analyzer.generate()
         binddict = dataflow_analyzer.getBinddict()
         terms = dataflow_analyzer.getTerms()
