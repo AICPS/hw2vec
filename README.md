@@ -110,8 +110,8 @@ model.set_output_layer(output)
 Some of the performance metrics that we can provide are as follows:
 | Graph Type |  Precision  |   Recall   |  F1 Score  |
 |    :---:   |    :---:    |    :---:   |    :---:   |
-|    DFG     |    0.9231   |   0.8571   |   0.8889   |
-|    AST     |    0.8667   |   0.9286   |   0.8966   |
+|    DFG     |    0.8750   |   1.0000   |   0.9333   |
+|    AST     |    0.8750   |   1.0000   |   0.9333   |
 
 
 ## Use Case 3: IP Piracy Detection
