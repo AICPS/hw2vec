@@ -51,9 +51,9 @@ $ python use_case_1.py
 Users can refer to the following code piece in use_case_1.py to configure the hardware design code path and pre-trained model weights and config paths.
 ```python
 hw_design_dir_path = Path("../assets/TJ-RTL-toy/TjFree/det_1011/") # Change this path to other hardware design folder path.
-pretrained_model_weight_path = "../assets/pretrained_AST_IP_RTL/model.pth" # Change this path to your desired pretrained model weight path.
-pretrained_model_cfg_path = "../assets/pretrained_AST_IP_RTL/model.cfg" # Change this path to your desired pretrained model config path.
-cfg.graph_type = "AST" # each pretrained model is bundled with one graph type so you will need to change this to fit the used pretrained model.
+pretrained_model_weight_path = "../assets/pretrained_DFG_TJ_RTL/model.pth" # Change this path to your desired pretrained model weight path.
+pretrained_model_cfg_path = "../assets/pretrained_DFG_TJ_RTL/model.cfg" # Change this path to your desired pretrained model config path.
+cfg.graph_type = "DFG" # each pretrained model is bundled with one graph type so you will need to change this to fit the used pretrained model.
 ```
 The expected embedding _h<sub>g</sub>_ is: 
 
@@ -110,8 +110,8 @@ model.set_output_layer(output)
 Some of the performance metrics that we can provide are as follows:
 | Graph Type |  Precision  |   Recall   |  F1 Score  |
 |    :---:   |    :---:    |    :---:   |    :---:   |
-|    DFG     |    0.9231   |   0.8571   |   0.8889   |
-|    AST     |    0.8667   |   0.9286   |   0.8966   |
+|    DFG     |    0.8750   |   1.0000   |   0.9333   |
+|    AST     |    0.8750   |   1.0000   |   0.9333   |
 
 
 ## Use Case 3: IP Piracy Detection
