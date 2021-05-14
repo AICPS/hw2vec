@@ -26,9 +26,9 @@ if __name__ == '__main__':
     cfg = Config(sys.argv[1:])
     
     hw_design_dir_path = Path("../assets/TJ-RTL-toy/TjFree/det_1011/") # Change this path to other hardware design folder path.
-    pretrained_model_weight_path = "../assets/pretrained_AST_IP_RTL/model.pth" # Change this path to your desired pretrained model weight path.
-    pretrained_model_cfg_path = "../assets/pretrained_AST_IP_RTL/model.cfg" # Change this path to your desired pretrained model config path.
-    cfg.graph_type = "AST" # each pretrained model is bundled with one graph type so you will need to change this to fit the used pretrained model.
+    pretrained_model_weight_path = "../assets/pretrained_DFG_TJ_RTL/model.pth" # Change this path to your desired pretrained model weight path.
+    pretrained_model_cfg_path = "../assets/pretrained_DFG_TJ_RTL/model.cfg" # Change this path to your desired pretrained model config path.
+    cfg.graph_type = "DFG" # each pretrained model is bundled with one graph type so you will need to change this to fit the used pretrained model.
 
     graph_emb = use_case_1(cfg, hw_design_dir_path,\
                            pretrained_model_weight_path,\
