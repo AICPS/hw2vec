@@ -9,7 +9,7 @@ We hope that **HW2VEC** can be helpful for researchers and practitioners in hard
 ![](https://github.com/AICPS/hw2vec/blob/master/figures/archi.png?raw=true)
 
 # To Get Started
-We recommend our users to use [Anaconda](https://www.anaconda.com/) as the virtual environment. The environment requirments for hw2vec is as follows,
+We recommend our users to use Linux system and [Anaconda](https://www.anaconda.com/) as the virtual environment. The environment requirments for hw2vec is as follows,
 - python >= 3.6 
 - torch == 1.6.0
 - torch_teometric == 1.6.1
