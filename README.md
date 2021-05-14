@@ -43,7 +43,7 @@ This set of commands assumes you have cuda 10.1 in your local and you are using 
 ## Use Case 1: Transforming a hardware design to a graph then to a graph embedding
 In this use case, we demonstrate how to use HW2VEC to transform a hardware design into a graph and then into an embedding with a pre-trained model. In the sample script examples/use_case_1.py, HW2GRAPH first uses preprocessing and graph generation modules to convert the hardware design _p_ into the corresponding graph _g_. Then _g_ is fed to GRAPH2VEC with the uses of Data Processing to generate _X_ and _A_. _X_ and _A_ are processed through the pre-trained model with Graph Convolution layers, Graph Pooling layers, and Graph Readout operations to generate the graph embedding _h<sub>g</sub>_. This  resulting _h<sub>g</sub>_ can be further inspected with the utilities of the model.
 
-To run this use case, use the following commands:
+To run this use case, unzip the assets/datasets.zip then use the following commands:
 ```sh
 $ cd examples
 $ python use_case_1.py
@@ -56,13 +56,19 @@ pretrained_model_cfg_path = "../assets/pretrained_DFG_TJ_RTL/model.cfg" # Change
 cfg.graph_type = "DFG" # each pretrained model is bundled with one graph type so you will need to change this to fit the used pretrained model.
 ```
 The expected embedding _h<sub>g</sub>_ is: 
+```python
+tensor([[1.5581e-02, 2.5182e-01, 2.1535e-02, 3.0264e-02, 3.3349e-02, 4.6067e-02,
+         5.5791e-02, 3.6810e-02, 8.3800e-02, 5.1623e-02, 1.1715e-03, 1.2781e-01,
+         ...      
+         1.2203e-01, 1.2821e-01]], grad_fn=<CppNode<ScatterMax>>)
+```
 
 ## Use Case 2: Hardware Trojan Detection
 In this use case, we demonstrate how to use HW2VEC to detect hardware trojans (HT), which are intentional, malicious modifications of circuits by attackers. examples/use_case_2.py implements a proposed GNN-based approach to model the circuit's behavior and identify the presence of HTs. The dataset used in this use case is obtained from a famous trojan [benchmark](https://www.trust-hub.org/benchmarks/trojan). The converted hardware DFG dataset can be downloaded from [here](http://ieee-dataport.org/3640).
 
 To realize the model with HW2VEC, we first use HW2GRAPH to convert each hardware design _p_ into a graph _g_. Then, we transform each _g_ to a graph embedding _h<sub>g</sub>_. Lastly, _h<sub>g</sub>_ is used to make a prediction with an MLP layer. To train the model, the cross-entropy loss _L_ is calculated collectively for all the graphs in the training set. 
 
-To run this use case, unzip the assets/datasets.zip and use the script examples/use_case_2.py with the toy dataset (assets/TJ-RTL-toy). To train the model on the dataset, we provide the following command sequences.
+To run this use case, use the script examples/use_case_2.py with the toy dataset (assets/TJ-RTL-toy). To train the model on the dataset, we provide the following command sequences.
 ```sh
 $ cd examples
 # for running HT detection on our toy RTL dataset using DFG graph type
