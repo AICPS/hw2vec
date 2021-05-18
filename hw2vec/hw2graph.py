@@ -12,8 +12,8 @@ from __future__ import print_function
 
 import pyverilog.utils.util as util
 import networkx as nx
-
-import pyverilog, pydot, json, os, sys
+import itertools
+import pyverilog, pydot, json, os, sys, pickle
 sys.path.append(os.path.dirname(sys.path[0]))
 
 from json import dumps
@@ -26,35 +26,14 @@ from sklearn.model_selection import train_test_split
 from glob import glob
 from hw2vec.graph2vec.trainers import *
 from hw2vec.utilities import *
-
+from torch_geometric.utils.convert import from_networkx
+from time import time
 
 class DataProcessor:
     def __init__(self, cfg):
         self.cfg = cfg
-        self.root_path = self.cfg.raw_dataset_path.resolve()
-
-        ''' self.graphs is a dict that stores all the hardware graphs that can be parsed from the raw datatset folder. 
-            'all': means it is a collection of all graph datasets.
-            'train' and 'test': store the collection of graph instances according to a prespliting result.
-        '''
-        self.graphs = {}
-
-        self.node_labels = set()
-        
-        ''' for GNN4IP '''
-        ''' self.graph_pairs/_train/_test stores the graph-pairing info. e.g. (0, 1, -1) means graph 0 and graph 1 is dissimilar. '''
-        self.graph_pairs       = []
-        self.graph_pairs_train = [] 
-        self.graph_pairs_test  = []
-        
-        # self.trunk stores the hardware category information about each hardware design. e.g. in [0, 1, 1, 2, 3], hw #1 belongs to category 1.
-        self.trunk = []
-
-        # list to store names of graphs in each set
-        self.training_graph_count = 0
-        self.testing_graph_count = 0
-        
-        self.label2idx = None
+        self.graph_data = []
+        self.graph_pair_data = []
 
         self.global_type2idx_AST_list = ['names','always','none','senslist','sens','identifier','nonblockingsubstitution',
                                          'lvalue','rvalue','intconst','pointer','ifstatement','pure numeric','assign','cond',
@@ -75,49 +54,18 @@ class DataProcessor:
 
         self.global_type2idx_DFG = {v:k for k, v in enumerate(self.global_type2idx_DFG_list)}
 
-    def append_training_graph_data(self, data):
-        if 'train' not in self.graphs: 
-            self.graphs['train'] = []
-        self.graphs['train'].append(data)
+    def process(self, nx_graph):
+        self.normalize(nx_graph)
+        data = from_networkx(nx_graph)
+        data.hw_name = nx_graph.name
+        data.hw_type = nx_graph.type
+        self.graph_data.append(data)
 
-    def append_testing_graph_data(self, data):
-        if 'test' not in self.graphs: 
-            self.graphs['test'] = []
-        self.graphs['test'].append(data)
-    
-    def append_graph_data(self, data):
-        if 'all' not in self.graphs: 
-            self.graphs['all'] = []
-        self.graphs['all'].append(data)
-
-    def append_graph_pair(self, pair):
-        self.graph_pairs.append(pair)
-
-    def get_graphs(self):
-        if 'train' in self.graphs and 'test' in self.graphs:
-            return self.graphs['train'], self.graphs['test']
-        elif 'all' in self.graphs:
-            return self.split_dataset(ratio=self.cfg.ratio, seed=self.cfg.seed, dataset=self.graphs['all'])
-
-    def get_pairs(self):
-        graph_pairs = self.graph_pairs
-        self.graph_pairs_train, self.graph_pairs_test = self.split_dataset(ratio=self.cfg.ratio, seed=self.cfg.seed, dataset=graph_pairs)
-        return self.graph_pairs_train, self.graph_pairs_test
-
-    def normalize(self, nx_graph, graph_format="DFG", normalize="keep_variable"):
+    def normalize(self, nx_graph):
         ''' 
-            Normalization is a step to replace the label of a node to a value.
-            We have two options in hw2vec: 
-            1. keep the variable name/numeric value.
-            2. replace all the variable name and numeric values with a high-level type.
+            Normalization is a step to replace the label of a node to a value -> replace all the variable name and numeric values with a high-level type.
         '''
-        if normalize == "keep_variable":
-            if self.label2idx == None:
-                self.label2idx = {v:k for k, v in enumerate(list(self.node_labels))}
-            for node in nx_graph.nodes(data=True):
-                node[1]['x'] = self.label2idx[node[1]['label']]
-            self.num_node_labels = len(self.label2idx)
-        elif graph_format == 'DFG': # normalize for DFG
+        if self.cfg.graph_type == 'DFG': # normalize for DFG
             in_degrees = [val for (node, val) in nx_graph.in_degree()]
             out_degrees = [val for (node, val) in nx_graph.out_degree()]
             for idx, node in enumerate(nx_graph.nodes(data=True)):
@@ -142,8 +90,9 @@ class DataProcessor:
                 
                 node[1]['x'] = self.global_type2idx_DFG[type_of_node]
             self.num_node_labels = len(self.global_type2idx_DFG)
+            self.cfg.num_feature_dim = self.num_node_labels
         
-        else: # normalize for AST
+        elif self.cfg.graph_type == "AST": # normalize for AST
             out_degrees = [val for (node, val) in nx_graph.out_degree()]
             for idx, node in enumerate(nx_graph.nodes(data=True)):
                 label = node[1]['label']
@@ -161,31 +110,23 @@ class DataProcessor:
                 
                 node[1]['x'] = self.global_type2idx_AST[type_of_node]
             self.num_node_labels = len(self.global_type2idx_AST)
+            self.cfg.num_feature_dim = self.num_node_labels
 
-
-    def read_node_labels(self, key):
-        # read thru all the node labels in a dataset. 
-        for json_path in glob("%s/**/**/topModule.json" % str(self.root_path/key), recursive=True):
-            with open(str(json_path), 'r') as json_file:
-                edge_list_dict = json.loads(json_file.read())
-                for src in edge_list_dict:
-                    node_name = src
-                    if '_graphrename' in src:
-                        node_name = src[:src.index('_graphrename')]
-                    if '.' in node_name: 
-                        type_of_node = node_name.split('.')[-1]
-                    elif '_' in node_name:
-                        type_of_node = node_name.split('_')[-1]
-                    else:
-                        type_of_node = node_name.lower()
-                    self.node_labels.add(type_of_node)
-
-        self.label2idx = {v:k for k, v in enumerate(list(self.node_labels))}
-        self.idx2label = {v:k for k, v in self.label2idx.items()}
+    def generate_pairs(self):
+        self.graph_pair_data = []
+        for idx_graph_a, idx_graph_b in itertools.combinations(range(len(self.graph_data)), 2):
+            self.graph_pair_data.append((self.graph_data[idx_graph_a], self.graph_data[idx_graph_b]))
+        #TODO: different sampling technique?
+    
+    def get_graphs(self):
+        return self.graph_data
+    
+    def get_pairs(self):
+        if len(self.graph_pair_data) == 0:
+            raise Exception("you have to genearte pairs first!")
+        return self.graph_pair_data
 
     def split_dataset(self, ratio, seed, dataset):
-        train_size = int(len(dataset) * ratio)
-
         sim_diff_label = []
 
         for data in dataset:
@@ -200,8 +141,30 @@ class DataProcessor:
                 else:
                     sim_diff_label.append(-1)
 
-        return train_test_split(dataset, train_size = train_size, shuffle = True, stratify=sim_diff_label, random_state=seed)
-    
+        return train_test_split(dataset, train_size = int(len(dataset) * ratio), shuffle = True, stratify=sim_diff_label, random_state=seed)
+
+    def get_class_weights(self, train_graphs):
+        training_labels = [data.label for data in train_graphs]
+        class_weights = torch.from_numpy(compute_class_weight('balanced', np.unique(training_labels), training_labels))
+
+        return class_weights
+
+    def cache_graph_data(self, data_pkl_path):
+        with open(data_pkl_path, 'wb+') as f:
+            pickle.dump(self.graph_data, f)
+        
+    def read_graph_data_from_cache(self, data_pkl_path):
+        with open(data_pkl_path, 'rb') as f:
+            self.graph_data = pickle.load(f)
+
+        if self.cfg.graph_type == 'DFG':
+            self.num_node_labels = len(self.global_type2idx_DFG)
+            self.cfg.num_feature_dim = self.num_node_labels
+        elif self.cfg.graph_type == 'AST':
+            self.num_node_labels = len(self.global_type2idx_AST)
+            self.cfg.num_feature_dim = self.num_node_labels
+        #TODO: creating pairs or blah blah blah.
+
 
 class DFGGenerator:
     def __init__(self):
@@ -234,20 +197,15 @@ class DFGGenerator:
                 label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
                 label_to_node[label] = node
         
-        # deleted = 0
-        # print('\nMerging subgraphs... ')
         num_nodes = len(dfg_graph_generator.graph.nodes())
         for num, node in enumerate(dfg_graph_generator.graph.nodes(), start=1):
             label = node.attr['label'] if node.attr['label'] != '\\N' else str(node)
             if '_' in label and label.replace('_', '.') in label_to_node:
                 parents = dfg_graph_generator.graph.predecessors(node)
                 dfg_graph_generator.graph.delete_node(node)
-                # deleted += 1
                 for parent in parents:
-                    # if not self._isChild(self.dfg_graph_generator.graph, label_to_node[label.replace('_', '.')], parent):
                     dfg_graph_generator.graph.add_edge(parent, label_to_node[label.replace('_', '.')])
-            # print(f'\rProgress : {num} - {deleted} = {num - deleted} / {num_nodes}', end='', flush=True)
-        # print('\nThe signals subgraphs are merged.')
+
         
         nx_graph = nx.DiGraph()
         
@@ -267,7 +225,7 @@ class DFGGenerator:
                 nx_graph.add_edge(node.name, child.name)
 
         return nx_graph
-    
+
 
 class ASTGenerator:
     def __init__(self):
@@ -285,6 +243,7 @@ class ASTGenerator:
              "EventStatement", "DelayStatement", "Task", "ParamArg", "Inout"]
         self.CONST_DICTIONARY_GEN = \
             ["IntConst","FloatConst","StringConst","Identifier"]
+        self.count = 0
 
     def process(self, verilog_file):
         #when generating AST, determines which substructure (dictionary/array) to generate
@@ -292,7 +251,12 @@ class ASTGenerator:
         
         self.ast, _ = parse([verilog_file], debug=False)
         ast_dict = self._generate_ast_dict(self.ast)
-        return ast_dict
+
+        nx_graph = nx.DiGraph()
+        for key in ast_dict.keys():
+            self._add_node(nx_graph, 'None', key, ast_dict[key])
+
+        return nx_graph
 
     #generates nested dictionary for conversion to json (AST helper)
     def _generate_ast_dict(self, ast_node):
@@ -312,6 +276,28 @@ class ASTGenerator:
         else:
             raise Exception(f"Error. Token name {class_name} is invalid or has not yet been supported")
         return structure
+    
+    def _add_node(self, graph, parent, child, cur_dict):
+        index = self.count
+        graph.add_nodes_from([(index, {"label": str(child)})])
+        if parent != 'None':
+            graph.add_edge(parent, index)
+        self.count = self.count + 1
+        if type(cur_dict) == dict:
+            for key in cur_dict.keys():
+                self._add_node(graph, index, key, cur_dict[key])
+        elif type(cur_dict) == list:
+            for ele in cur_dict:
+                if type(ele) == dict:
+                    self._add_node(graph, index, 'None', ele)
+                elif ele is not None:
+                    graph.add_nodes_from([(self.count, {"label": str(ele)})])
+                    graph.add_edge(index, self.count)
+                    self.count = self.count + 1
+        else:
+            graph.add_nodes_from([(self.count, {"label": str(cur_dict)})])
+            graph.add_edge(index, self.count)
+            self.count = self.count + 1
 
 class CFGGenerator:
     def __init__(self):
@@ -319,7 +305,7 @@ class CFGGenerator:
 
     def process(self, verilog_file): 
         fsm_vars = tuple(['fsm', 'state', 'count', 'cnt', 'step', 'mode'])
-        dataflow_analyzer = PyDataflowAnalyzer(self.verilog_file, "top")
+        dataflow_analyzer = VerilogDataflowAnalyzer(self.verilog_file, "top")
         dataflow_analyzer.generate()
         binddict = dataflow_analyzer.getBinddict()
         terms = dataflow_analyzer.getTerms()
@@ -385,28 +371,134 @@ class CFGGenerator:
 
 
 class HW2GRAPH:
-    '''the main class of hw2graph.''' 
+    
+    '''
+        The main class of hw2graph consists of two components:
+        1. preprocess (flatten, remove comment, ...)
+        2. processs (call backend graph geenration and acquire the nx graph instances.)
+
+        Currently HW2GRAPH can process Verilog files in RTL (Register Transfer Level) and GLN (Gate-Level Netlist).
+    ''' 
+
     def __init__(self, cfg):
         self.cfg = cfg
-        self.count = 0
 
-    @profilegraph
-    def process(self, verilog_file):
+    def find_hw_project_folders(self):        
+        projects = set()
+
+        for verilog_path in glob("%s/**/*.v" % str(self.cfg.raw_dataset_path), recursive=True):
+            folder_name = Path(verilog_path).parent
+            projects.add(folder_name)
+
+        return list(projects)
+
+    def flatten(self, input_path, flattened_hw_path):
+        flatten_content = ""
+        all_containing_files = [Path(x).name for x in glob(fr'{input_path}/*.v', recursive=True)]
+        if "topModule.v" in all_containing_files:
+            return
+        for verilog_file in glob(fr'{input_path}/*.v'):
+            with open(verilog_file, "r") as infile:
+                flatten_content += infile.read()     
+        with open(flattened_hw_path, "w") as outfile:
+            outfile.write(flatten_content)       
+
+    def remove_comments(self, hw_path):
+        with open(hw_path,'r') as file_in:
+            lines = file_in.read().split("\n")
+    
+        #TODO; right now this part is a rule-based method, we will consider using AST to remove comments in the future.
+        with open(hw_path, "w") as file_out:
+            for line in lines:
+                idx = line.find('//')
+                if idx == 0:
+                    continue
+                elif idx == -1:
+                    file_out.write(line+'\n')
+                else:
+                    file_out.write(line[:idx]+'\n')
+        
+    def remove_underscores(self, hw_path):
+        with open(hw_path, 'r') as file_in:
+            lines = file_in.read().replace('_', '')
+
+        with open(hw_path, "w") as file_out:
+            file_out.write(lines)
+
+    
+    def rename_topModule(self, hw_path):
+        #TODO; right now this part is a rule-based method, we will consider using AST to parse the flattened code in the future.
+
+        with open(hw_path,'r') as file_in:
+            lines = file_in.read().split("\n")
+    
+        modules_dic={}
+        for line in lines:
+            words = line.split()
+            for word_idx, word in enumerate(words):
+                if word == 'module':
+                    module_name = words[word_idx+1]
+                    if '(' in module_name:
+                        idx = module_name.find('(')
+                        module_name = module_name[:idx]
+                        modules_dic[module_name]= 1
+
+                    else:
+                        modules_dic[module_name]= 0
+                    
+        for line in lines:
+            words = line.split()
+            for word in words:
+                if word in modules_dic.keys():
+                    modules_dic[word] += 1
+    
+        for m in modules_dic:
+            if modules_dic[m] == 1:
+                top_module = m
+                break
+
+        with open(hw_path, "w") as file_out:
+            for line in lines:
+                file_out.write(line.replace(top_module, 'top')+'\n')        
+
+    def code2graph(self, verilog_dir, profile=True):
+        if profile:
+            start = time()
+
+        code_path = self.preprocess(verilog_dir)
+        hw_graph = self.process(str(code_path))
+        
+        if profile:
+            end = time()
+            print(str(code_path), ",", len(hw_graph.nodes), ",", len(hw_graph.edges), ",", end-start)
+        return hw_graph
+        
+    def preprocess(self, verilog_dir):
+        flattened_hw_path = verilog_dir / "topModule.v"
+        all_verilog_files = [Path(x).name for x in glob("%s/*.v"%str(verilog_dir))]
+
+        if "topModule.v" not in all_verilog_files:
+            self.flatten(verilog_dir, flattened_hw_path)
+            self.remove_comments(flattened_hw_path)
+            self.remove_underscores(flattened_hw_path)
+            self.rename_topModule(flattened_hw_path)
+
+        return flattened_hw_path    
+
+    # @profilegraph
+    def process(self, hw_path):
         if self.cfg.graph_type == "CFG":
             generator = CFGGenerator()
-            return_obj = generator.process(verilog_file)
+            return_obj = generator.process(hw_path)
             nx_graph = None
         
         elif self.cfg.graph_type == "AST":
             generator = ASTGenerator()
-            ast_dict = generator.process(verilog_file)
-            nx_graph = nx.DiGraph()
-            for key in ast_dict.keys():
-                self.add_node(nx_graph, 'None', key, ast_dict[key])
+            nx_graph = generator.process(hw_path)
 
         elif self.cfg.graph_type == "DFG":
             generator = DFGGenerator()
-            nx_graph = generator.process(verilog_file)
+            nx_graph = generator.process(hw_path)
         
         else:
             pass
@@ -418,109 +510,8 @@ class HW2GRAPH:
                 pass
 
         if nx_graph != None:
-            nx_graph.name = verilog_file.split("/")[-2]
+            # NOTE: this is creating a limitation of how users should form their dataset. (TODO: we have to provide a tutorial in readme.)
+            nx_graph.name = str(hw_path).split("/")[-2]
+            nx_graph.type = str(hw_path).split("/")[-3]
+            
         return nx_graph
-
-    def add_node(self, graph, parent, child, cur_dict):
-        index = self.count
-        graph.add_nodes_from([(index, {"label": str(child)})])
-        if parent != 'None':
-            graph.add_edge(parent, index)
-        self.count = self.count + 1
-        if type(cur_dict) == dict:
-            for key in cur_dict.keys():
-                self.add_node(graph, index, key, cur_dict[key])
-        elif type(cur_dict) == list:
-            for ele in cur_dict:
-                if type(ele) == dict:
-                    self.add_node(graph, index, 'None', ele)
-                elif ele is not None:
-                    graph.add_nodes_from([(self.count, {"label": str(ele)})])
-                    graph.add_edge(index, self.count)
-                    self.count = self.count + 1
-        else:
-            graph.add_nodes_from([(self.count, {"label": str(cur_dict)})])
-            graph.add_edge(index, self.count)
-            self.count = self.count + 1
-
-
-class PreprocessVerilog:
-    '''This class comprise the preprocessing functions for Verilog files in RTL (Register Transfer Level) and GLN (Gate-Level Netlist).'''
-    def __init__(self, input_path, target_path):
-        self.input_path = input_path
-        self.target_path = target_path
-
-    def flatten(self):
-        with open(self.target_path, "w") as outfile:
-            print(self.input_path, glob(fr'{self.input_path}/*.v'))
-            for verilog_file in glob(fr'{self.input_path}/*.v'):
-                if verilog_file.find("topModule.v") != -1:
-                    continue
-                with open(verilog_file, "r") as infile:
-                    outfile.write(infile.read())       
-
-    def remove_comments(self):
-        # read the file into a list of lines
-        with open(self.target_path,'r') as file_in:
-            lines = file_in.read().split("\n")
-    
-        with open(self.target_path, "w") as file_out:
-            for line in lines:
-                idx = line.find('//')
-                if idx == 0:
-                    continue
-                elif idx == -1:
-                    file_out.write(line+'\n')
-                else:
-                    file_out.write(line[:idx]+'\n')
-        
-    def remove_underscores(self):
-        with open(self.target_path, 'r') as file_in:
-            lines = file_in.read().replace('_', '')
-
-        with open(self.target_path, "w") as file_out:
-            file_out.write(lines)
-
-    def rename_topModule(self):
-        # read the file into a list of lines
-        with open(self.target_path,'r') as file_in:
-            lines = file_in.read().split("\n")
-    
-        modules_dic={}
-        # iterate over lines, and list the module names.
-        for line in lines:
-            words = line.split()
-            for word_idx, word in enumerate(words):
-                if word == 'module':
-                    module_name = words[word_idx+1]
-
-                    # if no space before '('
-                    if '(' in module_name:
-                        idx = module_name.find('(')
-                        module_name = module_name[:idx]
-                        modules_dic[module_name]= 1
-
-                    # if space before '('
-                    else:
-                        modules_dic[module_name]= 0
-                    
-        # iterate over file and count the occurance of each module name.                       
-        for line in lines:
-            words = line.split()
-            for word in words:
-                if word in modules_dic.keys():
-                    modules_dic[word] += 1
-
-        import pprint
-        pprint.pprint(modules_dic)
-        
-        # find the name of top module
-        for m in modules_dic:
-            if modules_dic[m] == 1:
-                top_module = m
-                break   
-        
-        # rename the top module to 'top'
-        with open(self.target_path, "w") as file_out:
-            for line in lines:
-                file_out.write(line.replace(top_module, 'top')+'\n')        
