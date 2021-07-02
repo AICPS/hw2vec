@@ -17,24 +17,16 @@ We recommend our users to use Linux system and [Anaconda](https://www.anaconda.c
 
 You can either install hw2vec from pypi or clone our repo. Here we provide one recommended command sequence, 
 ```sh
+# run the following commands if you choose to install hw2vec from pip instead of installing from pypi or cloning our repo.
 $ conda create --name hw2vec python=3.6
 $ conda activate hw2vec
 $ python -m pip install hw2vec 
-# if you clone from the repo, go to the root dir and do python setup.py install here.
 
 # for installing pygraphviz. 
-$ sudo add-apt-repository universe
-$ sudo apt update
-$ sudo apt install graphviz
 $ python -m pip install pygraphviz
 
 # for install torch and torch_geometric.
 $ conda install pytorch==1.6.0 torchvision==0.7.0 cudatoolkit=10.1 -c pytorch
-$ python -m pip install --no-index torch-scatter -f https://pytorch-geometric.com/whl/torch-1.6.0+cu101.html
-$ python -m pip install --no-index torch-sparse -f https://pytorch-geometric.com/whl/torch-1.6.0+cu101.html
-$ python -m pip install --no-index torch-cluster -f https://pytorch-geometric.com/whl/torch-1.6.0+cu101.html
-$ python -m pip install --no-index torch-spline-conv -f https://pytorch-geometric.com/whl/torch-1.6.0+cu101.html
-$ python -m pip install torch-geometric==1.6.1
 ```
 This set of commands assumes you have cuda 10.1 in your local and you are using Linux. Please refer to the installation guides of [torch](https://pytorch.org/) and [pytorch_geometric](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html) if you have different cuda settings. If installing pygraphviz in windows, please refer to this [issue](https://github.com/pygraphviz/pygraphviz/issues/58) for more information.
 
