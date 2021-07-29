@@ -170,3 +170,26 @@ Some of the performance metrics that we can provide are as follows:
 |    :---:   |    :---:  |   :---:    |    :---:   |
 |    DFG     |    RTL    |   0.9841   |   0.9783   |
 |    AST     |    RTL    |   0.8557   |   0.8333   |
+
+# Citation
+If you find our tool is useful in your research, please kindly consider citing our papers.
+```
+@misc{yu2021hw2vec,
+      title={HW2VEC: A Graph Learning Tool for Automating Hardware Security}, 
+      author={Shih-Yuan Yu and Rozhin Yasaei and Qingrong Zhou and Tommy Nguyen and Mohammad Abdullah Al Faruque},
+      year={2021},
+      eprint={2107.12328},
+      archivePrefix={arXiv},
+      primaryClass={cs.CR}
+}
+@TECHREPORT{UCI-TR-21-02,
+  AUTHOR =        {Yasamin Moghaddas and Tommy Nguyen, Shih-Yuan Yu, Rozhin Yasaei, Mohammad Abdullah Al Faruque, “Technical Report for HW2VEC – A Graph Learning Tool for Automating Hardware Security“, CECS TR 21-02, posted on July 27, 2021},
+  TITLE =         {Technical Report for HW2VEC – A Graph Learning Tool for Automating Hardware Security},
+  NUMBER =        {TR-21-02},
+  INSTITUTION =   {Center for Embedded and Cyber-Physical Systems University of California, Irvine},
+  ADDRESS =       {Irvine, CA 92697-2620, USA},
+  MONTH =         {July},
+  YEAR  =         {2021},
+   URL   =        {http://cecs.uci.edu/files/2021/07/TR-21-02.pdf}
+}
+```
