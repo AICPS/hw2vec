@@ -56,7 +56,7 @@ tensor([[1.5581e-02, 2.5182e-01, 2.1535e-02, 3.0264e-02, 3.3349e-02, 4.6067e-02,
 ```
 
 ## Use Case 2: Hardware Trojan Detection
-In this use case, we demonstrate how to use HW2VEC to detect hardware trojans (HT), which are intentional, malicious modifications of circuits by attackers. examples/use_case_2.py implements a proposed GNN-based approach to model the circuit's behavior and identify the presence of HTs. The dataset used in this use case is obtained from a famous trojan [benchmark](https://www.trust-hub.org/benchmarks/trojan). The converted hardware DFG dataset can be downloaded from [here](http://ieee-dataport.org/3640).
+In this use case, we demonstrate how to use HW2VEC to detect hardware trojans (HT), which are intentional, malicious modifications of circuits by attackers. examples/use_case_2.py implements a proposed GNN-based approach to model the circuit's behavior and identify the presence of HTs. The dataset used in this use case is obtained from a famous trojan [benchmark](https://www.trust-hub.org/benchmarks/trojan). The converted hardware DFG dataset can be downloaded from [here](http://ieee-dataport.org/4618).
 
 To realize the model with HW2VEC, we first use HW2GRAPH to convert each hardware design _p_ into a graph _g_. Then, we transform each _g_ to a graph embedding _h<sub>g</sub>_. Lastly, _h<sub>g</sub>_ is used to make a prediction with an MLP layer. To train the model, the cross-entropy loss _L_ is calculated collectively for all the graphs in the training set. 
 
@@ -113,7 +113,7 @@ Some of the performance metrics that we can provide are as follows:
 
 
 ## Use Case 3: IP Piracy Detection
-This use case demonstrates how to use HW2VEC to confront IP piracy - determining whether one of the two hardware designs is stolen from the other. The implemented method addresses IP piracy by assessing the similarities between hardware designs with a GNN-based model. The dataset used in this use case is obtained from a famous trojan [benchmark](https://www.trust-hub.org/benchmarks/trojan). The converted hardware DFG dataset can be downloaded from [here](http://ieee-dataport.org/3640). 
+This use case demonstrates how to use HW2VEC to confront IP piracy - determining whether one of the two hardware designs is stolen from the other. The implemented method addresses IP piracy by assessing the similarities between hardware designs with a GNN-based model. The dataset used in this use case is obtained from a famous trojan [benchmark](https://www.trust-hub.org/benchmarks/trojan). The converted hardware DFG dataset can be downloaded from [here](http://ieee-dataport.org/4618). 
 
 To implement the approach proposed, the GNN model has to be trained with a graph-pair classification trainer in GRAPH2VEC. The first step is to convert a pair of circuit designs _p<sub>1</sub>_, _p<sub>2</sub>_ to a pair of graphs _g<sub>1</sub>_, _g<sub>2</sub>_ with HW2GRAPH. Then, GRAPH2VEC transforms them into graph embeddings _h<sub>g1</sub>_, _h<sub>g2</sub>_. To assess the similarity of _h<sub>g1</sub>_ and _h<sub>g2</sub>_, a cosine similarity is computed as the final prediction of piracy. 
 
